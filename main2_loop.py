@@ -35,11 +35,11 @@ for exp in range(0,4):
         num_round = 120#100#200
         local_epochs = [5,5,5,5,5,5] #[3,5,3] #[1,5,1]#5
         batch_size = 32#50
-        type_iid = 'iid' #'iid', 'noniid'
-        if type_iid =='noniid':
-            class_ratio = 0.5 # non iid only
+        type_iid = ['iid', 'iid', 'iid', 'iid', 'noniid'] #'iid', 'noniid'
+        iid_filename = 'iiiin'
+        class_ratio = 0.5 # non iid only
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')#'cuda:0'
-        task_type = ['mnist', 'cifar10', 'fashion_mnist', 'emnist']
+        task_type = ['mnist', 'cifar10', 'fashion_mnist', 'emnist', 'fashion_mnist']
         #task_type = ['mnist', 'cifar10', 'fashion_mnist', 'mnist', 'cifar10', 'fashion_mnist'] #'fashion_mnist'
         #task_type = ['mnist', 'cifar10' , 'mnist']
         tasks_weight = np.ones(len(task_type))/len(task_type)
@@ -61,7 +61,7 @@ for exp in range(0,4):
         if not os.path.exists('./result'):
             os.makedirs('./result')
 
-        file =  open('./result/Algorithm_'+algorithm_name+'_normalization_'+normalization+'_type_'+type_iid+'_seed_'+str(random_seed)+''+'.txt', 'w')
+        file =  open('./result/Algorithm_'+algorithm_name+'_normalization_'+normalization+'_type_'+iid_filename+'_seed_'+str(random_seed)+''+'.txt', 'w')
     
     
         np.random.seed(random_seed)
@@ -83,12 +83,12 @@ for exp in range(0,4):
         
         for i in range(len(task_type)):
             tasks_data_info.append(preprocessing(task_type[i])) # 0: trainset, 1: testset, 2: min_data_num, 3: max_data_num 4: input_size, 5: classes_size
-            if type_iid =='iid':
+            if type_iid[i] =='iid':
                 tasks_data_idx.append(dataset.iid(dataset=tasks_data_info[i][0],
                                                 min_data_num=tasks_data_info[i][2],
                                                 max_data_num=tasks_data_info[i][3],
                                                 num_users=num_clients)) # 0: clients_data_idx
-            if type_iid =='noniid':
+            elif type_iid[i] =='noniid':
                 tasks_data_idx.append(dataset.noniid(dataset=tasks_data_info[i][0],
                                     min_data_num=tasks_data_info[i][2],
                                     max_data_num=tasks_data_info[i][3],
@@ -162,9 +162,9 @@ for exp in range(0,4):
                 for clients_idx, local_weights in enumerate(tasks_weights_list):
                     if clients_task[clients_idx] == task_idx:
                         temp_local_weights.append(local_weights)
-                        if type_iid =='iid':
+                        if type_iid[task_idx] =='iid':
                             local_data_nums.append(len(tasks_data_idx[task_idx][chosen_clients[clients_idx]]))
-                        if type_iid =='noniid':
+                        if type_iid[task_idx] =='noniid':
                             local_data_nums.append(len(tasks_data_idx[task_idx][0][chosen_clients[clients_idx]]))
                 #print('task, local data nums', task_idx, local_data_nums)
                 if (len(temp_local_weights) !=0):

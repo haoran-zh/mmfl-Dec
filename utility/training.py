@@ -34,9 +34,9 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         local_criterion = nn.CrossEntropyLoss()
 
         # Get client's data
-        if type_iid =='iid':
+        if type_iid[task_idx] =='iid':
             client_data = Subset(tasks_data_info[task_idx][0], tasks_data_idx[task_idx][chosen_clients[data_idx]])  # or iid_partition depending on your choice
-        if type_iid =='noniid':
+        if type_iid[task_idx] =='noniid':
             client_data = Subset(tasks_data_info[task_idx][0], tasks_data_idx[task_idx][0][chosen_clients[data_idx]])  # or iid_partition depending on your choice
             client_label = tasks_data_idx[task_idx][1][chosen_clients[data_idx]]
         client_loader = DataLoader(client_data, batch_size=batch_size, shuffle=True)
@@ -60,8 +60,8 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
                 #     images = images.view(firstdim,-1)
                 #print(images.shape)
                 outputs = local_model(images)
-                if type_iid == 'noniid':
-                    label_mask = torch.zeros(classes_size, device=outputs.device)
+                if type_iid[task_idx] == 'noniid':
+                    label_mask = torch.zeros(classes_size[task_idx][5], device=outputs.device)
                     label_mask[client_label] = 1
                     outputs = outputs.masked_fill(label_mask == 0, 0)
                 #print(outputs.shape)
