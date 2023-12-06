@@ -51,5 +51,23 @@ def preprocessing(name_data):
         classes_size = 10
         min_data_num = 400
         max_data_num = 500
+
+    elif name_data == 'emnist':
+        transform_train = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))])
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))])
+        trainset = torchvision.datasets.EMNIST('./utility/dataset', train=True, download=True,
+                                                     transform=transform_train, split='balanced')
+        testset = torchvision.datasets.EMNIST('./utility/dataset', train=False, download=True,
+                                                    transform=transform_test, split='balanced')
+
+        input_size = 28
+        classes_size = 47 # excluding capital letters that look similar to their lowercase counterparts
+        min_data_num = 400
+        max_data_num = 500
+
         
     return trainset, testset, min_data_num, max_data_num, input_size, classes_size

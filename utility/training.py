@@ -16,7 +16,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         #print('dataidx', data_idx)
         # Partition data
         task_idx=int(task_idx)
-        local_model = load_model(name_data=task_type[int(task_idx)], num_classes=classes_size).to(device)
+        local_model = load_model(name_data=task_type[int(task_idx)], num_classes=classes_size[task_idx][5]).to(device)
 
         global_model_state_dict = global_models[int(task_idx)].state_dict()
         local_model_state_dict = local_model.state_dict()
@@ -52,7 +52,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
                 labels = labels.to(device)
                 local_optimizer.zero_grad()
                 #print(images.shape)
-                firstdim=images.shape[0]
+                #firstdim=images.shape[0]
                 #print(images.shape[0])
                 # Forward pass
                 

@@ -16,4 +16,7 @@ def load_model(name_data, num_classes):
     elif name_data=='fashion_mnist':
         model = model_list.mnistCNN(num_classes=num_classes)#.to(device)
         return model
+    elif name_data=='emnist':
+        model = model_list.mnistCNN(num_classes=num_classes)
+        return model
 

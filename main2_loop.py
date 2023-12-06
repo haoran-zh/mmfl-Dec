@@ -39,7 +39,7 @@ for exp in range(0,4):
         if type_iid =='noniid':
             class_ratio = 0.5 # non iid only
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')#'cuda:0'
-        task_type = ['mnist', 'cifar10', 'fashion_mnist', 'mnist']
+        task_type = ['mnist', 'cifar10', 'fashion_mnist', 'emnist']
         #task_type = ['mnist', 'cifar10', 'fashion_mnist', 'mnist', 'cifar10', 'fashion_mnist'] #'fashion_mnist'
         #task_type = ['mnist', 'cifar10' , 'mnist']
         tasks_weight = np.ones(len(task_type))/len(task_type)
@@ -133,7 +133,7 @@ for exp in range(0,4):
             tasks_weights_list, tasks_local_training_acc, tasks_local_training_loss = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                                global_models=global_models, chosen_clients=chosen_clients,
                                                                                                task_type=task_type, clients_task=clients_task,
-                                                                                               local_epochs=local_epochs, batch_size = batch_size, classes_size = tasks_data_info[i][5],
+                                                                                               local_epochs=local_epochs, batch_size = batch_size, classes_size = tasks_data_info,
                                                                                                 type_iid=type_iid, device=device)
             temp_local_results = []
             for task_idx in range(len(task_type)):

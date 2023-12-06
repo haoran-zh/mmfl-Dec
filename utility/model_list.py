@@ -141,7 +141,7 @@ class MnistCNN(nn.Module):
         self.channel2 = 64
         self.conv_out_size = self.channel2*7*7
         self.fc_size = 512
-        self.out_size = 10
+        self.out_size = num_classes
 
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels=1, out_channels=self.channel1, kernel_size=self.kernel_conv, stride=1, padding=1),
@@ -187,3 +187,5 @@ def mnistCNN(num_classes):
     model=MnistCNN(num_classes=num_classes).to(device)
     model.apply(init_param)
     return model
+
+
