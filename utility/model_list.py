@@ -212,10 +212,6 @@ class EMnistCNN(nn.Module):
         x = self.fc3(x)
         return F.log_softmax(x, dim=1)
 
-    def forward(self, batch):
-        out1 = self.conv(batch.view(-1, 1, 28, 28)).view(-1, self.conv_out_size)
-        return self.fc(out1)
-
 
 
 def emnistCNN(num_classes):
