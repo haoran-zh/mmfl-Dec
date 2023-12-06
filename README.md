@@ -12,6 +12,4 @@ include non-iid task into iid experiment? a harder task, may show fairness algor
 
 experiment: [task1[iid], task2[iid], task3[iid], task4[non-iid]]
 
-task4[non-iid] can be viewed as a client producing "bad" data?
-
 add FEMNIST dataset later
