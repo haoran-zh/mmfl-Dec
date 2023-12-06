@@ -189,3 +189,37 @@ def mnistCNN(num_classes):
     return model
 
 
+
+class EMnistCNN(nn.Module):
+    def __init__(self, num_classes=47):
+        super(EMnistCNN, self).__init__()
+        # Define layers
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=5, padding=2)  # 'same' padding
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=48, kernel_size=5, padding=2)
+        self.conv3 = nn.Conv2d(in_channels=48, out_channels=64, kernel_size=5, padding=2)
+        self.fc1 = nn.Linear(in_features=64 * 7 * 7, out_features=512)
+        self.fc2 = nn.Linear(in_features=512, out_features=84)
+        self.fc3 = nn.Linear(in_features=84, out_features=num_classes)
+
+    def forward(self, x):
+        # Apply layers & activations
+        x = F.max_pool2d(F.tanh(self.conv1(x)), kernel_size=2, stride=2)
+        x = F.max_pool2d(F.tanh(self.conv2(x)), kernel_size=2, stride=2)
+        x = F.tanh(self.conv3(x))
+        x = x.view(x.size(0), -1)  # Flatten the tensor
+        x = F.tanh(self.fc1(x))
+        x = F.tanh(self.fc2(x))
+        x = self.fc3(x)
+        return F.log_softmax(x, dim=1)
+
+    def forward(self, batch):
+        out1 = self.conv(batch.view(-1, 1, 28, 28)).view(-1, self.conv_out_size)
+        return self.fc(out1)
+
+
+
+def emnistCNN(num_classes):
+    model=EMnistCNN(num_classes=num_classes).to(device)
+    model.apply(init_param)
+    return model
+
