@@ -11,6 +11,7 @@ import random
 import time
 import sys
 import math
+import os
 
 for exp in range(0,4):
     
@@ -56,7 +57,10 @@ for exp in range(0,4):
         #rr_clients=np.arange(num_clients)
         print(rr_taskAlloc, 'rr_taskAlloc')
         clients_task=0
-        
+
+        if not os.path.exists('./result'):
+            os.makedirs('./result')
+
         file =  open('./result/Algorithm_'+algorithm_name+'_normalization_'+normalization+'_type_'+type_iid+'_seed_'+str(random_seed)+''+'.txt', 'w')
     
     
