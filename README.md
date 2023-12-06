@@ -13,3 +13,5 @@ include non-iid task into iid experiment? a harder task, may show fairness algor
 experiment: [task1[iid], task2[iid], task3[iid], task4[non-iid]]
 
 add FEMNIST dataset later
+
+Current algorithm (alpha fairness) may allocate too many clients to an extremely hard task. If the task is really hard and can only reach acc=0.5 at best, then we are wasting time on this task. Find another way to avoid this waste. 
