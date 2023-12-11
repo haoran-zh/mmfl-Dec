@@ -80,6 +80,8 @@ for exp in range(0,4):
         localAccResults=np.zeros((len(task_type),num_round))
         globalLossResults=np.zeros((len(task_type),num_round))
         localLossResults=np.zeros((len(task_type),num_round))
+
+        TaskAllocCounter=np.zeros((len(task_type),num_round))
         
         for i in range(len(task_type)):
             tasks_data_info.append(preprocessing(task_type[i])) # 0: trainset, 1: testset, 2: min_data_num, 3: max_data_num 4: input_size, 5: classes_size
@@ -97,8 +99,16 @@ for exp in range(0,4):
             global_models.append(load_model(name_data=task_type[i], num_classes=tasks_data_info[i][5]).to(device))
             local_results.append([-1,-1])
             global_results.append([-1,-1])
+
+        # allocation_initialization !!
+        # NEW: dec 6 2023
+        all_clients = list(range(0, num_clients))
+        chosen_clients = random.sample(all_clients, int(numUsersSel))
+        # we first randomly allocate.
+        clients_task = np.random.randint(0, len(task_type), int(num_clients * C), dtype=int)
+
         # allocation_initialization
-        if algorithm_name =='round_robin':
+        """if algorithm_name =='round_robin':
             clients_task=rr_taskAlloc[firstIndRR:int(firstIndRR+numUsersSel)]
             rr_chosen_clients=np.arange(num_clients)[firstIndRR:int(firstIndRR+numUsersSel)]
             #sys.stdout = sys.__stdout__
@@ -116,7 +126,9 @@ for exp in range(0,4):
         # print("chosen clients")
         # print(rr_chosen_clients)
         # print("task allocation")
-        # print(clients_task)
+        # print(clients_task)"""
+
+
         for round in range(num_round):
             print(round)
             print(f"Round [{round+1}/{num_round}]")
@@ -124,11 +136,11 @@ for exp in range(0,4):
             print("Allocated Tasks:", clients_task)
             print("Allocated Tasks:", clients_task,file=file)
             
-            if algorithm_name=='round_robin':
+            """if algorithm_name=='round_robin':
                 chosen_clients=rr_chosen_clients
             else:
                 chosen_clients = np.random.choice(num_clients, int(num_clients*C), replace=False)
-    
+  """
             # training
             tasks_weights_list, tasks_local_training_acc, tasks_local_training_loss = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                                global_models=global_models, chosen_clients=chosen_clients,
@@ -181,25 +193,41 @@ for exp in range(0,4):
             for task_idx in range(len(task_type)):
                 global_accs.append(temp_global_results[task_idx][0])
             # task allocation
-            if algorithm_name=='round_robin':
-                clients_task, rr_chosen_clients,firstIndRR, rr_taskAlloc= get_task_id_RR(num_tasks=len(task_type), totNumCl=num_clients ,
-                                 num_clients =int(num_clients*C), algorithm_name=algorithm_name,
-                                 normalization=normalization, 
-                                 tasks_weight=tasks_weight,
-                                 global_accs=global_accs, beta=beta, firstIndRR=firstIndRR, rr_taskAlloc=rr_taskAlloc, rr_chosen_clients=rr_chosen_clients)
-                
+            # task allocation
+            # NEW: dec 6 2023
+            all_clients = list(range(0, num_clients))
+            chosen_clients = random.sample(all_clients, int(numUsersSel))  # for next round.
+
+            if algorithm_name == 'round_robin':
+                clients_task, rr_chosen_clients, firstIndRR, rr_taskAlloc = get_task_id_RR(num_tasks=len(task_type),
+                                                                                           totNumCl=num_clients,
+                                                                                           num_clients=int(
+                                                                                               num_clients * C),
+                                                                                           algorithm_name=algorithm_name,
+                                                                                           normalization=normalization,
+                                                                                           tasks_weight=tasks_weight,
+                                                                                           global_accs=global_accs,
+                                                                                           beta=beta,
+                                                                                           firstIndRR=firstIndRR,
+                                                                                           rr_taskAlloc=rr_taskAlloc,
+                                                                                           # rr_chosen_clients=rr_chosen_clients)
+                                                                                           # NEW: dec 6 2023
+                                                                                           rr_chosen_clients=chosen_clients)
+
             else:
-                clients_task = get_task_idx(num_tasks=len(task_type), num_clients=int(num_clients*C),
-                                        algorithm_name=algorithm_name,
-                                        normalization=normalization,
-                                        tasks_weight=tasks_weight, global_accs=global_accs, beta=beta)
-            
-            
-            #print("alloc",clients_task)
-    
+                clients_task = get_task_idx(num_tasks=len(task_type), num_clients=int(num_clients * C),
+                                            algorithm_name=algorithm_name,
+                                            normalization=normalization,
+                                            tasks_weight=tasks_weight, global_accs=global_accs, beta=beta,
+                                            # NEW: dec 6 2023
+                                            chosen_clients=chosen_clients)
+
+            TaskAllocCounter[:, round] = np.bincount(np.array(clients_task), minlength=len(task_type))
+            print("alloc", TaskAllocCounter[:, round])
+
             local_results = temp_local_results
             global_results = temp_global_results
-            
+
             globalAccResults[:,round]=np.array(temp_global_results)[:,0]
             localAccResults[:,round]=np.array(temp_local_results)[:,0]
             globalLossResults[:,round]=np.array(temp_global_results)[:,1]
@@ -209,7 +237,10 @@ for exp in range(0,4):
             
             filename='mcfmcf_i_globalAcc_exp{}_algo{}.npy'.format(exp,algo)
             np.save(filename,globalAccResults)
-            
+
+            filename = 'allocCounter_{}.npy'.format(algo)
+            np.save(filename, TaskAllocCounter)
+
         print('Finished Training')
         print('Finished Training',file=file)
         file.close()
