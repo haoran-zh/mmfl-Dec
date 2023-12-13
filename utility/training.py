@@ -36,7 +36,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         # Get client's data
         if type_iid[task_idx] =='iid':
             client_data = Subset(tasks_data_info[task_idx][0], tasks_data_idx[task_idx][chosen_clients[data_idx]])  # or iid_partition depending on your choice
-        if type_iid[task_idx] =='noniid':
+        elif type_iid[task_idx] =='noniid':
             client_data = Subset(tasks_data_info[task_idx][0], tasks_data_idx[task_idx][0][chosen_clients[data_idx]])  # or iid_partition depending on your choice
             client_label = tasks_data_idx[task_idx][1][chosen_clients[data_idx]]
         client_loader = DataLoader(client_data, batch_size=batch_size, shuffle=True)
