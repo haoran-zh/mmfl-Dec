@@ -13,7 +13,7 @@ import sys
 import math
 import os
 
-for exp in range(0,4):
+for exp in range(0,1):
     
     algorithm_name_vec=['proposed','random','round_robin']
     aggregation_mtd_vec=['pkOverSumPk', 'numUsersInv', 'numUsersInv']
@@ -24,8 +24,8 @@ for exp in range(0,4):
 #if __name__=="__main__":
 
         random_seed = 13#100
-        C = 0.4 #0.2#0.1
-        num_clients = 80#100
+        C = 1 #0.2#0.1
+        num_clients = 30#100
         numUsersSel=C*num_clients
         algorithm_name=algorithm_name_vec[algo]
         #algorithm_name = 'round_robin' # proposed, random, round_robin
@@ -35,11 +35,11 @@ for exp in range(0,4):
         num_round = 120#100#200
         local_epochs = [5,5,5,5,5,5] #[3,5,3] #[1,5,1]#5
         batch_size = 32#50
-        type_iid = ['iid', 'iid', 'iid', 'iid', 'noniid'] #'iid', 'noniid'
-        iid_filename = 'iiiin'
-        class_ratio = 0.5 # non iid only
+        type_iid = ['noniid', 'noniid', 'noniid', 'iid'] #'iid', 'noniid'
+        iid_filename = 'nnni30c30'
+        class_ratio = 0.2 # non iid only
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')#'cuda:0'
-        task_type = ['mnist', 'cifar10', 'fashion_mnist', 'emnist', 'fashion_mnist']
+        task_type = ['mnist', 'cifar10', 'fashion_mnist', 'emnist']
         #task_type = ['mnist', 'cifar10', 'fashion_mnist', 'mnist', 'cifar10', 'fashion_mnist'] #'fashion_mnist'
         #task_type = ['mnist', 'cifar10' , 'mnist']
         tasks_weight = np.ones(len(task_type))/len(task_type)
@@ -200,19 +200,18 @@ for exp in range(0,4):
 
             if algorithm_name == 'round_robin':
                 clients_task, rr_chosen_clients, firstIndRR, rr_taskAlloc = get_task_id_RR(num_tasks=len(task_type),
-                                                                                           totNumCl=num_clients,
-                                                                                           num_clients=int(
-                                                                                               num_clients * C),
-                                                                                           algorithm_name=algorithm_name,
-                                                                                           normalization=normalization,
-                                                                                           tasks_weight=tasks_weight,
-                                                                                           global_accs=global_accs,
-                                                                                           beta=beta,
-                                                                                           firstIndRR=firstIndRR,
-                                                                                           rr_taskAlloc=rr_taskAlloc,
-                                                                                           # rr_chosen_clients=rr_chosen_clients)
-                                                                                           # NEW: dec 6 2023
-                                                                                           rr_chosen_clients=chosen_clients)
+                                                                    totNumCl=num_clients,
+                                                                    num_clients=int(num_clients * C),
+                                                                    algorithm_name=algorithm_name,
+                                                                   normalization=normalization,
+                                                                   tasks_weight=tasks_weight,
+                                                                   global_accs=global_accs,
+                                                                   beta=beta,
+                                                                   firstIndRR=firstIndRR,
+                                                                   rr_taskAlloc=rr_taskAlloc,
+                                                                   # rr_chosen_clients=rr_chosen_clients)
+                                                                   # NEW: dec 6 2023
+                                                                   rr_chosen_clients=chosen_clients)
 
             else:
                 clients_task = get_task_idx(num_tasks=len(task_type), num_clients=int(num_clients * C),
@@ -221,8 +220,7 @@ for exp in range(0,4):
                                             tasks_weight=tasks_weight, global_accs=global_accs, beta=beta,
                                             # NEW: dec 6 2023
                                             chosen_clients=chosen_clients)
-
-            TaskAllocCounter[:, round] = np.bincount(np.array(clients_task), minlength=len(task_type))
+            TaskAllocCounter[:, round] = np.bincount(np.array(clients_task).astype(np.int64), minlength=len(task_type))
             print("alloc", TaskAllocCounter[:, round])
 
             local_results = temp_local_results
