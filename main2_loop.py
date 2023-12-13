@@ -12,6 +12,7 @@ import time
 import sys
 import math
 import os
+from tqdm import tqdm
 
 for exp in range(0,1):
     
@@ -129,11 +130,11 @@ for exp in range(0,1):
         # print(clients_task)"""
 
 
-        for round in range(num_round):
-            print(round)
-            print(f"Round [{round+1}/{num_round}]")
+        for round in tqdm(range(num_round)):
+            #print(round)
+            #print(f"Round [{round+1}/{num_round}]")
             print(f"Round [{round+1}/{num_round}]",file=file)
-            print("Allocated Tasks:", clients_task)
+            #print("Allocated Tasks:", clients_task)
             print("Allocated Tasks:", clients_task,file=file)
             
             """if algorithm_name=='round_robin':
@@ -159,11 +160,11 @@ for exp in range(0,1):
                     local_acc = np.mean(local_acc_list)
                     local_loss = np.mean(local_loss_list)
                     temp_local_results.append([local_acc, local_loss])
-                    print(f"Task[{task_idx}]: Local Acc-{temp_local_results[task_idx][0]} Local Loss-{temp_local_results[task_idx][1]}")
+                    #print(f"Task[{task_idx}]: Local Acc-{temp_local_results[task_idx][0]} Local Loss-{temp_local_results[task_idx][1]}")
                     print(f"Task[{task_idx}]: Local Acc-{temp_local_results[task_idx][0]} Local Loss-{temp_local_results[task_idx][1]}",file=file)
                 else:
                     temp_local_results.append(local_results[task_idx])
-                    print(f"Task[{task_idx}]: Local not changed")
+                    #print(f"Task[{task_idx}]: Local not changed")
                     print(f"Task[{task_idx}]: Local not changed",file=file)
             # evaluation
             temp_global_results = []
@@ -182,11 +183,11 @@ for exp in range(0,1):
                 if (len(temp_local_weights) !=0):
                     global_models[task_idx].load_state_dict(federated(models_state_dict=temp_local_weights, local_data_nums=local_data_nums, aggregation_mtd= aggregation_mtd, numUsersSel=numUsersSel))
                     temp_global_results.append(evaluation(model = global_models[task_idx], data = tasks_data_info[task_idx][1], batch_size = batch_size, device = device))
-                    print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                    #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                     print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",file=file)
                 else:
                     temp_global_results.append(global_results[task_idx])
-                    print(f"Task[{task_idx}]: Global not changed")
+                    #print(f"Task[{task_idx}]: Global not changed")
                     print(f"Task[{task_idx}]: Global not changed",file=file)
             
             global_accs = []
@@ -221,7 +222,7 @@ for exp in range(0,1):
                                             # NEW: dec 6 2023
                                             chosen_clients=chosen_clients)
             TaskAllocCounter[:, round] = np.bincount(np.array(clients_task).astype(np.int64), minlength=len(task_type))
-            print("alloc", TaskAllocCounter[:, round])
+            #print("alloc", TaskAllocCounter[:, round])
 
             local_results = temp_local_results
             global_results = temp_global_results
