@@ -215,7 +215,7 @@ class EMnistCNN(nn.Module):
 
 
 def emnistCNN(num_classes):
-    model=EMnistCNN(num_classes=num_classes).to(device)
+    model=MnistCNN(num_classes=num_classes).to(device)
     model.apply(init_param)
     return model
 

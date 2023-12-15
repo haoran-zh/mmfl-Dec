@@ -14,8 +14,7 @@ import math
 import os
 from tqdm import tqdm
 
-for exp in range(0,1):
-    
+for exp in range(0,4):
     algorithm_name_vec=['proposed','random','round_robin']
     aggregation_mtd_vec=['pkOverSumPk', 'numUsersInv', 'numUsersInv']
     
@@ -36,11 +35,11 @@ for exp in range(0,1):
         num_round = 120#100#200
         local_epochs = [5,5,5,5,5,5] #[3,5,3] #[1,5,1]#5
         batch_size = 32#50
-        type_iid = ['noniid', 'noniid', 'noniid', 'iid'] #'iid', 'noniid'
-        iid_filename = 'nnni30c30'
-        class_ratio = 0.2 # non iid only
+        type_iid = ['noniid', 'noniid', 'noniid', 'iid', 'iid'] #'iid', 'noniid'
+        iid_filename = 'nnnii30c30_lessPowerfulCNN'
+        class_ratio = 0.35 # non iid only
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')#'cuda:0'
-        task_type = ['mnist', 'cifar10', 'fashion_mnist', 'emnist']
+        task_type = ['mnist', 'cifar10', 'fashion_mnist', 'emnist', 'cifar10']
         #task_type = ['mnist', 'cifar10', 'fashion_mnist', 'mnist', 'cifar10', 'fashion_mnist'] #'fashion_mnist'
         #task_type = ['mnist', 'cifar10' , 'mnist']
         tasks_weight = np.ones(len(task_type))/len(task_type)
