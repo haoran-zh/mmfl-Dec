@@ -36,14 +36,14 @@ for exp in range(0,4):
         local_epochs = [5,5,5,5,5,5] #[3,5,3] #[1,5,1]#5
         batch_size = 32#50
         type_iid = ['noniid', 'noniid', 'noniid', 'iid', 'iid'] #'iid', 'noniid'
-        iid_filename = 'nnnii30c30_lessPowerfulCNN'
+        iid_filename = 'nnnii_lCNN_a5'
         class_ratio = 0.35 # non iid only
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')#'cuda:0'
         task_type = ['mnist', 'cifar10', 'fashion_mnist', 'emnist', 'cifar10']
         #task_type = ['mnist', 'cifar10', 'fashion_mnist', 'mnist', 'cifar10', 'fashion_mnist'] #'fashion_mnist'
         #task_type = ['mnist', 'cifar10' , 'mnist']
         tasks_weight = np.ones(len(task_type))/len(task_type)
-        beta = 3#2#3#4
+        beta = 5#2#3#4
         
         #for round robin
         rr_taskAlloc=np.zeros(num_clients)
