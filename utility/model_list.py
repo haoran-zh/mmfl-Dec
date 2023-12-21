@@ -214,8 +214,12 @@ class EMnistCNN(nn.Module):
 
 
 
-def emnistCNN(num_classes):
-    model=MnistCNN(num_classes=num_classes).to(device)
-    model.apply(init_param)
+def emnistCNN(num_classes, args):
+    if args.powerfulCNN is True:
+        model = EMnistCNN(num_classes=num_classes).to(device)
+        model.apply(init_param)
+    else:
+        model=MnistCNN(num_classes=num_classes).to(device)
+        model.apply(init_param)
     return model
 

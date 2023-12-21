@@ -5,7 +5,7 @@ from utility.config import optimizer_config
 import torch.nn as nn
 import torch.optim.lr_scheduler as lr_scheduler
 
-def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, task_type, clients_task, local_epochs, batch_size, classes_size, type_iid, device):
+def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, task_type, clients_task, local_epochs, batch_size, classes_size, type_iid, device, args):
     tasks_weights_list = []
     tasks_local_training_acc = []
     tasks_local_training_loss = []
@@ -16,7 +16,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         #print('dataidx', data_idx)
         # Partition data
         task_idx=int(task_idx)
-        local_model = load_model(name_data=task_type[int(task_idx)], num_classes=classes_size[task_idx][5]).to(device)
+        local_model = load_model(name_data=task_type[int(task_idx)], num_classes=classes_size[task_idx][5], args=args).to(device)
 
         global_model_state_dict = global_models[int(task_idx)].state_dict()
         local_model_state_dict = local_model.state_dict()
