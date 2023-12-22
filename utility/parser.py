@@ -19,10 +19,12 @@ class ParserArgs(object):
         self.parser.add_argument("--num_clients", type=int, default=30, help="number of clients")
         self.parser.add_argument("--exp_num", type=int, default=4, help="experiment round number")
         self.parser.add_argument("--powerfulCNN", action="store_true", help="Decide if use powerful CNN for EMNIST")
-        self.parser.add_argument("--type_iid", nargs='*', default=['noniid', 'noniid', 'noniid', 'iid', 'iid'], help="List of type_iid")
+        self.parser.add_argument("--iid_type", nargs='*', default=['noniid', 'noniid', 'noniid', 'iid', 'iid'], help="List of type_iid")
         self.parser.add_argument("--task_type", nargs='*', default=['mnist', 'cifar10', 'fashion_mnist', 'emnist', 'cifar10'], help="List of task types")
         self.parser.add_argument("--alpha", type=int, default=3, help="alpha, alpha-fairness")
         self.parser.add_argument("--notes", type=str, default='', help="notes to add on the folder name")
+        self.parser.add_argument("--bayes_exp", action="store_true", help="Decide if use np.exp for bayesian method")
+        self.parser.add_argument("--bayes_decay", type=float, default=1.0, help="Decay factor for bayesian method")
 
     def get_args(self):
         args = self.parser.parse_args()

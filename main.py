@@ -30,7 +30,7 @@ if __name__=="__main__":
     local_epochs = [5, 5, 5, 5, 5, 5]  # [3,5,3] #[1,5,1]#5
     batch_size = 32
     EMNIST_powerfulCNN = args.powerfulCNN
-    type_iid = args.type_iid  # 'iid', 'noniid'
+    type_iid = args.iid_type  # 'iid', 'noniid'
     class_ratio = args.class_ratio  # non iid only
     beta = args.alpha  # default 3
     task_type = args.task_type
@@ -57,13 +57,13 @@ if __name__=="__main__":
     print('task type', task_type)
 
     for exp in range(0,exp_num):
-        algorithm_name_vec=['proposed','random','round_robin']
-        aggregation_mtd_vec=['pkOverSumPk', 'numUsersInv', 'numUsersInv']
+        algorithm_name_vec=['bayesian', 'proposed','random','round_robin']
+        aggregation_mtd_vec=['pkOverSumPk', 'pkOverSumPk', 'numUsersInv', 'numUsersInv']
 
         for algo in range(len(algorithm_name_vec)):
-            print('exp', exp, 'algo', algo)
             algorithm_name = algorithm_name_vec[algo]
             aggregation_mtd = aggregation_mtd_vec[algo]
+            print('exp', exp, 'algo', algorithm_name)
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')#'cuda:0'
 
             #for round robin
@@ -75,7 +75,7 @@ if __name__=="__main__":
                 first_ind=math.floor((i+1)*num_clients/len(task_type))
             firstIndRR=0
             #rr_clients=np.arange(num_clients)
-            print(rr_taskAlloc, 'rr_taskAlloc')
+            #print(rr_taskAlloc, 'rr_taskAlloc')
             clients_task=0
 
             file =  open('./result/'+folder_name+'/Algorithm_'+algorithm_name+'_normalization_'+normalization+'_type_'+iid_filename+'_seed_'+str(random_seed)+''+'.txt', 'w')
@@ -125,7 +125,8 @@ if __name__=="__main__":
             clients_task = np.random.randint(0, len(task_type), int(num_clients * C), dtype=int)
 
             # allocation_initialization
-
+            allocation_history_list = []  # record history of allocation for bayesian
+            allocation_history_list.append(clients_task)
 
             for round in tqdm(range(num_round)):
                 #print(round)
@@ -212,7 +213,11 @@ if __name__=="__main__":
                                                 normalization=normalization,
                                                 tasks_weight=tasks_weight, global_accs=global_accs, beta=beta,
                                                 # NEW: dec 6 2023
-                                                chosen_clients=chosen_clients)
+                                                chosen_clients=chosen_clients,
+                                                allocation_history=allocation_history_list,
+                                                args=args)
+                allocation_history_list.append(clients_task)
+
                 TaskAllocCounter[:, round] = np.bincount(np.array(clients_task).astype(np.int64), minlength=len(task_type))
                 #print("alloc", TaskAllocCounter[:, round])
 
@@ -223,15 +228,13 @@ if __name__=="__main__":
                 localAccResults[:,round]=np.array(temp_local_results)[:,0]
                 globalLossResults[:,round]=np.array(temp_global_results)[:,1]
                 localLossResults[:,round]=np.array(temp_local_results)[:,1]
-                np.save('global_acc.npy', globalAccResults)
-                np.save('local_acc.npy', temp_local_results)
 
 
-                filename='mcf_i_globalAcc_exp{}_algo{}.npy'.format(exp,algo)
-                np.save('./result/'+folder_name+'/'+ filename, globalAccResults)
+            filename='mcf_i_globalAcc_exp{}_algo{}.npy'.format(exp,algo)
+            np.save('./result/'+folder_name+'/'+ filename, globalAccResults)
 
-                filename = 'allocCounter_{}.npy'.format(algo)
-                np.save('./result/'+folder_name+'/'+filename, TaskAllocCounter)
+            filename = 'allocCounter_{}.npy'.format(algo)
+            np.save('./result/'+folder_name+'/'+filename, TaskAllocCounter)
 
             print('Finished Training')
             print('Finished Training',file=file)

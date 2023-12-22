@@ -7,13 +7,16 @@ def get_task_idx(num_tasks,
                  tasks_weight,
                  global_accs, beta,
                  # NEW: dec 6 2023
-                 chosen_clients):
-    mixed_loss = [1.] * num_tasks
+                 chosen_clients, # looks here is unfinished
+                 allocation_history,
+                 args
+                 ):
+    mixed_loss = [1.] * num_tasks  # create a list of num_tasks elements, each element is 1
     for task_idx in range(num_tasks):
         if normalization == 'accuracy':
             mixed_loss[task_idx] *= tasks_weight[task_idx] * \
-                                    np.power(100 * (1. - global_accs[task_idx]), beta - 1)  # * \
-            #   np.power(100 * (1. - local_accs[task_idx]), 0)
+                                    np.power(100 * (1. - global_accs[task_idx]), beta - 1)
+
     if algorithm_name == 'proposed':
         # print('prop')
         probabilities = np.zeros((num_tasks))
@@ -22,6 +25,38 @@ def get_task_idx(num_tasks,
         # print(probabilities)
         # to double check!!!
         return list(np.random.choice(np.arange(0, num_tasks), num_clients, p=probabilities))
+    elif algorithm_name == 'bayesian':
+        past_counts = np.zeros((num_clients, num_tasks))  # num_clients needs to be changed to len(chosen_clients) in the future
+        history_array = np.array(allocation_history) # shape: rounds * num_clients
+        d = args.bayes_decay
+        round_num = len(allocation_history)
+        for client_idx in range(num_clients):
+            for task_idx in range(num_tasks):
+                for i in range(round_num):
+                    past_counts[client_idx, task_idx] += (d ** (round_num-i-1)) * (np.sum(history_array[i, client_idx] == task_idx) + 1)
+        # normalization
+        past_counts = past_counts / np.sum(past_counts, axis=1, keepdims=True)
+        future_expect = 1/2 * np.log((1-past_counts)/past_counts)
+        if args.bayes_exp:
+            future_expect = np.exp(future_expect)
+        P_client_task = future_expect / np.sum(future_expect, axis=1, keepdims=True)
+
+        P_task = np.zeros((num_tasks))
+        for task_idx in range(num_tasks):
+            P_task[task_idx] = mixed_loss[task_idx] / (np.sum(mixed_loss))
+
+        P_task_client = np.zeros((num_clients, num_tasks))
+
+        for client_idx in range(num_clients):
+            for task_idx in range(num_tasks):
+                P_task_client[client_idx, task_idx] = P_task[task_idx] * P_client_task[client_idx, task_idx]
+        # normalization
+        P_task_client = P_task_client / np.sum(P_task_client, axis=1, keepdims=True)
+
+        allocation_result = np.zeros(num_clients, dtype=int)
+        for client_idx in range(num_clients):
+            allocation_result[client_idx] = np.random.choice(np.arange(0, num_tasks), p=P_task_client[client_idx])
+        return allocation_result.tolist()
 
 
     elif algorithm_name == 'random':
