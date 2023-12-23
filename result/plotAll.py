@@ -22,84 +22,51 @@ import matplotlib.pyplot as plt
 from parserplot import ParserArgs
 import os
 from plotAllocation import plot_allocation
+import sys
 
 
-
-def AvgAcc1trial(data1, data2, data3):
-    avg_OurAlgo = np.mean(data1, axis=0)
-    avg_Rand = np.mean(data2, axis=0)
-    avg_RR = np.mean(data3, axis=0)
-
-    return avg_OurAlgo, avg_Rand, avg_RR
+def AvgAcc1trial(exp_array):
+    exp_array_avg = np.mean(exp_array, axis=1)
+    return exp_array_avg
 
 
-def MinAcc1trial(data1, data2, data3):
-    min_OurAlgo = np.min(data1, axis=0)
-    min_Rand = np.min(data2, axis=0)
-    min_RR = np.min(data3, axis=0)
-
-    return min_OurAlgo, min_Rand, min_RR
+def MinAcc1trial(exp_array):
+    min_array = np.min(exp_array, axis=1)
+    return min_array
 
 
-def diff1trial(data1, data2, data3):
-    diff_ourAlgo = np.max(data1, axis=0) - np.min(data1, axis=0)
-    diff_rand = np.max(data2, axis=0) - np.min(data2, axis=0)
-    diff_RR = np.max(data3, axis=0) - np.min(data3, axis=0)
-
-    return diff_ourAlgo, diff_rand, diff_RR
+def diff1trial(exp_array):
+    diff = np.max(exp_array, axis=1) - np.min(exp_array, axis=1)
+    return diff
 
 
-def var1trial(data1, data2, data3):
-    var_ourAlgo = np.var(data1, axis=0)
-    var_rand = np.var(data2, axis=0)
-    var_RR = np.var(data3, axis=0)
-
-    return var_ourAlgo, var_rand, var_RR
+def var1trial(exp_array):
+    var = np.var(exp_array, axis=1)
+    return var
 
 
-def AvgTimeTaken_1trial(data1, data2, data3, numTasks):
+def AvgTimeTaken_1trial(exp_array, numTasks):
     epsCheckpoints = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    epsReachedData1 = np.zeros((numTasks, len(epsCheckpoints)))
-    epsReachedData2 = np.zeros((numTasks, len(epsCheckpoints)))
-    epsReachedData3 = np.zeros((numTasks, len(epsCheckpoints)))
+    algo_num = exp_array.shape[0]
+    epsReachedData = np.zeros((algo_num, numTasks, len(epsCheckpoints)))
     for b in range(numTasks):
         for a in range(len(epsCheckpoints)):
-            indexdata1 = np.searchsorted(data1[b, :], epsCheckpoints[a])
-            # print(indexdata1)
-            epsReachedData1[b, a] = indexdata1 if indexdata1 < len(data1[b, :]) else 102
-            # print(epsReachedData1[a])
-
-            indexdata2 = np.searchsorted(data2[b, :], epsCheckpoints[a])
-            epsReachedData2[b, a] = indexdata2 if indexdata2 < len(data2[b, :]) else 102
-
-            indexdata3 = np.searchsorted(data3[b, :], epsCheckpoints[a])
-            epsReachedData3[b, a] = indexdata3 if indexdata3 < len(data3[b, :]) else 102
-
-    return np.mean(epsReachedData1, axis=0), np.mean(epsReachedData2, axis=0), np.mean(epsReachedData3, axis=0)
+            for k in range(algo_num):
+                indexdata = np.searchsorted(exp_array[k][b, :], epsCheckpoints[a])
+                epsReachedData[k, b, a] = indexdata if indexdata < len(exp_array[k][b, :]) else 102
+    return np.mean(epsReachedData, axis=1)
 
 
-def MaxTimeTaken_1trial(data1, data2, data3, numTasks):
+def MaxTimeTaken_1trial(exp_array, numTasks):
     epsCheckpoints = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    epsReachedData1 = np.zeros((numTasks, len(epsCheckpoints)))
-    epsReachedData2 = np.zeros((numTasks, len(epsCheckpoints)))
-    epsReachedData3 = np.zeros((numTasks, len(epsCheckpoints)))
+    algo_num = exp_array.shape[0]
+    epsReachedData = np.zeros((algo_num, numTasks, len(epsCheckpoints)))
     for b in range(numTasks):
         for a in range(len(epsCheckpoints)):
-            indexdata1 = np.searchsorted(data1[b, :], epsCheckpoints[a])
-            # print(indexdata1)
-            epsReachedData1[b, a] = indexdata1 if indexdata1 < len(data1[b, :]) else 102
-            # print(epsReachedData1[a])
-
-            indexdata2 = np.searchsorted(data2[b, :], epsCheckpoints[a])
-            epsReachedData2[b, a] = indexdata2 if indexdata2 < len(data2[b, :]) else 102
-
-            indexdata3 = np.searchsorted(data3[b, :], epsCheckpoints[a])
-            epsReachedData3[b, a] = indexdata3 if indexdata3 < len(data3[b, :]) else 102
-
-    return np.max(epsReachedData1, axis=0), np.max(epsReachedData2, axis=0), np.max(epsReachedData3, axis=0)
-
-
-
+            for k in range(algo_num):
+                indexdata = np.searchsorted(exp_array[k][b, :], epsCheckpoints[a])
+                epsReachedData[k, b, a] = indexdata if indexdata < len(exp_array[k][b, :]) else 102
+    return np.max(epsReachedData, axis=1)
 
 
 parser = ParserArgs()
@@ -108,13 +75,11 @@ args = parser.get_args()
 numRounds = 120  # 100
 folder_name = args.plot_folder
 path_plot = os.path.join('./result', folder_name)
-# find all files starting with mcf
-files = [f for f in os.listdir(path_plot) if f.startswith('mcf')]
 
 allocation_files = [f for f in os.listdir(path_plot) if f.startswith('Algorithm')]
 positions = {}
 # plot allocation map
-targets = ['proposed', 'random', 'round_robin']
+targets = ['bayesian', 'proposed', 'random', 'round_robin']
 for i, f in enumerate(allocation_files):
     for target in targets:
         if target in f:
@@ -140,27 +105,29 @@ for i in range(len(targets)):
 
 
 # read all files
+# find all files starting with mcf
+files = [f for f in os.listdir(path_plot) if f.startswith('mcf')]
 exp_list = []
 for f in files:
     t = np.load(os.path.join(path_plot, f))
     t = np.where(t <= 0, 0, t)
     exp_list.append(t)
 exp_array = np.array(exp_list)  # shape 3 5 120
+algo_num = exp_array.shape[0]
 
-# load 0th set
+# plot one by one
 tasknum = exp_array.shape[1]
 alpha = args.alpha
-algo_name = ["alpha-fairness", "random", "round robin"]
+algo_name = ["bayesian", "alpha-fairness", "random", "round robin"]
 print(tasknum)
-for k in range(exp_array.shape[0]): # algo
+for k in range(algo_num): # algo
     for i in range(tasknum): # task
         plt.plot(np.arange(0, numRounds), exp_array[k][i], label=f'task {i}')
     plt.legend()
     plt.ylabel('Accuracy')
     plt.xlabel('Num. Global Iterations')
     plt.grid(linestyle='--', linewidth=0.5)
-    title_name = f'Accuracy of different tasks, {algo_name[k]}' if k != 0 \
-        else f'Accuracy of different tasks, alpha={alpha}'
+    title_name = f'Accuracy of different tasks, {algo_name[k]}' if algo_name[k] != 'alpha-fairness' else f'Accuracy of different tasks, {algo_name[k]}, alpha={alpha}'
     plt.title(title_name)
     plt.savefig(os.path.join(path_plot,f'plot_taskAcc_{algo_name[k]}.png'))
     plt.clf()
@@ -168,15 +135,9 @@ for k in range(exp_array.shape[0]): # algo
 plt.rcParams['font.size'] = 12
 
 # average accuracy data and plots
-Avg_e0_ourAlgo, Avg_e0_Rand, Avg_e0_RR = AvgAcc1trial(exp_array[0], exp_array[1], exp_array[2])
-
-Avg_e1_ourAlgo_AVG = Avg_e0_ourAlgo
-Avg_e1_Rand_AVG = Avg_e0_Rand
-Avg_e1_RR_AVG = Avg_e0_RR
-
-plt.plot(np.arange(0, numRounds), Avg_e1_ourAlgo_AVG, label=f'Alpha={alpha}, alpha fair allocation')
-plt.plot(np.arange(0, numRounds), Avg_e1_Rand_AVG, label='Random allocation of tasks')
-plt.plot(np.arange(0, numRounds), Avg_e1_RR_AVG, label='Round Robin alocation of tasks')
+Avg_array = AvgAcc1trial(exp_array)
+for k in range(algo_num):
+    plt.plot(np.arange(0, numRounds), Avg_array[k], label=f'{algo_name[k]}')
 plt.legend()
 plt.ylabel('Average Accuracy')
 plt.xlabel('Num. Global Iterations')
@@ -186,15 +147,9 @@ plt.savefig(os.path.join(path_plot,'plot_avgAcc.png'))
 plt.clf()
 
 # min acc data and plots
-Min_e0_ourAlgo, Min_e0_Rand, Min_e0_RR = MinAcc1trial(exp_array[0], exp_array[1], exp_array[2])
-
-Min_e1_ourAlgo_AVG = Min_e0_ourAlgo
-Min_e1_Rand_AVG = Min_e0_Rand
-Min_e1_RR_AVG = Min_e0_RR
-
-plt.plot(np.arange(0, numRounds), Min_e1_ourAlgo_AVG, label=f'Alpha={alpha}, alpha fair allocation')
-plt.plot(np.arange(0, numRounds), Min_e1_Rand_AVG, label='Random allocation of tasks')
-plt.plot(np.arange(0, numRounds), Min_e1_RR_AVG, label='Round Robin alocation of tasks')
+Min_array = MinAcc1trial(exp_array)
+for k in range(algo_num):
+    plt.plot(np.arange(0, numRounds), Min_array[k], label=f'{algo_name[k]}')
 plt.legend()
 plt.ylabel('Minimum Accuracy')
 plt.xlabel('Num. Global Iterations')
@@ -204,15 +159,9 @@ plt.savefig(os.path.join(path_plot,'plot_minAcc.png'))
 plt.clf()
 
 # variance acc data and plots
-Var_e0_ourAlgo, Var_e0_Rand, Var_e0_RR = var1trial(exp_array[0], exp_array[1], exp_array[2])
-
-Var_e1_ourAlgo_AVG = Var_e0_ourAlgo
-Var_e1_Rand_AVG = Var_e0_Rand
-Var_e1_RR_AVG = Var_e0_RR
-
-plt.plot(np.arange(0, numRounds), Var_e1_ourAlgo_AVG, label=f'Alpha={alpha}, alpha fair allocation')
-plt.plot(np.arange(0, numRounds), Var_e1_Rand_AVG, label='Random allocation of tasks')
-plt.plot(np.arange(0, numRounds), Var_e1_RR_AVG, label='Round Robin alocation of tasks')
+Var = var1trial(exp_array)
+for k in range(algo_num):
+    plt.plot(np.arange(0, numRounds), Var[k], label=f'{algo_name[k]}')
 plt.legend()
 plt.ylabel('Variance')
 plt.xlabel('Num. Global Iterations')
@@ -222,16 +171,10 @@ plt.savefig(os.path.join(path_plot,'plot_var.png'))
 plt.clf()
 
 # Average time taken
-Atime_e0_ourAlgo, Atime_e0_Rand, Atime_e0_RR = AvgTimeTaken_1trial(exp_array[0], exp_array[1], exp_array[2], numTasks=tasknum)
-
-Atime_e1_ourAlgo_AVG = Atime_e0_ourAlgo
-Atime_e1_Rand_AVG = Atime_e0_Rand
-Atime_e1_RR_AVG = Atime_e0_RR
-
+Atime = AvgTimeTaken_1trial(exp_array, numTasks=tasknum)
 epsCheckpoints = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-plt.plot(epsCheckpoints, Atime_e1_ourAlgo_AVG, 'o-', label=f'Alpha={alpha}, alpha fair allocation')
-plt.plot(epsCheckpoints, Atime_e1_Rand_AVG, 'v-', label='Random allocation of tasks')
-plt.plot(epsCheckpoints, Atime_e1_RR_AVG, '.-', label='Round Robin alocation of tasks')
+for k in range(algo_num):
+    plt.plot(epsCheckpoints, Atime[k], 'o-', label=f'{algo_name[k]}')
 plt.xlabel('Accuracy level eps')
 plt.ylabel('Time taken in Num. global iterations')
 plt.legend()
@@ -241,16 +184,10 @@ plt.savefig(os.path.join(path_plot,'plot_avgTimeTaken.png'))
 plt.clf()
 
 # Maximum Time taken
-Mtime_e0_ourAlgo, Mtime_e0_Rand, Mtime_e0_RR = MaxTimeTaken_1trial(exp_array[0], exp_array[1], exp_array[2], numTasks=tasknum)
-
-Mtime_e1_ourAlgo_AVG = Mtime_e0_ourAlgo
-Mtime_e1_Rand_AVG = Mtime_e0_Rand
-Mtime_e1_RR_AVG = Mtime_e0_RR
-
+Mtime = MaxTimeTaken_1trial(exp_array, numTasks=tasknum)
 epsCheckpoints = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-plt.plot(epsCheckpoints, Mtime_e1_ourAlgo_AVG, 'o-', label=f'Alpha={alpha}, alpha fair allocation')
-plt.plot(epsCheckpoints, Mtime_e1_Rand_AVG, 'v-', label='Random allocation of tasks')
-plt.plot(epsCheckpoints, Mtime_e1_RR_AVG, '.-', label='Round Robin alocation of tasks')
+for k in range(algo_num):
+    plt.plot(epsCheckpoints, Mtime[k], 'o-', label=f'{algo_name[k]}')
 plt.xlabel('Accuracy level eps')
 plt.ylabel('Time taken (Num. Global Epochs)')
 plt.legend()
