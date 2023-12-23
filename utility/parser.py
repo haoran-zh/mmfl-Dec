@@ -25,6 +25,7 @@ class ParserArgs(object):
         self.parser.add_argument("--notes", type=str, default='', help="notes to add on the folder name")
         self.parser.add_argument("--bayes_exp", action="store_true", help="Decide if use np.exp for bayesian method")
         self.parser.add_argument("--bayes_decay", type=float, default=1.0, help="Decay factor for bayesian method")
+        self.parser.add_argument("--algo_type", nargs='*', default=['bayesian', 'proposed','random','round_robin'], help="List of algorithms")
 
     def get_args(self):
         args = self.parser.parse_args()

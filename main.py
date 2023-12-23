@@ -57,8 +57,13 @@ if __name__=="__main__":
     print('task type', task_type)
 
     for exp in range(0,exp_num):
-        algorithm_name_vec=['bayesian', 'proposed','random','round_robin']
-        aggregation_mtd_vec=['pkOverSumPk', 'pkOverSumPk', 'numUsersInv', 'numUsersInv']
+        algorithm_name_vec = args.algo_type
+        aggregation_dict = {'bayesian':'pkOverSumPk',
+                            'proposed':'pkOverSumPk',
+                            'random':'numUsersInv',
+                            'round_robin':'numUsersInv'}
+
+        aggregation_mtd_vec=[aggregation_dict[algo] for algo in algorithm_name_vec]
 
         for algo in range(len(algorithm_name_vec)):
             algorithm_name = algorithm_name_vec[algo]
