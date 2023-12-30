@@ -34,6 +34,12 @@ def MinAcc1trial(exp_array):
     min_array = np.min(exp_array, axis=1)
     return min_array
 
+def cascadeAcc(exp_array):
+    cascade = 1
+    for i in range(exp_array.shape[1]):
+        cascade *= exp_array[:, i]
+    print(cascade.shape)
+    return cascade
 
 def diff1trial(exp_array):
     diff = np.max(exp_array, axis=1) - np.min(exp_array, axis=1)
@@ -156,6 +162,19 @@ plt.xlabel('Num. Global Iterations')
 plt.grid(linestyle='--', linewidth=0.5)
 plt.title(f'Minimum Accuracy over {tasknum} Tasks')
 plt.savefig(os.path.join(path_plot,'plot_minAcc.png'))
+plt.clf()
+
+
+# cascade
+cas_array = cascadeAcc(exp_array)
+for k in range(algo_num):
+    plt.plot(np.arange(0, numRounds), cas_array[k], label=f'{algo_name[k]}')
+plt.legend()
+plt.ylabel('Cascade Accuracy')
+plt.xlabel('Num. Global Iterations')
+plt.grid(linestyle='--', linewidth=0.5)
+plt.title(f'Cascade Accuracy over {tasknum} Tasks')
+plt.savefig(os.path.join(path_plot,'plot_casAcc.png'))
 plt.clf()
 
 # variance acc data and plots
