@@ -1,17 +1,10 @@
 # mmfl-Dec
-code for mmfl from Dec 5.
+To start the code, run
 
-To add a new dataset, modify: config.py, dataset.py, preprocessing.py, model_list.py, load_model.py. 
+`python main.py --exp_num 1 --class_ratio 0.35 --notes bayes_exp_decay0.9P --bayes_exp --bayes_decay 0.9 --powerfulCNN`
 
-Dec 5:
-1. Add new dataset/task: EMNIST (model:CNN). 47 classes. 
-2. fix class_size bug.
+Check more setting options in `utility/parser.py`. Remember to provide the necessary information in `--notes`, this will be a part of the folder name of the current experiment. If a new experiment creates a folder that has existed already, the experiment will be skipped. 
 
+Complete the experiment and all experiment results will be stored in `result/[foldername]`. 
 
-include non-iid task into iid experiment? a harder task, may show fairness algorithm works more clearly?
-
-experiment: [task1[iid], task2[iid], task3[iid], task4[non-iid]]
-
-add FEMNIST dataset later
-
-Current algorithm (alpha fairness) may allocate too many clients to an extremely hard task. If the task is really hard and can only reach acc=0.5 at best, then we are wasting time on this task. Find another way to avoid this waste. 
+Run `python result/plotAll.py --plot_folder [foldername]` to plot everything. 
