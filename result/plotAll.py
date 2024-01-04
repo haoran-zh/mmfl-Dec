@@ -96,16 +96,34 @@ for i in range(len(targets)):
     allocated_tasks_lists = []
     file_name = os.path.join(path_plot, allocation_files[positions[targets[i]]])
     with open(file_name, 'r') as file:
+        tasks_data = ''
+        recording = False
         for line in file:
             if "Allocated Tasks:" in line:
-                line = line.strip()
-                bracketed_part = line.split(":", 1)[1].strip()
-                if '[' in bracketed_part and ']' in bracketed_part and ',' not in bracketed_part:
-                    bracketed_part = bracketed_part.replace(' ', ', ')
-                tasks_list = eval(bracketed_part)
-                tasks_list = [int(x) for x in tasks_list]
-                allocated_tasks_lists.append(tasks_list)
-        plot_allocation(allocated_tasks_lists, path_plot, numRounds, targets[i])
+                recording = True
+                tasks_data += line.split(":", 1)[1].strip()
+            elif recording:
+                # Check if the line still belongs to 'Allocated Tasks'
+                if line.startswith('Task[') or 'Round [' in line:
+
+                    recording = False
+                else:
+                    tasks_data += ' ' + line.strip()
+
+        if tasks_data:
+            # Replace spaces with commas and remove any newlines
+
+            tasks_data = tasks_data.replace(' ', ',').replace('\n', '')
+            tasks_data = tasks_data.replace(',,', ',')
+
+            tasks_data = tasks_data.replace('][', '],[')
+            tasks_data = '[' + tasks_data + ']'
+
+            # Ensure the string is a valid Python list format
+            tasks_list = eval(tasks_data)
+            tasks_list = [[int(item) for item in sublist] for sublist in tasks_list]
+
+    plot_allocation(tasks_list, path_plot, numRounds, targets[i])
 
 
 

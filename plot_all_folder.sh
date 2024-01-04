@@ -1,4 +1,15 @@
 #!/bin/bash
+python result/plotAll.py --plot_folder 5task_iiiii_d0.7c80
+python result/plotAll.py --plot_folder 5task_iiiii_d0.8c80
+python result/plotAll.py --plot_folder 5task_iiiii_d0.9c50
+python result/plotAll.py --plot_folder 5task_iiiii_d0.9c70
+python result/plotAll.py --plot_folder 5task_iiiii_d0.9c80
+python result/plotAll.py --plot_folder 5task_iiiii_d1.0c80
+python result/plotAll.py --plot_folder 5task_niiii_d0.9c30
+python result/plotAll.py --plot_folder 5task_niiii_d0.9c30ratio0.5
+python result/plotAll.py --plot_folder 5task_niiii_d0.9c80
+python result/plotAll.py --plot_folder 5task_niiii_d0.9c80ratio0.5
+
 python result/plotAll.py --plot_folder 5task_niiii_bayes_exp_decay0.75
 python result/plotAll.py --plot_folder 5task_iiiii_bayes_decay0.75
 python result/plotAll.py --plot_folder 5task_niiii_bayes_decay0.9
