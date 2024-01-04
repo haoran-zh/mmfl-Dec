@@ -126,23 +126,43 @@ for i in range(len(targets)):
     plot_allocation(tasks_list, path_plot, numRounds, targets[i])
 
 
+def sort_files(files):
+    def extract_numbers(file_name):
+        parts = file_name.split('_')
+        exp_number = int(parts[3].replace('exp', ''))
+        algo_number = int(parts[4].replace('algo', '').split('.')[0])
+        return algo_number, exp_number
 
+    return sorted(files, key=extract_numbers)
 
 # read all files
 # find all files starting with mcf
+algo_name = ["bayesian", "alpha-fairness", "random", "round robin"]
+algo_num  = len(algo_name)
 files = [f for f in os.listdir(path_plot) if f.startswith('mcf')]
+files = sort_files(files)
+print(files)
 exp_list = []
 for f in files:
     t = np.load(os.path.join(path_plot, f))
     t = np.where(t <= 0, 0, t)
     exp_list.append(t)
 exp_array = np.array(exp_list)  # shape 3 5 120
-algo_num = exp_array.shape[0]
+exp_num = int(exp_array.shape[0] / algo_num)
+
+
+if exp_num > 1:
+    aver_list = []
+    # compute average. example: 16 5 120 average to 4 5 120
+    for i in range(exp_num):
+        average = np.mean(exp_array[i*exp_num:(i+1)*exp_num], axis=0)
+        aver_list.append(average)
+    exp_array = np.array(aver_list)
 
 # plot one by one
 tasknum = exp_array.shape[1]
 alpha = args.alpha
-algo_name = ["bayesian", "alpha-fairness", "random", "round robin"]
+
 print(tasknum)
 for k in range(algo_num): # algo
     for i in range(tasknum): # task
