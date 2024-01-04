@@ -141,7 +141,6 @@ algo_name = ["bayesian", "alpha-fairness", "random", "round robin"]
 algo_num  = len(algo_name)
 files = [f for f in os.listdir(path_plot) if f.startswith('mcf')]
 files = sort_files(files)
-print(files)
 exp_list = []
 for f in files:
     t = np.load(os.path.join(path_plot, f))
@@ -159,11 +158,16 @@ if exp_num > 1:
         aver_list.append(average)
     exp_array = np.array(aver_list)
 
+# compare with results outside of this folder
+outside_algo = ['Bayesian,d=', '']
+outside_folder = 'result/5task...only'
+
+
 # plot one by one
 tasknum = exp_array.shape[1]
 alpha = args.alpha
+print(folder_name)
 
-print(tasknum)
 for k in range(algo_num): # algo
     for i in range(tasknum): # task
         plt.plot(np.arange(0, numRounds), exp_array[k][i], label=f'task {i}')
