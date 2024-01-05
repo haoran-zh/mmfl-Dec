@@ -1,4 +1,9 @@
 #!/bin/bash
+python result/plotAll.py --plot_folder 5task_niiii_decay0.5c80
+
+python result/plotAll.py --plot_folder 4task_nnii_decay0.9_noMNIST
+python result/plotAll.py --plot_folder 5task_nnnii_decay0.9_replaceasFM
+
 python result/plotAll.py --plot_folder 5task_iiiii_d0.7c80
 python result/plotAll.py --plot_folder 5task_iiiii_d0.8c80
 python result/plotAll.py --plot_folder 5task_iiiii_d0.9c50

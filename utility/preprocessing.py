@@ -1,7 +1,7 @@
 import torchvision.transforms as transforms
 import torchvision
 
-def preprocessing(name_data):
+def preprocessing(name_data, data_ratio=1.0):
     if name_data == 'cifar10':
         # Load the CIFAR10 training and test datasets
         transforms_train = transforms.Compose([
@@ -18,8 +18,8 @@ def preprocessing(name_data):
         testset = torchvision.datasets.CIFAR10(root='./utility/dataset', train=False, download=True, transform=transforms_test)
         input_size = 32
         classes_size = 10
-        min_data_num = 400
-        max_data_num = 500
+        min_data_num = int(data_ratio*400)
+        max_data_num = int(data_ratio*500)
 
     elif name_data == 'mnist':
         transform_train = transforms.Compose([
@@ -33,8 +33,8 @@ def preprocessing(name_data):
         testset = torchvision.datasets.MNIST('./utility/dataset', train=False, download=True, transform=transform_test)
         input_size = 28
         classes_size = 10
-        min_data_num = 500
-        max_data_num = 600
+        min_data_num = int(data_ratio*500)
+        max_data_num = int(data_ratio*600)
         
     elif name_data=='fashion_mnist':
         transform_train = transforms.Compose([
@@ -49,8 +49,8 @@ def preprocessing(name_data):
         
         input_size=28
         classes_size = 10
-        min_data_num = 400
-        max_data_num = 500
+        min_data_num = int(data_ratio*400)
+        max_data_num = int(data_ratio*500)
 
     elif name_data == 'emnist':
         transform_train = transforms.Compose([
@@ -66,8 +66,8 @@ def preprocessing(name_data):
 
         input_size = 28
         classes_size = 47 # excluding capital letters that look similar to their lowercase counterparts
-        min_data_num = 400
-        max_data_num = 500
+        min_data_num = int(data_ratio*400)
+        max_data_num = int(data_ratio*500)
 
         
     return trainset, testset, min_data_num, max_data_num, input_size, classes_size
