@@ -21,6 +21,9 @@ def iid(dataset, min_data_num, max_data_num, num_users):
         client_data_idx = []
         for _ in range(random_number):
             while(classes_data_idx[uniform_idx] >= len(classes_list[uniform_idx])):
+                # len(classes_list[uniform_idx]) how many data points in class=uniform_idx
+                # classes_data_idx[uniform_idx]  how many data points in class=uniform_idx have been assigned to clients
+                # if all data points in class=uniform_idx have been assigned to clients, then uniform_idx+=1 to jump over this class
                 uniform_idx += 1
                 if uniform_idx == num_classes:
                     uniform_idx = 0
