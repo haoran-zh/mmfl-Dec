@@ -1,4 +1,20 @@
 #!/bin/bash
+python result/plotAll.py --plot_folder 3task_iii_exp0
+
+python result/plotAll.py --plot_folder 5task_iiiii_d0.9data0.25
+
+python result/plotAll.py --plot_folder 5task_iiiii_d0.9data2.0
+
+python result/plotAll.py --plot_folder 5task_iiiii_d0.9c50P
+python result/plotAll.py --plot_folder 5task_iiiii_d0.9c70P
+python result/plotAll.py --plot_folder 5task_iiiii_d0.9c80P
+
+python result/plotAll.py --plot_folder 5task_iiiii_d0.9data1.5P
+python result/plotAll.py --plot_folder 5task_iiiii_d0.9data0.5P
+
+python result/plotAll.py --plot_folder 5task_iiiii_d0.9data0.5
+python result/plotAll.py --plot_folder 5task_iiiii_d0.9data1.5
+
 python result/plotAll.py --plot_folder 5task_niiii_decay0.5c80
 
 python result/plotAll.py --plot_folder 4task_nnii_decay0.9_noMNIST

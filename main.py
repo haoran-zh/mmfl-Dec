@@ -180,7 +180,11 @@ if __name__=="__main__":
                                 local_data_nums.append(len(tasks_data_idx[task_idx][0][chosen_clients[clients_idx]]))
                     #print('task, local data nums', task_idx, local_data_nums)
                     if (len(temp_local_weights) !=0):
+                        if args.cpumodel is True:
+                            global_models[task_idx].to('cpu')
                         global_models[task_idx].load_state_dict(federated(models_state_dict=temp_local_weights, local_data_nums=local_data_nums, aggregation_mtd= aggregation_mtd, numUsersSel=numUsersSel))
+                        if args.cpumodel is True:
+                            global_models[task_idx].to(device)
                         temp_global_results.append(evaluation(model = global_models[task_idx], data = tasks_data_info[task_idx][1], batch_size = batch_size, device = device))
                         #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",file=file)

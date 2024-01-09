@@ -80,6 +80,8 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         tasks_local_training_acc.append(local_train_accuracy)
         tasks_local_training_loss.append(local_train_loss)
         # Append local model weights to list
+        if args.cpumodel is True:
+            local_model.to('cpu')
         tasks_weights_list.append(local_model.state_dict().copy())
         
         

@@ -27,6 +27,7 @@ class ParserArgs(object):
         self.parser.add_argument("--bayes_decay", type=float, default=1.0, help="Decay factor for bayesian method")
         self.parser.add_argument("--algo_type", nargs='*', default=['bayesian', 'proposed','random','round_robin'], help="List of algorithms")
         self.parser.add_argument("--data_ratio", type=float, default=1.0, help="data points num=default_num*data_ratio")
+        self.parser.add_argument("--cpumodel", action="store_true", help="store model in cpu")
 
     def get_args(self):
         args = self.parser.parse_args()
