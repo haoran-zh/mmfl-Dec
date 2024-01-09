@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import sys
 
 def iid(dataset, min_data_num, max_data_num, num_users):
     labels = torch.tensor(dataset.targets)
@@ -19,6 +20,7 @@ def iid(dataset, min_data_num, max_data_num, num_users):
     for random_number in random_numbers:
         uniform_idx=np.random.randint(0, num_classes)
         client_data_idx = []
+        loop_counter = 0
         for _ in range(random_number):
             while(classes_data_idx[uniform_idx] >= len(classes_list[uniform_idx])):
                 # len(classes_list[uniform_idx]) how many data points in class=uniform_idx
@@ -27,6 +29,11 @@ def iid(dataset, min_data_num, max_data_num, num_users):
                 uniform_idx += 1
                 if uniform_idx == num_classes:
                     uniform_idx = 0
+                loop_counter += 1
+                if loop_counter > 3*num_classes:
+                    print("data not enough")
+                    sys.exit()
+
             client_data_idx.append(classes_list[uniform_idx][classes_data_idx[uniform_idx]])
             classes_data_idx[uniform_idx] += 1
             uniform_idx += 1

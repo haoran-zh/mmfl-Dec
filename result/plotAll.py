@@ -85,7 +85,8 @@ path_plot = os.path.join('./result', folder_name)
 allocation_files = [f for f in os.listdir(path_plot) if f.startswith('Algorithm')]
 positions = {}
 # plot allocation map
-targets = ['bayesian', 'proposed', 'random', 'round_robin']
+#targets = ['bayesian', 'proposed', 'random', 'round_robin']
+targets = ['proposed', 'random', 'round_robin']
 for i, f in enumerate(allocation_files):
     for target in targets:
         if target in f:
@@ -137,10 +138,15 @@ def sort_files(files):
 
 # read all files
 # find all files starting with mcf
-algo_name = ["bayesian", "alpha-fairness", "random", "round robin"]
+#algo_name = ["bayesian", "alpha-fairness", "random", "round robin"]
+algo_name = ["alpha-fairness", "random", "round robin"]
 algo_num  = len(algo_name)
 files = [f for f in os.listdir(path_plot) if f.startswith('mcf')]
 files = sort_files(files)
+# skip the bayesian
+if 'algo3' in files[-1]:
+    files = files[1:]
+
 exp_list = []
 for f in files:
     t = np.load(os.path.join(path_plot, f))
@@ -193,6 +199,7 @@ plt.grid(linestyle='--', linewidth=0.5)
 plt.title(f'Average Accuracy over {tasknum} Tasks')
 plt.savefig(os.path.join(path_plot,'plot_avgAcc.png'))
 plt.clf()
+print(Avg_array[:,-1])
 
 # min acc data and plots
 Min_array = MinAcc1trial(exp_array)
