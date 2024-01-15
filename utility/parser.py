@@ -15,7 +15,7 @@ class ParserArgs(object):
         # general settings
         self.parser.add_argument("--seed", type=int, default=13, help="random seed")
         self.parser.add_argument("--C", type=float, default=1.0, help="C, numUsersSel=C*numClients")
-        self.parser.add_argument("--class_ratio", type=float, default=0.35, help="class ratio for noniid task")
+        self.parser.add_argument("--class_ratio", nargs='*', type=float, default=[0.3, 0.3, 0.3, 0.3, 0.3], help="list of class ratios for noniid task")
         self.parser.add_argument("--num_clients", type=int, default=30, help="number of clients")
         self.parser.add_argument("--exp_num", type=int, default=4, help="experiment round number")
         self.parser.add_argument("--powerfulCNN", action="store_true", help="Decide if use powerful CNN for EMNIST")

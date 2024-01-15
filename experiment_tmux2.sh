@@ -1,10 +1,26 @@
 #!/bin/bash
-python main.py --exp_num 1 --iid_type noniid noniid iid iid --task_type cifar10 fashion_mnist emnist cifar10 --class_ratio 0.35 --notes decay0.9_noMNIST --bayes_decay 0.9
-python main.py --exp_num 1 --iid_type noniid noniid noniid iid iid --task_type fashion_mnist cifar10 fashion_mnist emnist cifar10 --class_ratio 0.35 --notes decay0.9_replaceasFM --bayes_decay 0.9
-python main.py --exp_num 1 --iid_type noniid iid iid iid iid --class_ratio 0.35 --notes decay0.5c80 --bayes_decay 0.5 --num_clients 80
-python main.py --exp_num 1 --iid_type noniid iid iid iid iid --class_ratio 0.35 --notes decay0.2c80only --bayes_decay 0.2 --num_clients 80 --algo_type bayesian
-python main.py --exp_num 1 --iid_type noniid iid iid iid iid --class_ratio 0.35 --notes decay0.3c80only --bayes_decay 0.3 --num_clients 80 --algo_type bayesian
-python main.py --exp_num 1 --iid_type noniid iid iid iid iid --class_ratio 0.35 --notes decay0.4c80only --bayes_decay 0.4 --num_clients 80 --algo_type bayesian
-python main.py --exp_num 1 --iid_type noniid iid iid iid iid --class_ratio 0.35 --notes decay0.6c80only --bayes_decay 0.6 --num_clients 80 --algo_type bayesian
-python main.py --exp_num 1 --iid_type noniid iid iid iid iid --class_ratio 0.35 --notes decay0.7c80only --bayes_decay 0.7 --num_clients 80 --algo_type bayesian
-python main.py --exp_num 1 --iid_type noniid iid iid iid iid --task_type fashion_mnist cifar10 fashion_mnist emnist cifar10 --class_ratio 0.35 --notes decay0.9_replaceasFM --bayes_decay 0.9
+# seed=11 unfinished part
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid --task_type mnist cifar10 emnist --notes exp1C1c20-cpu-emnist-seed11 --cpumodel --seed 11
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid --task_type mnist cifar10 cifar10 emnist --notes exp1C1c20-cpu-MCCE-seed11 --cpumodel --seed 11
+# seed=10 unfinished part
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid --task_type mnist cifar10 cifar10 emnist --notes exp1C1c20-cpu-MCCE-seed10 --cpumodel --seed 10
+# seed=12
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid --task_type mnist cifar10 emnist --notes exp1C1c20-cpu-emnist-seed12 --cpumodel --seed 12
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid --task_type mnist cifar10 cifar10 emnist --notes exp1C1c20-cpu-MCCE-seed12 --cpumodel --seed 12
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid iid --task_type mnist cifar10 fashion_mnist emnist cifar10 --notes exp1C1c20-cpu-seed12 --cpumodel --seed 12
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid iid iid --task_type mnist cifar10 fashion_mnist emnist cifar10 fashion_mnist --notes exp1C1c20-cpu-seed12 --cpumodel --seed 12
+# seed=14
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid --task_type mnist cifar10 emnist --notes exp1C1c20-cpu-emnist-seed14 --cpumodel --seed 14
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid --task_type mnist cifar10 cifar10 emnist --notes exp1C1c20-cpu-MCCE-seed14 --cpumodel --seed 14
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid iid --task_type mnist cifar10 fashion_mnist emnist cifar10 --notes exp1C1c20-cpu-seed14 --cpumodel --seed 14
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid iid iid --task_type mnist cifar10 fashion_mnist emnist cifar10 fashion_mnist --notes exp1C1c20-cpu-seed14 --cpumodel --seed 14
+# seed=15
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid --task_type mnist cifar10 emnist --notes exp1C1c20-cpu-emnist-seed15 --cpumodel --seed 15
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid --task_type mnist cifar10 cifar10 emnist --notes exp1C1c20-cpu-MCCE-seed15 --cpumodel --seed 15
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid iid --task_type mnist cifar10 fashion_mnist emnist cifar10 --notes exp1C1c20-cpu-seed15 --cpumodel --seed 15
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid iid iid --task_type mnist cifar10 fashion_mnist emnist cifar10 fashion_mnist --notes exp1C1c20-cpu-seed15 --cpumodel --seed 15
+# seed=16
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid --task_type mnist cifar10 emnist --notes exp1C1c20-cpu-emnist-seed16 --cpumodel --seed 16
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid --task_type mnist cifar10 cifar10 emnist --notes exp1C1c20-cpu-MCCE-seed16 --cpumodel --seed 16
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid iid --task_type mnist cifar10 fashion_mnist emnist cifar10 --notes exp1C1c20-cpu-seed16 --cpumodel --seed 16
+python main.py --exp_num 1 --C 1.0 --num_clients 20 --algo_type proposed random round_robin --iid_type iid iid iid iid iid iid --task_type mnist cifar10 fashion_mnist emnist cifar10 fashion_mnist --notes exp1C1c20-cpu-seed16 --cpumodel --seed 16
