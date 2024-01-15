@@ -117,7 +117,7 @@ if __name__=="__main__":
                     tasks_data_idx.append(dataset.noniid(dataset=tasks_data_info[i][0],
                                         min_data_num=tasks_data_info[i][2],
                                         max_data_num=tasks_data_info[i][3],
-                                        class_ratio=class_ratio,
+                                        class_ratio=class_ratio[i],
                                         num_users=num_clients)) # 0: clients_data_idx 1: clients_label
                 global_models.append(load_model(name_data=task_type[i], num_classes=tasks_data_info[i][5], args=args).to(device))
                 local_results.append([-1,-1])
