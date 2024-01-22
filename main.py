@@ -27,7 +27,7 @@ if __name__=="__main__":
 
     normalization = 'accuracy'  # accuracy
     num_round = 120  # 100#200
-    local_epochs = [5, 5, 5, 5, 5, 5]  # [3,5,3] #[1,5,1]#5
+    local_epochs = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]  # [3,5,3] #[1,5,1]#5
     batch_size = 32
     EMNIST_powerfulCNN = args.powerfulCNN
     type_iid = args.iid_type  # 'iid', 'noniid'
@@ -137,7 +137,7 @@ if __name__=="__main__":
             for round in tqdm(range(num_round)):
                 #print(round)
                 #print(f"Round [{round+1}/{num_round}]")
-                print(f"Round [{round+1}/{num_round}]",file=file)
+                print(f"Round[ {round+1}/{num_round} ]",file=file)
                 #print("Allocated Tasks:", clients_task)
                 print("Allocated Tasks:", clients_task,file=file)
 
