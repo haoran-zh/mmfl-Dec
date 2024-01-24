@@ -196,22 +196,24 @@ def sort_files(files):
 
 # read all files
 # find all files starting with mcf
-#algo_name = ["bayesian", "alpha-fairness", "random", "round robin"]
-algo_name = ["bayesian","alpha-fairness", "random", "round robin"]
+algo_name = ["bayesian", "alpha-fairness", "random", "round robin"]
+#algo_name = ["alpha-fairness", "random", "round robin"]
 algo_num  = len(algo_name)
 
 # seeds
 paths = []
-paths.append(os.path.join('./result', "5task_iiiii_d0.9data2.0"))
-paths.append(os.path.join('./result', "5task_iiiii_d0.9data2.0"))
-paths.append(os.path.join('./result', "5task_iiiii_d0.9data2.0"))
-paths.append(os.path.join('./result', "5task_iiiii_d0.9data2.0"))
+paths.append(os.path.join('./result', "10task_iiiiiiiiii_exp1C1c20-cpu-seed12"))
+paths.append(os.path.join('./result', "10task_iiiiiiiiii_exp1C1c20-cpu-seed12"))
+paths.append(os.path.join('./result', "10task_iiiiiiiiii_exp1C1c20-cpu-seed12"))
+paths.append(os.path.join('./result', "10task_iiiiiiiiii_exp1C1c20-cpu-seed12"))
 exp_seeds_array = []
 for path_plot in paths:
     files = [f for f in os.listdir(path_plot) if f.startswith('mcf')]
     files = sort_files(files)
     # skip the bayesian
     """if 'algo3' in files[-1]:
+        algo_name = ["alpha-fairness", "random", "round robin"]
+        algo_num  = len(algo_name)
         files = files[1:]"""
 
     exp_list = []
