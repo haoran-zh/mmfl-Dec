@@ -23,7 +23,7 @@ def plot_allocation(tasks_list, path_plot, round_num=120, algo=None):
     boundaries = np.arange(-0.5, len(colors), 1)
     norm = BoundaryNorm(boundaries, cmap.N)
     #plt.imshow(tasks_list,, interpolation='nearest')
-    #plt.imshow(tasks_list, cmap=cmap, norm=norm, interpolation='nearest')
+    plt.imshow(tasks_list, cmap=cmap, norm=norm, interpolation='nearest')
 
     cbar = plt.colorbar(ticks=range(len(colors)), shrink=0.3)
     cbar.set_ticklabels([f'task{i}' for i in range(len(colors))])

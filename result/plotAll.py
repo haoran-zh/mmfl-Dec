@@ -202,10 +202,10 @@ algo_num  = len(algo_name)
 
 # seeds
 paths = []
-paths.append(os.path.join('./result', "10task_iiiiiiiiii_exp1C1c20-cpu-seed12"))
-paths.append(os.path.join('./result', "10task_iiiiiiiiii_exp1C1c20-cpu-seed12"))
-paths.append(os.path.join('./result', "10task_iiiiiiiiii_exp1C1c20-cpu-seed12"))
-paths.append(os.path.join('./result', "10task_iiiiiiiiii_exp1C1c20-cpu-seed12"))
+paths.append(os.path.join('./result', "9task_iiiiiiiii_exp1C1c20-cpu-seed10"))
+paths.append(os.path.join('./result', "9task_iiiiiiiii_exp1C1c20-cpu-seed11"))
+paths.append(os.path.join('./result', "9task_iiiiiiiii_exp1C1c20-cpu-seed12"))
+paths.append(os.path.join('./result', "9task_iiiiiiiii_exp1C1c20-cpu-seed12"))
 exp_seeds_array = []
 for path_plot in paths:
     files = [f for f in os.listdir(path_plot) if f.startswith('mcf')]
