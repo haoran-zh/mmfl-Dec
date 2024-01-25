@@ -13,10 +13,16 @@ def sort_files(files):
 
 algo_num = 3
 paths = []
-paths.append(os.path.join('./result', "6task_iiiiii_exp1C1c20-cpu"))
-paths.append(os.path.join('./result', "6task_iiiiii_exp1C1c20-cpu-seed10"))
-paths.append(os.path.join('./result', "6task_iiiiii_exp1C1c20-cpu-seed12"))
-paths.append(os.path.join('./result', "6task_iiiiii_exp1C1c20-cpu-seed15"))
+# list all the paths
+# each path is a folder containing 3 algo results
+# each folder should exist:
+# (mcf_..._exp0_algo0.npy)
+# (mcf_..._exp0_algo1.npy)
+# (mcf_..._exp0_algo2.npy)
+paths.append(os.path.join('./result', "10task_iiiiiiiiii_exp1C1c20-cpu-seed10"))
+paths.append(os.path.join('./result', "10task_iiiiiiiiii_exp1C1c20-cpu-seed10"))
+paths.append(os.path.join('./result', "10task_iiiiiiiiii_exp1C1c20-cpu-seed11"))
+paths.append(os.path.join('./result', "10task_iiiiiiiiii_exp1C1c20-cpu-seed12"))
 exp_seeds_array = []
 for path_plot in paths:
     files = [f for f in os.listdir(path_plot) if f.startswith('mcf')]
@@ -52,6 +58,7 @@ std_array = np.mean(std_array, axis=0) # get shape 3algo 120rounds"""
 # plot variance
 seeds_var_array = np.var(exp_seeds_array, axis=2) # get shape 4seeds 3algo 120rounds
 
+# compute error bars
 errors_algo1 = [[np.min(np.mean(seeds_var_array[:,0], axis=1), axis=0), np.max(np.mean(seeds_var_array[:,0], axis=1), axis=0)],
                 [np.min(seeds_var_array[:,0,10]), np.max(seeds_var_array[:,0,10])],
                 [np.min(seeds_var_array[:,0,60]), np.max(seeds_var_array[:,0,60])],
@@ -76,6 +83,7 @@ algo1 = [mean_var_array[0], var_array[0][10],var_array[0][60], var_array[0][119]
 algo2 = [mean_var_array[1], var_array[1][10],var_array[1][60], var_array[1][119]]
 algo3 = [mean_var_array[2], var_array[2][10],var_array[2][60], var_array[2][119]]
 
+# finish the computation of error bars
 errors_algo1 = [[abs(algo1[i]-errors_algo1[i][0]),abs(algo1[i]-errors_algo1[i][1])] for i in range(4)]
 errors_algo2 = [[abs(algo2[i]-errors_algo2[i][0]),abs(algo2[i]-errors_algo2[i][1])] for i in range(4)]
 errors_algo3 = [[abs(algo3[i]-errors_algo3[i][0]),abs(algo3[i]-errors_algo3[i][1])] for i in range(4)]
@@ -92,7 +100,7 @@ bar3 = ax.bar(index + 2*bar_width, algo3, bar_width, yerr=np.array(errors_algo3)
 # Adding labels, title, and legend
 #ax.set_xlabel('The Number of Slots (N)', fontsize=14)
 ax.set_ylabel('Variance', fontsize=14)
-ax.set_title('Variance over the algorithms, 6 tasks', fontsize=14)
+ax.set_title('Variance over the algorithms, 10 tasks', fontsize=14)
 ax.set_xticks(index + bar_width)
 ax.set_xticklabels(labels, fontsize=14)
 ax.legend()

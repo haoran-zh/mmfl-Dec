@@ -53,10 +53,10 @@ def plotgraph(x1, x2, x3, x4, y1, y2,y3,y4, z1, z2,z3,z4, ytitle, plot_title):
     plt.clf()
 
     # Plot the average line in a darker green color
+    plt.fill_between(x, min_valuesB, max_valuesB, color='blue', alpha=0.5, label='Alpha-fair Client-Task Allocation')
 
     plt.fill_between(x, min_valuesRand, max_valuesRand, color='orange', alpha=0.5, label='Random Client-Task Allocation')
     plt.fill_between(x, min_valuesRR, max_valuesRR, color='green', alpha=0.5, label='Round Robin Client-Task Allocation')
-    plt.fill_between(x, min_valuesB, max_valuesB, color='blue', alpha=0.5, label='Alpha-fair Client-Task Allocation')
 
     # Plot the average line in a darker green color
     plt.plot(average_valuesRand, color='darkorange', linestyle='--')
@@ -68,17 +68,17 @@ def plotgraph(x1, x2, x3, x4, y1, y2,y3,y4, z1, z2,z3,z4, ytitle, plot_title):
     plt.xlabel('Num. Global Iterations',fontsize=14)
     # plt.ylabel('Y-axis')
     plt.title(plot_title,fontsize=14)
-    #plt.ylim([0.5, 0.8])
+    plt.ylim([0.2, 0.55])
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.tight_layout()
-    handles, labels = plt.gca().get_legend_handles_labels()
+    """handles, labels = plt.gca().get_legend_handles_labels()
 
     # Specify the order of items in the legend
     order = [2, 0, 1]
 
     # Create the legend with the specified order
-    plt.legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc='lower right')
-    #plt.legend(loc='lower right')
+    plt.legend([handles[idx] for idx in order], [labels[idx] for idx in order], loc='lower right')"""
+    plt.legend(loc='lower right')
     # Show the plot
     plt.savefig(os.path.join(path_plot, f'marie_plot.png'))
     plt.clf()
@@ -202,10 +202,10 @@ algo_num  = len(algo_name)
 
 # seeds
 paths = []
-paths.append(os.path.join('./result', "9task_iiiiiiiii_exp1C1c20-cpu-seed10"))
-paths.append(os.path.join('./result', "9task_iiiiiiiii_exp1C1c20-cpu-seed11"))
-paths.append(os.path.join('./result', "9task_iiiiiiiii_exp1C1c20-cpu-seed12"))
-paths.append(os.path.join('./result', "9task_iiiiiiiii_exp1C1c20-cpu-seed12"))
+paths.append(os.path.join('./result', "5task_iiiii_exp3C1c20d2.5-cpu-seed15"))
+paths.append(os.path.join('./result', "5task_iiiii_exp3C1c20d2.5-cpu-seed15"))
+paths.append(os.path.join('./result', "5task_iiiii_exp3C1c20d2.5-cpu-seed15"))
+paths.append(os.path.join('./result', "5task_iiiii_exp3C1c20d2.5-cpu-seed15"))
 exp_seeds_array = []
 for path_plot in paths:
     files = [f for f in os.listdir(path_plot) if f.startswith('mcf')]
@@ -352,4 +352,4 @@ min_seed4 = MinAcc1trial(seed4)
 plotgraph(min_seed1[0], min_seed2[0],min_seed3[0], min_seed4[0],
           min_seed1[1], min_seed2[1], min_seed3[1], min_seed4[1],
           min_seed1[2], min_seed2[2],min_seed3[2], min_seed4[2],
-          'Accuracy', 'Minimum Accuracy over 3 Tasks')
+          'Accuracy', 'Minimum Accuracy over 10 Tasks')
