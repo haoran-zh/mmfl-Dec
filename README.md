@@ -5,6 +5,8 @@ To start the code, run
 
 Check more setting options in `utility/parser.py`. Remember to provide the necessary information in `--notes`, this will be a part of the folder name of the current experiment. If a new experiment creates a folder that has existed already, the experiment will be skipped. 
 
+`--cpumodel` stores all models in CPU to save memory, but training can still happen on GPU. 
+
 Complete the experiment and all experiment results will be stored in `result/[foldername]`. 
 
 Run `python result/plotAll.py --plot_folder [foldername]` to plot everything. 
