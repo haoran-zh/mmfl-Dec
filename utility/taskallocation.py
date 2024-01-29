@@ -56,7 +56,8 @@ def get_task_idx(num_tasks,
         allocation_result = np.zeros(num_clients, dtype=int)
         for client_idx in range(num_clients):
             allocation_result[client_idx] = np.random.choice(np.arange(0, num_tasks), p=P_task_client[client_idx])
-        return allocation_result.tolist()
+        allocation_result = allocation_result.tolist()
+        return allocation_result
 
 
     elif algorithm_name == 'random':

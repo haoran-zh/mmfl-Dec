@@ -226,7 +226,9 @@ if __name__=="__main__":
                                                 chosen_clients=chosen_clients,
                                                 allocation_history=allocation_history_list,
                                                 args=args)
-                allocation_history_list.append(clients_task)
+                    if algorithm_name == 'bayesian':
+                        allocation_history_list.append(clients_task)
+                        clients_task = [clients_task[i] for i in chosen_clients]
 
                 TaskAllocCounter[:, round] = np.bincount(np.array(clients_task).astype(np.int64), minlength=len(task_type))
                 #print("alloc", TaskAllocCounter[:, round])
