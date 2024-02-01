@@ -23,6 +23,8 @@ from parserplot import ParserArgs
 import os
 from plotAllocation import plot_allocation
 from plotAllocation import simulate_allocation
+from plotAllocation import tasklist2clientlist
+from plotAllocation import simulate_map
 import sys
 
 
@@ -244,10 +246,25 @@ seed4 = exp_seeds_array[0]
 exp_array = np.mean(exp_seeds_array, axis=0)
 # print("exp_array shape", exp_array.shape) # algo_num, task_num, numRounds
 
-simulate_history = simulate_allocation(exp_array[0], 'bayesian')
-plot_allocation(simulate_history, path_plot, numRounds, 'bayesian')
-simulate_history = simulate_allocation(exp_array[1], 'bayesian proposed')
-plot_allocation(simulate_history, path_plot, numRounds, 'bayesian')
+task_num = exp_array.shape[1]
+simulate_history = []
+for i in range(4):
+    simulate_history.append(simulate_allocation(exp_array[0], 'bayesian'))
+plot_allocation(simulate_history[0], path_plot, numRounds, 'bayesian')
+clientList = []
+for i in range(4):
+    clientList.append(tasklist2clientlist(simulate_history[i], task_num)[3])
+simulate_map(clientList, path_plot, 'bayesian', task_index=0, exp_num=4)
+
+simulate_history = []
+for i in range(4):
+    simulate_history.append(simulate_allocation(exp_array[1], 'proposed'))
+plot_allocation(simulate_history[0], path_plot, numRounds, 'proposed')
+clientList = []
+for i in range(4):
+    clientList.append(tasklist2clientlist(simulate_history[i], task_num)[3])
+simulate_map(clientList, path_plot, 'proposed', task_index=0, exp_num=4)
+
 
 # plot one by one
 tasknum = exp_array.shape[1]

@@ -39,17 +39,15 @@ def tasklist2clientlist(tasks_list, task_num=5):
     tasks_list = np.array(tasks_list) # round client_num
     round_num = tasks_list.shape[0]
     clients_list = []
-    for r in range(round_num):
-        current_round_list = []
-        for i in range(task_num):
-            current_round_list.append(np.where(tasks_list[r]==i)[0])
-        clients_list.append(current_round_list)
-    return clients_list
+    for i in range(task_num):
+        current_task_list = []
+        for r in range(round_num):
+            current_task_list.append(np.where(tasks_list[r]==i)[0])
+        clients_list.append(current_task_list)
+    return clients_list # list: task_index, round_num, client_set(array)
 
 
 
-def recover_client_order(chosen_clients_history):
-    return
 
 
 def simulate_allocation(acc_array, algo_name):
@@ -120,5 +118,64 @@ def simulate_allocation(acc_array, algo_name):
             simulate_tasks_list.append(list(np.random.choice(np.arange(0, task_num), num_clients, p=probabilities)))
 
     return simulate_tasks_list
-#tasks_list = [[1,1,0,0,2,3,4,5],[2,3,4,5,1,1,0,0]]
-#tasklist2clientlist(tasks_list)
+
+
+def simulate_map(selected_destinations_per_round_all, path_plot, algo=None, task_index=0, exp_num=1):
+    # Example input: list of selected destinations for each round
+
+    # Fixed value for r
+    r = 10  # Example radius, adjust as needed
+
+    # Total number of destinations
+    total_destinations = 20
+
+    # Calculate positions of all destinations
+    positions = [(r * np.sin(0.5*np.pi * i / total_destinations), r * np.cos(0.5*np.pi * i / total_destinations)) for i
+                 in range(total_destinations)]
+    plt.figure(figsize=(8, 8))
+    for exp in range(exp_num):
+        selected_destinations_per_round = selected_destinations_per_round_all[exp].copy()
+        # Starting point
+        current_position = np.array([0.0, 0.0])
+
+        # Store all positions for plotting, starting with the initial position
+        path_positions = [current_position.copy()]
+
+        # Total rounds
+        total_rounds = len(selected_destinations_per_round)
+
+        for round_destinations in selected_destinations_per_round:
+            # Calculate the average position for the current round
+            average_position = np.mean([positions[i] for i in round_destinations], axis=0)
+            # Calculate the step size
+            step_size = 1*r / (total_rounds)
+
+            # Update the current position
+            current_position += step_size * (average_position - current_position)
+
+            # Store the current position
+            path_positions.append(current_position.copy())
+
+        # Convert path_positions to a format suitable for plotting
+        path_x, path_y = zip(*path_positions[0:20])
+        print(path_x[3])
+
+        # Plot the destinations and the path
+        circle = plt.Circle((0, 0), r, color='lightgrey', fill=False)
+        plt.gca().add_artist(circle)
+        dest_x, dest_y = zip(*positions)
+        plt.plot(dest_x, dest_y, 'o', label='Destinations', color='green')
+        plt.plot(path_x, path_y, 'o', label='Path', color='black')
+        plt.plot(path_x, path_y, '-', label='Path', color='red')
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.title('Path Across Rounds Towards Selected Destinations')
+    plt.legend()
+    plt.axis('equal')
+    plt.grid(True)
+    # plt.show()
+    plt.savefig(os.path.join(path_plot, f'task{task_index}_map_algo{algo}.png'))
+    plt.clf()
+
+# tasks_list = [[1,1,0,0,2,3,4,5],[2,3,4,5,1,1,0,0]]
+# print(tasklist2clientlist(tasks_list))
