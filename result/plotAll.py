@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 from parserplot import ParserArgs
 import os
 from plotAllocation import plot_allocation
+from plotAllocation import simulate_allocation
 import sys
 
 
@@ -143,8 +144,8 @@ path_plot = os.path.join('./result', folder_name)
 allocation_files = [f for f in os.listdir(path_plot) if f.startswith('Algorithm')]
 positions = {}
 # plot allocation map
-#targets = ['bayesian', 'proposed', 'random', 'round_robin']
-targets = ['proposed', 'random', 'round_robin']
+targets = ['bayesian', 'proposed', 'random', 'round_robin']
+#targets = ['proposed', 'random', 'round_robin']
 for i, f in enumerate(allocation_files):
     for target in targets:
         if target in f:
@@ -202,10 +203,11 @@ algo_num  = len(algo_name)
 
 # seeds
 paths = []
-paths.append(os.path.join('./result', "5task_iiiii_exp3C1c20d2.5-cpu-seed15"))
-paths.append(os.path.join('./result', "5task_iiiii_exp3C1c20d2.5-cpu-seed15"))
-paths.append(os.path.join('./result', "5task_iiiii_exp3C1c20d2.5-cpu-seed15"))
-paths.append(os.path.join('./result', "5task_iiiii_exp3C1c20d2.5-cpu-seed15"))
+paths.append(path_plot)
+#paths.append(os.path.join('./result', "5task_nnnnn_exp4C1c20d1.5-seed15"))
+#paths.append(os.path.join('./result', "5task_nnnnn_exp4C1c20d1.5-seed15"))
+#paths.append(os.path.join('./result', "5task_nnnnn_exp4C1c20d1.5-seed15"))
+#paths.append(os.path.join('./result', "5task_nnnnn_exp4C1c20d1.5-seed15"))
 exp_seeds_array = []
 for path_plot in paths:
     files = [f for f in os.listdir(path_plot) if f.startswith('mcf')]
@@ -236,10 +238,16 @@ for path_plot in paths:
 
 exp_seeds_array = np.array(exp_seeds_array)
 seed1 = exp_seeds_array[0]
-seed2 = exp_seeds_array[1]
-seed3 = exp_seeds_array[2]
-seed4 = exp_seeds_array[3]
+seed2 = exp_seeds_array[0]
+seed3 = exp_seeds_array[0]
+seed4 = exp_seeds_array[0]
 exp_array = np.mean(exp_seeds_array, axis=0)
+# print("exp_array shape", exp_array.shape) # algo_num, task_num, numRounds
+
+simulate_history = simulate_allocation(exp_array[0], 'bayesian')
+plot_allocation(simulate_history, path_plot, numRounds, 'bayesian')
+simulate_history = simulate_allocation(exp_array[1], 'bayesian proposed')
+plot_allocation(simulate_history, path_plot, numRounds, 'bayesian')
 
 # plot one by one
 tasknum = exp_array.shape[1]
@@ -304,15 +312,15 @@ plt.clf()
 
 # variance acc data and plots
 Var = var1trial(exp_array)
-#for k in range(algo_num):
-#    plt.plot(np.arange(0, numRounds), Var[k], label=f'{algo_name[k]}')
-#plt.legend()
-#plt.ylabel('Variance')
-#plt.xlabel('Num. Global Iterations')
-#plt.grid(linestyle='--', linewidth=0.5)
-plt.bar(algo_name, np.mean(Var, axis=1), width=0.5)
+for k in range(algo_num):
+    plt.plot(np.arange(0, numRounds), Var[k], label=f'{algo_name[k]}')
+plt.legend()
+plt.ylabel('Variance')
+plt.xlabel('Num. Global Iterations')
+plt.grid(linestyle='--', linewidth=0.5)
+"""plt.bar(algo_name, np.mean(Var, axis=1), width=0.5)
 plt.title(f'Variance over {tasknum} Tasks')
-plt.tight_layout()
+plt.tight_layout()"""
 plt.savefig(os.path.join(path_plot,'plot_var.png'))
 plt.clf()
 
