@@ -156,11 +156,11 @@ if __name__=="__main__":
                 #print(f"Round [{round+1}/{num_round}]")
                 print(f"Round[ {round+1}/{num_round} ]",file=file)
                 #print("Allocated Tasks:", clients_task)
-                print("Allocated Tasks:", clients_task,file=file)
+
 
                 # training
                 if args.optimal_sampling is True:
-                    all_tasks_weights_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training_all(
+                    all_tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training_all(
                                                                                         tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                         global_models=global_models, chosen_clients=chosen_clients,
                                                                                         task_type=task_type, clients_task=None,
@@ -177,6 +177,7 @@ if __name__=="__main__":
                                                                                                     type_iid=type_iid, device=device, args=args)
 
                 # record accuracy and loss
+                print("Allocated Tasks:", clients_task, file=file)
                 temp_local_results = []
                 for task_idx in range(len(task_type)):
                     local_acc_list = []
@@ -199,20 +200,20 @@ if __name__=="__main__":
                 if args.optimal_sampling is True:
                     temp_global_results = []
                     for task_idx in range(len(task_type)):
-                        this_task_weights_list = []
+                        this_task_gradients_list = []
                         this_task_data_num_list = []
                         # get local_weights for this task
                         for client_idx in range(len(chosen_clients)):
                             if clients_task[client_idx] == task_idx:
-                                this_task_weights_list.append(all_tasks_weights_list[task_idx][client_idx])
+                                this_task_gradients_list.append(all_tasks_gradients_list[task_idx][client_idx])
                                 this_task_data_num_list.append(all_data_num[task_idx][chosen_clients[client_idx]])
-                        assert len(this_task_weights_list) == len(p_dict[task_idx])
+                        assert len(this_task_gradients_list) == len(p_dict[task_idx])
                         # aggregation
-                        if (len(this_task_weights_list) != 0):
+                        if (len(this_task_gradients_list) != 0):
                             if args.cpumodel is True:
                                 global_models[task_idx].to('cpu')
                             global_models[task_idx].load_state_dict(
-                                federated_prob(models_state_dict=this_task_weights_list, local_data_num=this_task_data_num_list,
+                                federated_prob(global_weights =global_models[task_idx], models_gradient_dict=this_task_gradients_list, local_data_num=this_task_data_num_list,
                                           p_list=p_dict[task_idx]))
                             if args.cpumodel is True:
                                 global_models[task_idx].to(device)
@@ -223,6 +224,8 @@ if __name__=="__main__":
                             print(
                                 f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",
                                 file=file)
+                            print(
+                                f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             # print(f"Task[{task_idx}]: Global not changed")

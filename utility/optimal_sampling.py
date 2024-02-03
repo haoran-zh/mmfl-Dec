@@ -4,11 +4,11 @@ import random
 
 def get_gradient_norm(weights_this_round, weights_next_round):
     # get gradient by subtracting weights_next_round from weights_this_round
-    weight_diff = {name: weights_this_round[name] - weights_next_round[name] for name in weights_this_round}
+    weight_diff = {name: (weights_this_round[name] - weights_next_round[name]).cpu() for name in weights_this_round}
     # Calculate the L2 norm of the weight differences
     norm = sum(torch.norm(diff, p=2) ** 2 for diff in weight_diff.values()) ** 0.5
     norm.item()
-    return norm.item()
+    return norm.item(), weight_diff
 def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_record):
     # gradient_record: the shape is [task_index][client_index]
     # chosen_clients provide the index of the chosen clients in a random order
@@ -40,23 +40,26 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
             if is_sampled[i] == 0:
                 all_gradients_this_task.append(gradient_record[task_index][i])
         assert len(all_gradients_this_task) == len(current_available_clients)
+        # print("all_gradients_this_task", all_gradients_this_task)
 
         for client_index in range(len(current_available_clients)):
             # from U to U~ in the paper
-            all_gradients_this_task[client_index] *= all_data_num[task_index][current_available_clients[client_index]] / np.sum(
-                all_data_num[task_index]*(1-is_sampled))
-
+            all_gradients_this_task[client_index] *= all_data_num[task_index][current_available_clients[client_index]] / (np.sum(
+                all_data_num[task_index]*(1-is_sampled))+1e-14)
+        # print("all_gradients_this_task after filter", all_gradients_this_task)
         # sort the gradients of the clients for this task, get a list of indices
         sorted_indices = np.argsort(all_gradients_this_task)
+        # print('sorted_indices', sorted_indices)
         # sorted_indices is in the order of the gradient of the clients for this task
         # remember: sorted_indices is in the order of chosen_clients
         # if sorted_indices[0] = A, then it means chosen_clients[A] has the smallest gradient for this task
         # all_gradients_this_task[sorted_indices[0]] is the smallest gradient for this task
-        n = len(current_available_clients)
+        n = len(current_available_clients) # 20
+        # print("n", n)
         if n <= clients_num_this_task:
             m = n
         else:
-            m = clients_num_this_task
+            m = clients_num_this_task # alphafair get = 7
 
         if n == 0: # if no client is available, then skip
             continue
@@ -74,10 +77,11 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
             upper = sum_upto_l / all_gradients_this_task[sorted_indices[l-1]]
             # if 0<m+l-n<=upper, then this l is good. find the largest l satisfying this condition
             if 0 < m + l - n <= upper:
-                best_l = l
+                best_l = l # 14
         # compute p
-        p = np.ones(n)
+        p = np.ones(n) # n: available clients
         sum_upto_l = sum(all_gradients_this_task[sorted_indices[i]] for i in range(best_l))
+        # print('sum_upto_l', sum_upto_l)
         for i in range(len(sorted_indices)):
             if i >= best_l:
                 p[sorted_indices[i]] *= 1
@@ -85,6 +89,9 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
                 p[sorted_indices[i]] *= (m+best_l-n)*all_gradients_this_task[sorted_indices[i]]/sum_upto_l
         # rescale the probability, make sure the sum of p is still m even some clients are sampled
         # print(p)
+        # print('best l', best_l)
+        # if p[i]=nan, set it to 1
+        # p[np.isnan(p)] = 1 # set nan to 1
         # print('sum of p', sum(p))
         # use p to optimal sample clients for this task
         if task_indices[-1] == task_index:
@@ -108,7 +115,7 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
         # print(is_sampled)
 
         # print(p_dict)
-        # p_dict[task_index]
+    print(clients_task)
     return clients_task, p_dict
 
 def get_clients_num_per_task(clients_task, tasks_num):
