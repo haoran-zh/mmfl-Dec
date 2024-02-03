@@ -3,9 +3,9 @@ import torch
 import utility.dataset as dataset
 from utility.preprocessing import preprocessing
 from utility.load_model import load_model
-from utility.training import training
+from utility.training import training, training_all
 from utility.evalation import evaluation
-from utility.aggregation import federated
+from utility.aggregation import federated, federated_prob
 from utility.taskallocation import get_task_idx, get_task_id_RR
 import random
 import time
@@ -15,6 +15,7 @@ import os
 from tqdm import tqdm
 import argparse
 from utility.parser import ParserArgs
+import utility.optimal_sampling as optimal_sampling
 
 if __name__=="__main__":
     parser = ParserArgs()
@@ -47,8 +48,12 @@ if __name__=="__main__":
     if not os.path.exists('./result/'+folder_name):
         os.makedirs('./result/'+folder_name)
     else:
-        print('folder exists!')
-        sys.exit()
+        if args.insist is True:
+            # go ahead
+            print('folder exists but still go on!')
+        else:
+            print('folder exists!')
+            sys.exit()
 
     print('task number', task_number)
     print('folder name', folder_name)
@@ -123,6 +128,18 @@ if __name__=="__main__":
                 local_results.append([-1,-1])
                 global_results.append([-1,-1])
 
+
+            # record all client data num
+            all_data_num = []
+            for task_idx in range(len(task_type)):
+                local_data_num = []
+                for client_idx in range(num_clients):
+                    if type_iid[task_idx] == 'iid':
+                        local_data_num.append(len(tasks_data_idx[task_idx][client_idx]))
+                    if type_iid[task_idx] == 'noniid':
+                        local_data_num.append(len(tasks_data_idx[task_idx][0][client_idx]))
+                all_data_num.append(local_data_num)
+
             # allocation_initialization !!
             # NEW: dec 6 2023
             all_clients = list(range(0, num_clients))
@@ -142,11 +159,24 @@ if __name__=="__main__":
                 print("Allocated Tasks:", clients_task,file=file)
 
                 # training
-                tasks_weights_list, tasks_local_training_acc, tasks_local_training_loss = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
+                if args.optimal_sampling is True:
+                    all_tasks_weights_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training_all(
+                                                                                        tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
+                                                                                        global_models=global_models, chosen_clients=chosen_clients,
+                                                                                        task_type=task_type, clients_task=None,
+                                                                                        local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
+                                                                                        type_iid=type_iid, device=device, args=args)
+                    # optimal sampling
+                    clients_task, p_dict = optimal_sampling.get_optimal_sampling(chosen_clients, clients_task, all_data_num, all_weights_diff)
+                    # optimal sampling needs to be moved after we get local_data_nums
+                else:
+                    tasks_weights_list, tasks_local_training_acc, tasks_local_training_loss = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                                    global_models=global_models, chosen_clients=chosen_clients,
                                                                                                    task_type=task_type, clients_task=clients_task,
                                                                                                    local_epochs=local_epochs, batch_size = batch_size, classes_size = tasks_data_info,
                                                                                                     type_iid=type_iid, device=device, args=args)
+
+                # record accuracy and loss
                 temp_local_results = []
                 for task_idx in range(len(task_type)):
                     local_acc_list = []
@@ -165,40 +195,78 @@ if __name__=="__main__":
                         temp_local_results.append(local_results[task_idx])
                         #print(f"Task[{task_idx}]: Local not changed")
                         print(f"Task[{task_idx}]: Local not changed",file=file)
-                # evaluation
-                temp_global_results = []
-                for task_idx in range(len(task_type)):
-                    temp_local_weights = []
-                    temp_local_data_num = []
-                    local_data_nums = []
-                    for clients_idx, local_weights in enumerate(tasks_weights_list):
-                        if clients_task[clients_idx] == task_idx:
-                            temp_local_weights.append(local_weights)
-                            if type_iid[task_idx] =='iid':
-                                local_data_nums.append(len(tasks_data_idx[task_idx][chosen_clients[clients_idx]]))
-                            if type_iid[task_idx] =='noniid':
-                                local_data_nums.append(len(tasks_data_idx[task_idx][0][chosen_clients[clients_idx]]))
-                    #print('task, local data nums', task_idx, local_data_nums)
-                    if (len(temp_local_weights) !=0):
-                        if args.cpumodel is True:
-                            global_models[task_idx].to('cpu')
-                        global_models[task_idx].load_state_dict(federated(models_state_dict=temp_local_weights, local_data_nums=local_data_nums, aggregation_mtd= aggregation_mtd, numUsersSel=numUsersSel))
-                        if args.cpumodel is True:
-                            global_models[task_idx].to(device)
-                        temp_global_results.append(evaluation(model = global_models[task_idx], data = tasks_data_info[task_idx][1], batch_size = batch_size, device = device))
-                        #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
-                        print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",file=file)
-                    else:
-                        temp_global_results.append(global_results[task_idx])
-                        #print(f"Task[{task_idx}]: Global not changed")
-                        print(f"Task[{task_idx}]: Global not changed",file=file)
 
-                global_accs = []
-                for task_idx in range(len(task_type)):
-                    global_accs.append(temp_global_results[task_idx][0])
+                if args.optimal_sampling is True:
+                    temp_global_results = []
+                    for task_idx in range(len(task_type)):
+                        this_task_weights_list = []
+                        this_task_data_num_list = []
+                        # get local_weights for this task
+                        for client_idx in range(len(chosen_clients)):
+                            if clients_task[client_idx] == task_idx:
+                                this_task_weights_list.append(all_tasks_weights_list[task_idx][client_idx])
+                                this_task_data_num_list.append(all_data_num[task_idx][chosen_clients[client_idx]])
+                        assert len(this_task_weights_list) == len(p_dict[task_idx])
+                        # aggregation
+                        if (len(this_task_weights_list) != 0):
+                            if args.cpumodel is True:
+                                global_models[task_idx].to('cpu')
+                            global_models[task_idx].load_state_dict(
+                                federated_prob(models_state_dict=this_task_weights_list, local_data_num=this_task_data_num_list,
+                                          p_list=p_dict[task_idx]))
+                            if args.cpumodel is True:
+                                global_models[task_idx].to(device)
+                            temp_global_results.append(
+                                evaluation(model=global_models[task_idx], data=tasks_data_info[task_idx][1],
+                                           batch_size=batch_size, device=device))
+                            # print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            print(
+                                f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",
+                                file=file)
+                        else:
+                            temp_global_results.append(global_results[task_idx])
+                            # print(f"Task[{task_idx}]: Global not changed")
+                            print(f"Task[{task_idx}]: Global not changed", file=file)
+
+                    global_accs = []
+                    for task_idx in range(len(task_type)):
+                        global_accs.append(temp_global_results[task_idx][0])
+                else:
+                    temp_global_results = []
+                    for task_idx in range(len(task_type)):
+                        temp_local_weights = []
+                        temp_local_data_num = []
+                        local_data_nums = []
+                        for clients_idx, local_weights in enumerate(tasks_weights_list):
+                            if clients_task[clients_idx] == task_idx:
+                                temp_local_weights.append(local_weights)
+                                if type_iid[task_idx] =='iid':
+                                    local_data_nums.append(len(tasks_data_idx[task_idx][chosen_clients[clients_idx]]))
+                                if type_iid[task_idx] =='noniid':
+                                    local_data_nums.append(len(tasks_data_idx[task_idx][0][chosen_clients[clients_idx]]))
+                        #print('task, local data nums', task_idx, local_data_nums)
+                        # aggregation
+                        if (len(temp_local_weights) !=0):
+                            if args.cpumodel is True:
+                                global_models[task_idx].to('cpu')
+                            global_models[task_idx].load_state_dict(federated(models_state_dict=temp_local_weights, local_data_nums=local_data_nums, aggregation_mtd= aggregation_mtd, numUsersSel=numUsersSel))
+                            if args.cpumodel is True:
+                                global_models[task_idx].to(device)
+                            temp_global_results.append(evaluation(model = global_models[task_idx], data = tasks_data_info[task_idx][1], batch_size = batch_size, device = device))
+                            #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",file=file)
+                        else:
+                            temp_global_results.append(global_results[task_idx])
+                            #print(f"Task[{task_idx}]: Global not changed")
+                            print(f"Task[{task_idx}]: Global not changed",file=file)
+
+                    global_accs = []
+                    for task_idx in range(len(task_type)):
+                        global_accs.append(temp_global_results[task_idx][0])
                 # task allocation
                 # task allocation
                 # NEW: dec 6 2023
+
                 all_clients = list(range(0, num_clients))
                 chosen_clients = random.sample(all_clients, int(numUsersSel))  # for next round.
 
@@ -251,3 +319,16 @@ if __name__=="__main__":
             print('Finished Training')
             print('Finished Training',file=file)
             file.close()
+
+
+
+# record all client data num
+all_data_num = []
+for task_idx in range(len(task_type)):
+    local_data_num = []
+    for client_idx in range(num_clients):
+        if type_iid[task_idx] == 'iid':
+            local_data_num.append(len(tasks_data_idx[task_idx][client_idx]))
+        if type_iid[task_idx] == 'noniid':
+            local_data_num.append(len(tasks_data_idx[task_idx][0][client_idx]))
+    all_data_num.append(local_data_num)

@@ -3,7 +3,7 @@ def optimizer_config(name_data):
         learning_rate = 0.01
         momentum = 0.9
         weight_decay = 1e-4
-        lr_step_size=1
+        lr_step_size=1 # consider to change it to 5? (local round number)
         gamma=1
         milestones=[100]
         
