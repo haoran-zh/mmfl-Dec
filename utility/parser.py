@@ -14,8 +14,11 @@ class ParserArgs(object):
     def get_general_parser(self):
         # general settings
         self.parser.add_argument("--seed", type=int, default=13, help="random seed")
+        self.parser.add_argument("--round_num", type=int, default=120, help="round number")
         self.parser.add_argument("--C", type=float, default=1.0, help="C, numUsersSel=C*numClients")
         self.parser.add_argument("--class_ratio", nargs='*', type=float, default=[0.3, 0.3, 0.3, 0.3, 0.3], help="list of class ratios for noniid task")
+        self.parser.add_argument("--local_epochs", nargs='*', type=int, default=[5, 5, 5, 5, 5],
+                                 help="local epochs for each task")
         self.parser.add_argument("--num_clients", type=int, default=30, help="number of clients")
         self.parser.add_argument("--exp_num", type=int, default=4, help="experiment round number")
         self.parser.add_argument("--powerfulCNN", action="store_true", help="Decide if use powerful CNN for EMNIST")
@@ -30,6 +33,8 @@ class ParserArgs(object):
         self.parser.add_argument("--cpumodel", action="store_true", help="store model in cpu")
         self.parser.add_argument("--optimal_sampling", action="store_true", help="use optimal sampling")
         self.parser.add_argument("--insist", action="store_true", help="if insist, then experiment will be conducted even if the folder exists")
+        self.parser.add_argument("--half_lr", action="store_true",
+                                 help="0.5*learning rate")
 
     def get_args(self):
         args = self.parser.parse_args()

@@ -68,6 +68,9 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
         # get l in the paper
         l = n - m + 1
         best_l = l
+        if m == 0: # if m=0, we get best_l = n+1 above, which is wrong. how to solve?
+            best_l = n
+
         while True:
             l += 1
             if l > n:

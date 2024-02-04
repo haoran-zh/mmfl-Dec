@@ -27,8 +27,10 @@ if __name__=="__main__":
     numUsersSel = C * num_clients
 
     normalization = 'accuracy'  # accuracy
-    num_round = 120  # 100#200
-    local_epochs = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]  # [3,5,3] #[1,5,1]#5
+    num_round = args.round_num  # 100#200
+    print('num_round', num_round)
+    local_epochs = args.local_epochs
+    print(local_epochs, 'local_epochs')
     batch_size = 32
     EMNIST_powerfulCNN = args.powerfulCNN
     type_iid = args.iid_type  # 'iid', 'noniid'
@@ -214,13 +216,15 @@ if __name__=="__main__":
                                 global_models[task_idx].to('cpu')
                             global_models[task_idx].load_state_dict(
                                 federated_prob(global_weights =global_models[task_idx], models_gradient_dict=this_task_gradients_list, local_data_num=this_task_data_num_list,
-                                          p_list=p_dict[task_idx]))
+                                          p_list=p_dict[task_idx], args=args))
                             if args.cpumodel is True:
                                 global_models[task_idx].to(device)
                             temp_global_results.append(
                                 evaluation(model=global_models[task_idx], data=tasks_data_info[task_idx][1],
                                            batch_size=batch_size, device=device))
                             # print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            print('p_list', p_dict[task_idx], file=file)
+                            print('p_list', p_dict[task_idx])
                             print(
                                 f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",
                                 file=file)
