@@ -33,8 +33,7 @@ class ParserArgs(object):
         self.parser.add_argument("--cpumodel", action="store_true", help="store model in cpu")
         self.parser.add_argument("--optimal_sampling", action="store_true", help="use optimal sampling")
         self.parser.add_argument("--insist", action="store_true", help="if insist, then experiment will be conducted even if the folder exists")
-        self.parser.add_argument("--half_lr", action="store_true",
-                                 help="0.5*learning rate")
+        self.parser.add_argument("--lr", type=float, default=1.0, help="learning rate")
 
     def get_args(self):
         args = self.parser.parse_args()
