@@ -20,7 +20,7 @@ class ParserArgs(object):
         self.parser.add_argument("--local_epochs", nargs='*', type=int, default=[5, 5, 5, 5, 5],
                                  help="local epochs for each task")
         self.parser.add_argument("--num_clients", type=int, default=30, help="number of clients")
-        self.parser.add_argument("--exp_num", type=int, default=4, help="experiment round number")
+        self.parser.add_argument("--exp_num", type=int, default=1, help="experiment round number")
         self.parser.add_argument("--powerfulCNN", action="store_true", help="Decide if use powerful CNN for EMNIST")
         self.parser.add_argument("--iid_type", nargs='*', default=['noniid', 'noniid', 'noniid', 'iid', 'iid'], help="List of type_iid")
         self.parser.add_argument("--task_type", nargs='*', default=['mnist', 'cifar10', 'fashion_mnist', 'emnist', 'cifar10'], help="List of task types")

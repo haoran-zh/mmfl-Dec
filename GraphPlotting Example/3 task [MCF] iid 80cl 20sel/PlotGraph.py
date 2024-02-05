@@ -323,7 +323,7 @@ globAccRR=np.where(globAccRR <=0, 0, globAccRR)
 
 # #Exp 3. [1,5,1]
 # numRounds=100#120
-# globAccB3=np.load('mcf_i_globalAcc_exp0_algo0.npy')
+# globAccB3=np.load('mcf_i_globalAcc_exp0_algo4.npy')
 # globAccB3=globAccB3[:, 0:100]
 # globAccRand=np.load('mcf_i_globalAcc_exp0_algo1.npy')
 # globAccRand=globAccRand[:,0:100]

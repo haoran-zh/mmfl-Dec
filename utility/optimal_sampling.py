@@ -100,6 +100,8 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
         if task_indices[-1] == task_index:
             # for the last task, just give all the rest.
             sampled_clients = np.where((p >= 0))[0]
+            # set all p to 1
+            p = np.ones(n)
         else:
             random_numbers = np.random.rand(n)
             sampled_clients = np.where((random_numbers < p))[0]

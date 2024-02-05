@@ -199,7 +199,9 @@ def sort_files(files):
 
 # read all files
 # find all files starting with mcf
-algo_name = ["bayesian", "alpha-fairness", "random", "round robin"]
+algo_name = ["bayesian", "alpha-fairness", "random", "round robin",
+             "alpha-fairness-OS", "alpha-fairness-OS-halfLR",
+             "alpha-OS-2localepochs", "alpha-OS-2localepochs-halfLR"]
 #algo_name = ["alpha-fairness", "random", "round robin"]
 algo_num  = len(algo_name)
 
@@ -223,7 +225,14 @@ for path_plot in paths:
     exp_list = []
     for f in files:
         t = np.load(os.path.join(path_plot, f))
-        t = np.where(t <= 0, 0, t)
+        t = np.where(t <= 0, 0, t) # t shape: (task_num, numRounds)
+        if t.shape[-1] != numRounds:
+            # scale to 120 if it is not 120
+            num_samples = 120
+            # Generate 120 evenly spaced indices from 0 to 299
+            indices = np.linspace(0, 299, num_samples, endpoint=False).astype(int)
+            # Use these indices to sample from the original array
+            t = t[:, indices]
         exp_list.append(t)
     exp_array = np.array(exp_list)  # shape 3 5 120
     exp_num = int(exp_array.shape[0] / algo_num)
@@ -247,13 +256,13 @@ exp_array = np.mean(exp_seeds_array, axis=0)
 # print("exp_array shape", exp_array.shape) # algo_num, task_num, numRounds
 
 task_num = exp_array.shape[1]
-simulate_history = []
+"""simulate_history = []
 for i in range(4):
     simulate_history.append(simulate_allocation(exp_array[0], 'bayesian'))
 plot_allocation(simulate_history[0], path_plot, numRounds, 'bayesian')
 clientList = []
 for i in range(4):
-    clientList.append(tasklist2clientlist(simulate_history[i], task_num)[3])
+    clientList.append(tasklist2clientlist(simulate_history[i], task_num)[2])
 simulate_map(clientList, path_plot, 'bayesian', task_index=0, exp_num=4)
 
 simulate_history = []
@@ -262,8 +271,8 @@ for i in range(4):
 plot_allocation(simulate_history[0], path_plot, numRounds, 'proposed')
 clientList = []
 for i in range(4):
-    clientList.append(tasklist2clientlist(simulate_history[i], task_num)[3])
-simulate_map(clientList, path_plot, 'proposed', task_index=0, exp_num=4)
+    clientList.append(tasklist2clientlist(simulate_history[i], task_num)[2])
+simulate_map(clientList, path_plot, 'proposed', task_index=0, exp_num=4)"""
 
 
 # plot one by one
@@ -374,7 +383,8 @@ min_seed1 = MinAcc1trial(seed1)
 min_seed2 = MinAcc1trial(seed2)
 min_seed3 = MinAcc1trial(seed3)
 min_seed4 = MinAcc1trial(seed4)
-plotgraph(min_seed1[0], min_seed2[0],min_seed3[0], min_seed4[0],
+
+"""plotgraph(min_seed1[0], min_seed2[0],min_seed3[0], min_seed4[0],
           min_seed1[1], min_seed2[1], min_seed3[1], min_seed4[1],
           min_seed1[2], min_seed2[2],min_seed3[2], min_seed4[2],
-          'Accuracy', 'Minimum Accuracy over 10 Tasks')
+          'Accuracy', 'Minimum Accuracy over 10 Tasks')"""
