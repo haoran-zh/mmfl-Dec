@@ -24,6 +24,9 @@ def get_task_idx(num_tasks,
             probabilities[task_idx] = mixed_loss[task_idx] / (np.sum(mixed_loss))
         # print(probabilities)
         # to double check!!!
+        # 1,2,3
+        # client 1: P(alpha-fairness), task 1,2,3
+        # client 2:
         return list(np.random.choice(np.arange(0, num_tasks), num_clients, p=probabilities))
     elif algorithm_name == 'bayesian':
         past_counts = np.zeros((num_clients, num_tasks))  # num_clients needs to be changed to len(chosen_clients) in the future
@@ -54,10 +57,14 @@ def get_task_idx(num_tasks,
         P_task_client = P_task_client / np.sum(P_task_client, axis=1, keepdims=True)
 
         allocation_result = np.zeros(num_clients, dtype=int)
+        # include the probability that this client is not selected, extra column. -1 if not selected. unfinished!!!!!!
         for client_idx in range(num_clients):
-            allocation_result[client_idx] = np.random.choice(np.arange(0, num_tasks), p=P_task_client[client_idx])
+            if client_idx not in chosen_clients:
+                allocation_result[client_idx] = -1
+            else:
+                allocation_result[client_idx] = np.random.choice(np.arange(0, num_tasks), p=P_task_client[client_idx])
         allocation_result = allocation_result.tolist()
-        return allocation_result
+        return allocation_result, P_task_client
 
 
     elif algorithm_name == 'random':

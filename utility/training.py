@@ -10,6 +10,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
     tasks_weights_list = []
     tasks_local_training_acc = []
     tasks_local_training_loss = []
+    tasks_gradients_list = []
     
     #print(clients_task, 'cl task')
     for data_idx, task_idx  in enumerate(clients_task):
@@ -25,6 +26,8 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         for key in local_model_state_dict.keys():
             local_model_state_dict[key] = global_model_state_dict[key]
         local_model.load_state_dict(local_model_state_dict)
+
+        previous_local_state_dict = local_model_state_dict.copy()
 
         # Create a local optimizer
         learning_rate, momentum, weight_decay, lr_step_size, gamma , milestones= optimizer_config(task_type[task_idx])
@@ -80,16 +83,18 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
 
         tasks_local_training_acc.append(local_train_accuracy)
         tasks_local_training_loss.append(local_train_loss)
+        norm, lr_gradients = optimal_sampling.get_gradient_norm(previous_local_state_dict, local_model.state_dict())
         # Append local model weights to list
         if args.cpumodel is True:
             local_model.to('cpu')
         tasks_weights_list.append(local_model.state_dict().copy())
+        tasks_gradients_list.append(lr_gradients.copy())
         
         
         #take a step once every global epoch
         scheduler.step()
     
-    return tasks_weights_list, tasks_local_training_acc, tasks_local_training_loss
+    return tasks_weights_list, tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss
 
 
 def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients, task_type, clients_task, local_epochs,
@@ -106,7 +111,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
         tasks_local_training_acc = []
         tasks_local_training_loss = []
         weights_diff = []
-        for client_index in range(len(chosen_clients)):
+        for client_index in range(args.num_clients):
             local_model = load_model(name_data=task_type[int(tasks_index)], num_classes=classes_size[tasks_index][5],
                                      args=args).to(device)
 
@@ -130,12 +135,10 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
 
             # Get client's data
             if type_iid[tasks_index] == 'iid':
-                client_data = Subset(tasks_data_info[tasks_index][0], tasks_data_idx[tasks_index][
-                    chosen_clients[client_index]])  # or iid_partition depending on your choice
+                client_data = Subset(tasks_data_info[tasks_index][0], tasks_data_idx[tasks_index][client_index])  # or iid_partition depending on your choice
             elif type_iid[tasks_index] == 'noniid':
-                client_data = Subset(tasks_data_info[tasks_index][0], tasks_data_idx[tasks_index][0][
-                    chosen_clients[client_index]])  # or iid_partition depending on your choice
-                client_label = tasks_data_idx[tasks_index][1][chosen_clients[client_index]]
+                client_data = Subset(tasks_data_info[tasks_index][0], tasks_data_idx[tasks_index][0][client_index])  # or iid_partition depending on your choice
+                client_label = tasks_data_idx[tasks_index][1][client_index]
             client_loader = DataLoader(client_data, batch_size=batch_size, shuffle=True)
             local_model.train()
             local_train_accuracy = 0
@@ -170,6 +173,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
             tasks_local_training_loss.append(local_train_loss)
             # Append local model weights to list
             norm, lr_gradients = optimal_sampling.get_gradient_norm(previous_local_state_dict, local_model.state_dict())
+            # new lr = original_lr * sum(f^alpha-1(w_t))
             weights_diff.append(norm)
 
             if args.cpumodel is True:

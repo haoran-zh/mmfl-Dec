@@ -14,29 +14,33 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
     # chosen_clients provide the index of the chosen clients in a random order
     # clients_task has the same order as chosen_clients
     # example: clients_task[2] provides the task index of the chosen_clients[2]
-    # gradient_record[tasl_index] is in the same order as chosen_clients
-    # example: gradient_record[2][3] provides the gradient of the chosen_clients[3] for task 2
+    # gradient_record[task_index] is in the normal order, not in the order of chosen_clients
+    # example: gradient_record[2][chosen_clients[3]] provides the gradient of the chosen_clients[3] for task 2
     # In this function, we only use clients_task to record how many clients each task should have.
     # all_data_num is not in the order of chosen_clients
     if type(clients_task) == list:
         clients_task = np.array(clients_task)
     tasks_num = len(gradient_record)
     task_indices = list(range(tasks_num))
-    random.shuffle(task_indices) # make task order random
+    # random.shuffle(task_indices) # make task order random
+    all_clients_num = len(gradient_record[0])
 
-    chosen_clients_num = len(chosen_clients)
     clients_num_per_task = get_clients_num_per_task(clients_task, tasks_num)
 
-    is_sampled = np.zeros(chosen_clients_num) # whether the client is sampled
-    current_available_clients = chosen_clients.copy()
+    is_sampled = np.zeros(all_clients_num) # whether the client is sampled
+    # is_sampled is in the normal order! not in the order of chosen_clients
+    current_available_clients = list(range(0, all_clients_num))
+    all_clients = list(range(0, all_clients_num))
     p_dict = {task_index: [] for task_index in task_indices}
+    clients_task = np.ones(all_clients_num) * -1  # initialize clients_task
+    chosen_clients = []
 
     for task_index in task_indices:
         # available_chosen_clients_num = sum(is_sampled == 0) # available clients left
         # how many clients should be selected for this task
         clients_num_this_task = clients_num_per_task[task_index]
         all_gradients_this_task = []
-        for i in range(chosen_clients_num):
+        for i in range(all_clients_num):
             if is_sampled[i] == 0:
                 all_gradients_this_task.append(gradient_record[task_index][i])
         assert len(all_gradients_this_task) == len(current_available_clients)
@@ -44,8 +48,8 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
 
         for client_index in range(len(current_available_clients)):
             # from U to U~ in the paper
-            all_gradients_this_task[client_index] *= all_data_num[task_index][current_available_clients[client_index]] / (np.sum(
-                all_data_num[task_index]*(1-is_sampled))+1e-14)
+            all_gradients_this_task[client_index] *= all_data_num[task_index][current_available_clients[client_index]] / np.sum(
+                all_data_num[task_index])
         # print("all_gradients_this_task after filter", all_gradients_this_task)
         # sort the gradients of the clients for this task, get a list of indices
         sorted_indices = np.argsort(all_gradients_this_task)
@@ -97,31 +101,29 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
         # p[np.isnan(p)] = 1 # set nan to 1
         # print('sum of p', sum(p))
         # use p to optimal sample clients for this task
-        if task_indices[-1] == task_index:
-            # for the last task, just give all the rest.
-            sampled_clients = np.where((p >= 0))[0]
-            # set all p to 1
-            p = np.ones(n)
-        else:
-            random_numbers = np.random.rand(n)
-            sampled_clients = np.where((random_numbers < p))[0]
+        random_numbers = np.random.rand(n)
+        sampled_clients = np.where((random_numbers < p))[0]
         # print("overall chosen clients", chosen_clients)
         # print('current available clients', current_available_clients)
         # print("sampled_clients", sampled_clients)
         p_dict[task_index] = p[sampled_clients]
 
         # find the real index in chosen_clients
-        real_indices = [np.where(np.array(chosen_clients) == current_available_clients[client])[0][0] for client in sampled_clients]
+        real_indices = [np.where(np.array(all_clients) == current_available_clients[client])[0][0] for client in sampled_clients]
         # print('real indices', real_indices)
         is_sampled[real_indices] = 1
         clients_task[real_indices] = task_index
+        chosen_clients = chosen_clients + real_indices
+
         # remove the sampled clients from the available clients (current_available_clients)
         current_available_clients = np.delete(current_available_clients, sampled_clients)
         # print(is_sampled)
 
         # print(p_dict)
-    print(clients_task)
-    return clients_task, p_dict
+    # clients_task = [clients_task[i] for i in range(len(clients_task)) if clients_task[i] != -1] # take out -1
+    clients_task = [clients_task[i] for i in chosen_clients]
+
+    return clients_task, p_dict, chosen_clients
 
 def get_clients_num_per_task(clients_task, tasks_num):
     clients_num_per_task = [0] * tasks_num # list with length of tasks_num
