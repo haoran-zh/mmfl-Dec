@@ -13,115 +13,81 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
     # gradient_record: the shape is [task_index][client_index]
     # chosen_clients provide the index of the chosen clients in a random order
     # clients_task has the same order as chosen_clients
-    # example: clients_task[2] provides the task index of the chosen_clients[2]
-    # gradient_record[task_index] is in the normal order, not in the order of chosen_clients
-    # example: gradient_record[2][chosen_clients[3]] provides the gradient of the chosen_clients[3] for task 2
-    # In this function, we only use clients_task to record how many clients each task should have.
-    # all_data_num is not in the order of chosen_clients
+    # multiple tasks sampling will degenerate to single task sampling when task=1
+    # therefore we can use the same function.
     if type(clients_task) == list:
         clients_task = np.array(clients_task)
+    sample_num = len(chosen_clients)  # m in the paper
     tasks_num = len(gradient_record)
-    task_indices = list(range(tasks_num))
     # random.shuffle(task_indices) # make task order random
     all_clients_num = len(gradient_record[0])
 
-    clients_num_per_task = get_clients_num_per_task(clients_task, tasks_num)
+    all_gradients = gradient_record.copy()
 
-    is_sampled = np.zeros(all_clients_num) # whether the client is sampled
-    # is_sampled is in the normal order! not in the order of chosen_clients
-    current_available_clients = list(range(0, all_clients_num))
-    all_clients = list(range(0, all_clients_num))
-    p_dict = {task_index: [] for task_index in task_indices}
-    clients_task = np.ones(all_clients_num) * -1  # initialize clients_task
-    chosen_clients = []
+    for task_index in range(tasks_num):
+        for client_index in range(all_clients_num):
+        # from U to U~ in the paper
+            all_gradients[task_index][client_index] *= all_data_num[task_index][client_index] / np.sum(
+            all_data_num[task_index])
 
-    for task_index in task_indices:
-        # available_chosen_clients_num = sum(is_sampled == 0) # available clients left
-        # how many clients should be selected for this task
-        clients_num_this_task = clients_num_per_task[task_index]
-        all_gradients_this_task = []
-        for i in range(all_clients_num):
-            if is_sampled[i] == 0:
-                all_gradients_this_task.append(gradient_record[task_index][i])
-        assert len(all_gradients_this_task) == len(current_available_clients)
-        # print("all_gradients_this_task", all_gradients_this_task)
+    client_gradients_sumTasks = np.zeros(all_clients_num) # this is M_i in the proof
+    for client_index in range(all_clients_num):
+        for task_index in range(tasks_num):
+            client_gradients_sumTasks[client_index] += all_gradients[task_index][client_index]
 
-        for client_index in range(len(current_available_clients)):
-            # from U to U~ in the paper
-            all_gradients_this_task[client_index] *= all_data_num[task_index][current_available_clients[client_index]] / np.sum(
-                all_data_num[task_index])
-        # print("all_gradients_this_task after filter", all_gradients_this_task)
-        # sort the gradients of the clients for this task, get a list of indices
-        sorted_indices = np.argsort(all_gradients_this_task)
-        # print('sorted_indices', sorted_indices)
-        # sorted_indices is in the order of the gradient of the clients for this task
-        # remember: sorted_indices is in the order of chosen_clients
-        # if sorted_indices[0] = A, then it means chosen_clients[A] has the smallest gradient for this task
-        # all_gradients_this_task[sorted_indices[0]] is the smallest gradient for this task
-        n = len(current_available_clients) # 20
-        # print("n", n)
-        if n <= clients_num_this_task:
-            m = n
+    # sort the gradients of the clients for this task, get a list of indices
+    sorted_indices = np.argsort(client_gradients_sumTasks)
+
+    n = all_clients_num
+    m = sample_num
+
+    l = n - m + 1
+    best_l = l
+    if m == 0: # if m=0, we get best_l = n+1 above, which is wrong. how to solve?
+        best_l = n
+
+    while True:
+        l += 1
+        if l > n:
+            break
+        # sum the first l smallest gradients
+        sum_upto_l = sum(client_gradients_sumTasks[sorted_indices[i]] for i in range(l))
+        upper = sum_upto_l / client_gradients_sumTasks[sorted_indices[l-1]]
+        # if 0<m+l-n<=upper, then this l is good. find the largest l satisfying this condition
+        if 0 < m + l - n <= upper:
+            best_l = l
+    # compute p
+    p_s_i = np.zeros((tasks_num, all_clients_num))
+    sum_upto_l = sum(client_gradients_sumTasks[sorted_indices[i]] for i in range(best_l))
+    # print('sum_upto_l', sum_upto_l)
+    for i in range(len(sorted_indices)):
+        if i >= best_l:
+            for task_index in range(tasks_num):
+                p_s_i[task_index][sorted_indices[i]] = all_gradients[task_index][sorted_indices[i]] / client_gradients_sumTasks[sorted_indices[i]]
         else:
-            m = clients_num_this_task # alphafair get = 7
+            for task_index in range(tasks_num):
+                p_s_i[task_index][sorted_indices[i]] = (m + best_l - n) * all_gradients[task_index][sorted_indices[i]] / sum_upto_l
 
-        if n == 0: # if no client is available, then skip
-            continue
 
-        # print("m by alpha fair", m)
-        # get l in the paper
-        l = n - m + 1
-        best_l = l
-        if m == 0: # if m=0, we get best_l = n+1 above, which is wrong. how to solve?
-            best_l = n
-
-        while True:
-            l += 1
-            if l > n:
-                break
-            # sum the first l smallest gradients
-            sum_upto_l = sum(all_gradients_this_task[sorted_indices[i]] for i in range(l))
-            upper = sum_upto_l / all_gradients_this_task[sorted_indices[l-1]]
-            # if 0<m+l-n<=upper, then this l is good. find the largest l satisfying this condition
-            if 0 < m + l - n <= upper:
-                best_l = l # 14
-        # compute p
-        p = np.ones(n) # n: available clients
-        sum_upto_l = sum(all_gradients_this_task[sorted_indices[i]] for i in range(best_l))
-        # print('sum_upto_l', sum_upto_l)
-        for i in range(len(sorted_indices)):
-            if i >= best_l:
-                p[sorted_indices[i]] *= 1
-            else:
-                p[sorted_indices[i]] *= (m+best_l-n)*all_gradients_this_task[sorted_indices[i]]/sum_upto_l
-        # rescale the probability, make sure the sum of p is still m even some clients are sampled
-        # print(p)
-        # print('best l', best_l)
-        # if p[i]=nan, set it to 1
-        # p[np.isnan(p)] = 1 # set nan to 1
-        # print('sum of p', sum(p))
-        # use p to optimal sample clients for this task
-        random_numbers = np.random.rand(n)
-        sampled_clients = np.where((random_numbers < p))[0]
-        # print("overall chosen clients", chosen_clients)
-        # print('current available clients', current_available_clients)
-        # print("sampled_clients", sampled_clients)
-        p_dict[task_index] = p[sampled_clients]
-
-        # find the real index in chosen_clients
-        real_indices = [np.where(np.array(all_clients) == current_available_clients[client])[0][0] for client in sampled_clients]
-        # print('real indices', real_indices)
-        is_sampled[real_indices] = 1
-        clients_task[real_indices] = task_index
-        chosen_clients = chosen_clients + real_indices
-
-        # remove the sampled clients from the available clients (current_available_clients)
-        current_available_clients = np.delete(current_available_clients, sampled_clients)
-        # print(is_sampled)
-
-        # print(p_dict)
-    # clients_task = [clients_task[i] for i in range(len(clients_task)) if clients_task[i] != -1] # take out -1
-    clients_task = [clients_task[i] for i in chosen_clients]
+    # below is unfinished
+    allocation_result = np.zeros(all_clients_num, dtype=int)
+    for client_idx in range(all_clients_num):
+        if abs(1-np.sum(p_s_i[:, client_idx])) < 1e-6:
+            p_not_choose = 0
+        else:
+            p_not_choose = 1 - np.sum(p_s_i[:, client_idx])
+        # append p_not_choose to the head of p_s_i
+        p_client = np.zeros(tasks_num+1)
+        p_client[0] = p_not_choose
+        p_client[1:] = p_s_i[:, client_idx]
+        allocation_result[client_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
+    allocation_result = allocation_result.tolist()
+    clients_task = [s for s in allocation_result if s != -1]
+    chosen_clients = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
+    # get p_dict
+    p_dict = []
+    for task_index in range(tasks_num):
+        p_dict.append([p_s_i[task_index][i] for i in range(all_clients_num) if allocation_result[i] == task_index])
 
     return clients_task, p_dict, chosen_clients
 

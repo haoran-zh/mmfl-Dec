@@ -248,14 +248,17 @@ if __name__=="__main__":
                         temp_local_P = []
                         temp_local_data_num = []
                         local_data_nums = []
-                        if algorithm_name in ['bayesian', 'random']:
+                        if algorithm_name in ['bayesian', 'random', 'proposed'] and args.optimal_sampling is False:
                             for clients_idx, local_gradients in enumerate(tasks_gradients_list):
                                 if clients_task[clients_idx] == task_idx:
                                     temp_local_gradients.append(local_gradients)
                                     if algorithm_name == 'bayesian':
                                         temp_local_P.append(P_task_client_bayesian[chosen_clients[clients_idx]][task_idx])
-                                    elif algorithm_name == 'random':
-                                        temp_local_P.append(1.0)
+                                        # P_{i,s}=P(s|i)*P(i)
+                                    else:
+                                        # print('uniform distribution')
+                                        p = C/task_number
+                                        temp_local_P.append(p)
                                     # do not need to collect local_data num, just use all_local_data_num
                         else:
                             for clients_idx, local_weights in enumerate(tasks_weights_list):
@@ -270,13 +273,15 @@ if __name__=="__main__":
                         if ((len(temp_local_weights)+len(temp_local_gradients)) !=0):
                             if args.cpumodel is True:
                                 global_models[task_idx].to('cpu')
-                            if algorithm_name in ['bayesian', 'random']: # unfinished! ################
+                            if algorithm_name in ['bayesian', 'random', 'proposed'] and args.optimal_sampling is False:
                                 # 抽取P_task_client_bayesian based on chosen_clients and clients_task, define a function to do that
                                 global_models[task_idx].load_state_dict(
                                     federated_prob(global_weights=global_models[task_idx],
                                                    models_gradient_dict=temp_local_gradients,
                                                    local_data_num=all_data_num[task_idx],
                                                    p_list=temp_local_P, args=args, chosen_clients=chosen_clients))
+                                print('p_list', temp_local_P, file=file)
+                                print('p_list', temp_local_P)
                             else:
                                 global_models[task_idx].load_state_dict(federated(models_state_dict=temp_local_weights, local_data_nums=local_data_nums, aggregation_mtd= aggregation_mtd, numUsersSel=numUsersSel))
                             if args.cpumodel is True:
@@ -284,6 +289,7 @@ if __name__=="__main__":
                             temp_global_results.append(evaluation(model = global_models[task_idx], data = tasks_data_info[task_idx][1], batch_size = batch_size, device = device))
                             #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                             print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",file=file)
+                            print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             #print(f"Task[{task_idx}]: Global not changed")

@@ -36,10 +36,17 @@ def get_task_idx(num_tasks,
         for client_idx in range(num_clients):
             for task_idx in range(num_tasks):
                 for i in range(round_num):
-                    past_counts[client_idx, task_idx] += (d ** (round_num-i-1)) * (np.sum(history_array[i, client_idx] == task_idx) + 1)
+                    #  past_counts[client_idx, task_idx] += (d ** (round_num-i-1)) * (np.sum(history_array[i, client_idx] == task_idx) + 1)
+                    past_counts[client_idx, task_idx] += (d ** (round_num - i - 1)) * (
+                                np.sum(history_array[i, client_idx] == task_idx)+1)
         # normalization
         past_counts = past_counts / np.sum(past_counts, axis=1, keepdims=True)
-        future_expect = 1/2 * np.log((1-past_counts)/past_counts)
+        future_expect = 1 - past_counts
+        # past_counts cannot exceed 0.5
+        #------------
+        #past_counts = np.minimum(past_counts, 0.45)
+        #future_expect = 1/2 * np.log((1-past_counts)/past_counts)
+        # ------------
         if args.bayes_exp:
             future_expect = np.exp(future_expect)
         P_client_task = future_expect / np.sum(future_expect, axis=1, keepdims=True)

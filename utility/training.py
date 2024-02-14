@@ -5,6 +5,7 @@ from utility.config import optimizer_config
 import torch.nn as nn
 import torch.optim.lr_scheduler as lr_scheduler
 import utility.optimal_sampling as optimal_sampling
+import numpy as np
 
 def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, task_type, clients_task, local_epochs, batch_size, classes_size, type_iid, device, args):
     tasks_weights_list = []
@@ -99,6 +100,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
 
 def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients, task_type, clients_task, local_epochs,
              batch_size, classes_size, type_iid, device, args):
+    alpha = args.alpha
     all_tasks_weights_list = []
     all_tasks_local_training_acc = []
     all_tasks_local_training_loss = []
@@ -159,7 +161,10 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
                     # print(outputs.shape)
                     # print(labels.shape)
                     loss = local_criterion(outputs, labels)
-                    loss.backward()
+                    clipped_loss = torch.clamp(loss, max=1e2)
+                    modified_loss = clipped_loss.pow(alpha)
+                    # print(modified_loss)
+                    modified_loss.backward()
                     _, predicted = torch.max(outputs.data, 1)
                     total += labels.size(0)
                     correct += (predicted == labels).sum().item()
