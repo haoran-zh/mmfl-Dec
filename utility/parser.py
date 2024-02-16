@@ -31,9 +31,10 @@ class ParserArgs(object):
         self.parser.add_argument("--algo_type", nargs='*', default=['bayesian', 'proposed','random','round_robin'], help="List of algorithms")
         self.parser.add_argument("--data_ratio", type=float, default=1.0, help="data points num=default_num*data_ratio")
         self.parser.add_argument("--cpumodel", action="store_true", help="store model in cpu")
+        self.parser.add_argument("--alpha_loss", action="store_true", help="use alpha-fairness loss function")
         self.parser.add_argument("--optimal_sampling", action="store_true", help="use optimal sampling")
         self.parser.add_argument("--insist", action="store_true", help="if insist, then experiment will be conducted even if the folder exists")
-        self.parser.add_argument("--lr", type=float, default=1.0, help="learning rate")
+        self.parser.add_argument("--lr", type=float, default=0.01, help="learning rate")
 
     def get_args(self):
         args = self.parser.parse_args()

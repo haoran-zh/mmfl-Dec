@@ -173,7 +173,17 @@ if __name__=="__main__":
                                                                                         local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
                                                                                         type_iid=type_iid, device=device, args=args)
                     # optimal sampling
-                    clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients, clients_task, all_data_num, all_weights_diff)
+                    if args.alpha_loss is True:
+                        clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
+                                                                                                     clients_task,
+                                                                                                     all_data_num,
+                                                                                                     all_weights_diff)
+                    else:
+                        clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
+                                                                                                         clients_task,
+                                                                                                         all_data_num,
+                                                                                                         all_weights_diff)
+
                     # optimal sampling needs to be moved after we get local_data_nums
                 else:
                     tasks_weights_list, tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,

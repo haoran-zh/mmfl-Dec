@@ -99,21 +99,53 @@ def get_clients_num_per_task(clients_task, tasks_num):
 
 import cvxpy as cp
 
-def cvx_solve_optimal(client_num, task_num, all_gradients, ms_list):
+def optimal_solver(client_num, task_num, all_gradients, ms_list):
 
     N = client_num # client_num
     S = task_num # task_num
-    U = np.array(all_gradients) # gradient_record
-    print(U.shape)
+    # U = np.array(all_gradients) # gradient_record
     ms = np.array(ms_list)
 
-    p = cp.Variable((S, N), nonneg=True)
-    # objective function: sum_task sum_client U^2/p
-    objective = cp.Minimize(cp.sum(cp.square(U) / p))
-    constraints = [cp.sum(p, axis=0) <= 1, cp.sum(p, axis=1) <= ms]
-    prob = cp.Problem(objective, constraints)
-    prob.solve()
-    p_optimal = p.value
+    from scipy.optimize import minimize
+
+    def objective(p):
+        U = np.array(all_gradients).reshape(task_num, client_num)
+        p_reshaped = p.reshape(task_num, client_num) + 1e-10
+        return np.sum(np.divide(np.square(U), p_reshaped))
+
+    # Constraint functions
+    def constraint_sum_p_client(p):
+        # Each client's sum of p across tasks <= 1
+        return 1 - np.sum(p.reshape(task_num, client_num), axis=0)
+
+    def constraint_sum_p_task(p):
+        # Each task's sum of p across clients <= ms
+        return ms - np.sum(p.reshape(task_num, client_num), axis=1)
+
+    def bounds_p(p):
+        # p >= 0 and p <= 1
+        return p - np.zeros_like(p)  # lower bound
+        # Note: Upper bound handled by setting bounds in minimize call
+
+    # Initial guess (starting point for the optimizer)
+    p0 = np.ones(task_num * client_num) / task_num
+
+    # Constraints and bounds
+    cons = [{'type': 'ineq', 'fun': constraint_sum_p_client},
+            {'type': 'ineq', 'fun': constraint_sum_p_task},
+            {'type': 'ineq', 'fun': bounds_p}]
+    bounds = [(0, 1) for _ in range(task_num * client_num)]
+
+    # Solve the problem
+    result = minimize(objective, p0, method='SLSQP', bounds=bounds, constraints=cons, options={'maxiter': 10000})
+
+    if result.success:
+        p_optimal = result.x.reshape(task_num, client_num)
+        # print("Optimal p:", p_optimal)
+    else:
+        print("Optimization failed:", result.message)
+        p_optimal = result.x.reshape(task_num, client_num)
+
     return p_optimal
 
 
@@ -140,7 +172,7 @@ def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradien
             all_gradients[task_index][client_index] *= all_data_num[task_index][client_index] / np.sum(
             all_data_num[task_index])
 
-    p_optimal = cvx_solve_optimal(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, ms_list=ms_list)
+    p_optimal = optimal_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, ms_list=ms_list)
     p_s_i = p_optimal
 
     allocation_result = np.zeros(all_clients_num, dtype=int)

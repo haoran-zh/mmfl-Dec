@@ -26,11 +26,9 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
 
     global_weights_dict = global_weights.state_dict()
     global_keys = list(global_weights_dict.keys())
-
-    lr_factor = args.lr
     # Sum the state_dicts of all client models
     for i, gradient_dict in enumerate(models_gradient_dict):
         for key in global_keys:
-            global_weights_dict[key] -= (local_data_num[chosen_clients[i]]/np.sum(local_data_num) * 1/p_list[i]) * gradient_dict[key] * lr_factor
+            global_weights_dict[key] -= (local_data_num[chosen_clients[i]]/np.sum(local_data_num) * 1/p_list[i]) * gradient_dict[key]
 
     return global_weights_dict
