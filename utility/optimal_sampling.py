@@ -68,8 +68,6 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
             for task_index in range(tasks_num):
                 p_s_i[task_index][sorted_indices[i]] = (m + best_l - n) * all_gradients[task_index][sorted_indices[i]] / sum_upto_l
 
-
-    # below is unfinished
     allocation_result = np.zeros(all_clients_num, dtype=int)
     for client_idx in range(all_clients_num):
         if abs(1-np.sum(p_s_i[:, client_idx])) < 1e-6:
@@ -98,3 +96,70 @@ def get_clients_num_per_task(clients_task, tasks_num):
         clients_num_per_task[task_index] = clients_task.tolist().count(task_index)
     return clients_num_per_task
 
+
+import cvxpy as cp
+
+def cvx_solve_optimal(client_num, task_num, all_gradients, ms_list):
+
+    N = client_num # client_num
+    S = task_num # task_num
+    U = np.array(all_gradients) # gradient_record
+    print(U.shape)
+    ms = np.array(ms_list)
+
+    p = cp.Variable((S, N), nonneg=True)
+    # objective function: sum_task sum_client U^2/p
+    objective = cp.Minimize(cp.sum(cp.square(U) / p))
+    constraints = [cp.sum(p, axis=0) <= 1, cp.sum(p, axis=1) <= ms]
+    prob = cp.Problem(objective, constraints)
+    prob.solve()
+    p_optimal = p.value
+    return p_optimal
+
+
+def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradient_record):
+    # gradient_record: the shape is [task_index][client_index]
+    # chosen_clients provide the index of the chosen clients in a random order
+    # clients_task has the same order as chosen_clients
+    # multiple tasks sampling will degenerate to single task sampling when task=1
+    # therefore we can use the same function.
+    if type(clients_task) == list:
+        clients_task = np.array(clients_task)
+    sample_num = len(chosen_clients)  # m in the paper
+    tasks_num = len(gradient_record)
+    # random.shuffle(task_indices) # make task order random
+    all_clients_num = len(gradient_record[0])
+
+    ms_list = get_clients_num_per_task(clients_task, tasks_num)
+
+    all_gradients = gradient_record.copy()
+
+    for task_index in range(tasks_num):
+        for client_index in range(all_clients_num):
+        # from U to U~ in the paper
+            all_gradients[task_index][client_index] *= all_data_num[task_index][client_index] / np.sum(
+            all_data_num[task_index])
+
+    p_optimal = cvx_solve_optimal(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, ms_list=ms_list)
+    p_s_i = p_optimal
+
+    allocation_result = np.zeros(all_clients_num, dtype=int)
+    for client_idx in range(all_clients_num):
+        if abs(1 - np.sum(p_s_i[:, client_idx])) < 1e-6:
+            p_not_choose = 0
+        else:
+            p_not_choose = 1 - np.sum(p_s_i[:, client_idx])
+        # append p_not_choose to the head of p_s_i
+        p_client = np.zeros(tasks_num + 1)
+        p_client[0] = p_not_choose
+        p_client[1:] = p_s_i[:, client_idx]
+        allocation_result[client_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
+    allocation_result = allocation_result.tolist()
+    clients_task = [s for s in allocation_result if s != -1]
+    chosen_clients = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
+    # get p_dict
+    p_dict = []
+    for task_index in range(tasks_num):
+        p_dict.append([p_s_i[task_index][i] for i in range(all_clients_num) if allocation_result[i] == task_index])
+
+    return clients_task, p_dict, chosen_clients
