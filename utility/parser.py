@@ -34,6 +34,7 @@ class ParserArgs(object):
         self.parser.add_argument("--optimal_sampling", action="store_true", help="use optimal sampling")
         self.parser.add_argument("--insist", action="store_true", help="if insist, then experiment will be conducted even if the folder exists")
         self.parser.add_argument("--lr", type=float, default=0.01, help="learning rate")
+        self.parser.add_argument("--validation", action="store_true", help="use validation set instead of test set")
 
     def get_args(self):
         args = self.parser.parse_args()

@@ -136,6 +136,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
 
             # Create a local optimizer
             learning_rate, momentum, weight_decay, lr_step_size, gamma, milestones = optimizer_config(task_type[tasks_index])
+            learning_rate = args.lr
             local_optimizer = torch.optim.SGD(local_model.parameters(), lr=learning_rate, momentum=momentum,
                                               weight_decay=weight_decay)
             # learning rate scheduler

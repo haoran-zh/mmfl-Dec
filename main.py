@@ -101,7 +101,7 @@ if __name__=="__main__":
             torch.backends.cudnn.benchmark = False
             torch.cuda.manual_seed_all(random_seed)
 
-            global_models =[]
+            global_models = []
             local_results = []
             global_results = []
             tasks_data_info = []
@@ -233,15 +233,14 @@ if __name__=="__main__":
                                 global_models[task_idx].to(device)
                             temp_global_results.append(
                                 evaluation(model=global_models[task_idx], data=tasks_data_info[task_idx][1],
-                                           batch_size=batch_size, device=device))
+                                           batch_size=batch_size, device=device, args=args))
                             # print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                             print('p_list', p_dict[task_idx], file=file)
-                            print('p_list', p_dict[task_idx])
+                            #print('p_list', p_dict[task_idx])
                             print(
                                 f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",
                                 file=file)
-                            print(
-                                f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             # print(f"Task[{task_idx}]: Global not changed")
@@ -291,15 +290,15 @@ if __name__=="__main__":
                                                    local_data_num=all_data_num[task_idx],
                                                    p_list=temp_local_P, args=args, chosen_clients=chosen_clients))
                                 print('p_list', temp_local_P, file=file)
-                                print('p_list', temp_local_P)
+                                #print('p_list', temp_local_P)
                             else:
                                 global_models[task_idx].load_state_dict(federated(models_state_dict=temp_local_weights, local_data_nums=local_data_nums, aggregation_mtd= aggregation_mtd, numUsersSel=numUsersSel))
                             if args.cpumodel is True:
                                 global_models[task_idx].to(device)
-                            temp_global_results.append(evaluation(model = global_models[task_idx], data = tasks_data_info[task_idx][1], batch_size = batch_size, device = device))
+                            temp_global_results.append(evaluation(model = global_models[task_idx], data = tasks_data_info[task_idx][1], batch_size = batch_size, device = device, args=args))
                             #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                             print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",file=file)
-                            print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             #print(f"Task[{task_idx}]: Global not changed")
@@ -373,6 +372,6 @@ if __name__=="__main__":
             filename = 'allocCounter_{}.npy'.format(algo)
             np.save('./result/'+folder_name+'/'+filename, TaskAllocCounter)
 
-            print('Finished Training')
-            print('Finished Training',file=file)
+            print(f'Finished Training, lr:{args.lr}, Global acc:{globalAccResults[:, -1]}')
+            print(f'Finished Training, lr:{args.lr}, Global acc:{globalAccResults[:, -1]}', file=file)
             file.close()
