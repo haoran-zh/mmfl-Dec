@@ -1,7 +1,12 @@
 import torchvision.transforms as transforms
 import torchvision
 
-def preprocessing(name_data, data_ratio=1.0):
+def preprocessing(name_data, data_ratio, args):
+    unbalance = args.unbalance
+    clients_num = args.num_clients
+    unbalanced_clients = int(unbalance[0] * clients_num)
+    unbalanced_data = unbalance[1]
+
     if name_data == 'cifar10':
         # Load the CIFAR10 training and test datasets
         transforms_train = transforms.Compose([
@@ -69,5 +74,17 @@ def preprocessing(name_data, data_ratio=1.0):
         min_data_num = int(data_ratio*400)
         max_data_num = int(data_ratio*500)
 
+    max_data_list = []
+    min_data_list = []
+    unbalanced_max = max_data_num * unbalanced_data
+    unbalanced_min = min_data_num * unbalanced_data
+    for i in range(clients_num):
+        if i < unbalanced_clients:
+            max_data_list.append(unbalanced_max)
+            min_data_list.append(unbalanced_min)
+        else:
+            max_data_list.append(max_data_num)
+            min_data_list.append(min_data_num)
+
         
-    return trainset, testset, min_data_num, max_data_num, input_size, classes_size
+    return trainset, testset, min_data_list, max_data_list, input_size, classes_size

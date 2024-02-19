@@ -13,11 +13,12 @@ def iid(dataset, min_data_num, max_data_num, num_users):
                 class_list.append(idx)
         classes_list.append(class_list)
 
-    random_numbers = np.random.randint(min_data_num, max_data_num+1, size=num_users)
 
     clients_data_idx = []
     classes_data_idx = np.zeros(num_classes, dtype=int)
-    for random_number in random_numbers:
+    for i in range(num_users):
+        random_number = np.random.randint(min_data_num[i], max_data_num[i]+1)
+
         uniform_idx=np.random.randint(0, num_classes)
         client_data_idx = []
         loop_counter = 0
@@ -53,7 +54,6 @@ def noniid(dataset, min_data_num, max_data_num, class_ratio, num_users):
                 class_list.append(idx)
         classes_list.append(class_list)
 
-    random_numbers = np.random.randint(min_data_num, max_data_num+1, size=num_users)
 
     classes_len_list = []
     for class_list in classes_list:
@@ -64,7 +64,8 @@ def noniid(dataset, min_data_num, max_data_num, class_ratio, num_users):
     clients_data_idx = []
     classes_data_idx = np.zeros(num_classes, dtype=int)
     clients_label =[]
-    for random_number in random_numbers:
+    for i in range(num_users):
+        random_number = np.random.randint(min_data_num[i], max_data_num[i] + 1)
         noniid_labels = []
         # Clone classes_len_list so as not to mutate the original
         temp_classes_len_list = classes_len_list.copy()

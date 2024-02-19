@@ -114,7 +114,7 @@ if __name__=="__main__":
             TaskAllocCounter=np.zeros((len(task_type),num_round))
 
             for i in range(len(task_type)):
-                tasks_data_info.append(preprocessing(task_type[i], data_ratio)) # 0: trainset, 1: testset, 2: min_data_num, 3: max_data_num 4: input_size, 5: classes_size
+                tasks_data_info.append(preprocessing(task_type[i], data_ratio, args)) # 0: trainset, 1: testset, 2: min_data_num, 3: max_data_num 4: input_size, 5: classes_size
                 if type_iid[i] =='iid':
                     tasks_data_idx.append(dataset.iid(dataset=tasks_data_info[i][0],
                                                     min_data_num=tasks_data_info[i][2],
