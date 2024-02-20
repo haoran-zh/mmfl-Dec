@@ -137,7 +137,7 @@ def optimal_solver(client_num, task_num, all_gradients, ms_list):
     bounds = [(0, 1) for _ in range(task_num * client_num)]
 
     # Solve the problem
-    result = minimize(objective, p0, method='SLSQP', bounds=bounds, constraints=cons, options={'maxiter': 10000})
+    result = minimize(objective, p0, method='SLSQP', bounds=bounds, constraints=cons, options={'maxiter': 50000})
 
     if result.success:
         p_optimal = result.x.reshape(task_num, client_num)
@@ -185,7 +185,11 @@ def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradien
         p_client = np.zeros(tasks_num + 1)
         p_client[0] = p_not_choose
         p_client[1:] = p_s_i[:, client_idx]
-        allocation_result[client_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
+        try:
+            allocation_result[client_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
+        except:
+            allocation_result[client_idx] = np.random.choice(np.arange(-1, tasks_num), p=np.ones(tasks_num+1)/(1+tasks_num))
+
     allocation_result = allocation_result.tolist()
     clients_task = [s for s in allocation_result if s != -1]
     chosen_clients = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
