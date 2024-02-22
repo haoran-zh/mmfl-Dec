@@ -214,6 +214,8 @@ if __name__=="__main__":
                         print(f"Task[{task_idx}]: Local not changed",file=file)"""
 
                 if args.optimal_sampling is True:
+                    # remember to process local_loss
+
                     temp_global_results = []
                     for task_idx in range(len(task_type)):
                         this_task_gradients_list = []
@@ -228,7 +230,7 @@ if __name__=="__main__":
                                 global_models[task_idx].to('cpu')
                             global_models[task_idx].load_state_dict(
                                 federated_prob(global_weights =global_models[task_idx], models_gradient_dict=this_task_gradients_list, local_data_num=all_data_num[task_idx],
-                                          p_list=p_dict[task_idx], args=args, chosen_clients=chosen_clients))
+                                          p_list=p_dict[task_idx], args=args, chosen_clients=chosen_clients, tasks_local_training_loss=tasks_local_training_loss[task_idx]))
                             if args.cpumodel is True:
                                 global_models[task_idx].to(device)
                             temp_global_results.append(
@@ -240,7 +242,7 @@ if __name__=="__main__":
                             print(
                                 f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",
                                 file=file)
-                            #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             # print(f"Task[{task_idx}]: Global not changed")
@@ -288,7 +290,7 @@ if __name__=="__main__":
                                     federated_prob(global_weights=global_models[task_idx],
                                                    models_gradient_dict=temp_local_gradients,
                                                    local_data_num=all_data_num[task_idx],
-                                                   p_list=temp_local_P, args=args, chosen_clients=chosen_clients))
+                                                   p_list=temp_local_P, args=args, chosen_clients=chosen_clients, tasks_local_training_loss=tasks_local_training_loss[task_idx]))
                                 print('p_list', temp_local_P, file=file)
                                 #print('p_list', temp_local_P)
                             else:

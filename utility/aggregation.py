@@ -22,13 +22,24 @@ def federated(models_state_dict, local_data_nums, aggregation_mtd, numUsersSel):
 
     return global_state_dict
 
-def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list, args, chosen_clients):
+def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list, args, chosen_clients, tasks_local_training_loss):
 
     global_weights_dict = global_weights.state_dict()
     global_keys = list(global_weights_dict.keys())
     # Sum the state_dicts of all client models
+    # sum loss power a-1
+    alpha = 3
+
+    L = 500
+    denominator = 0
+    for i, gradient_dict in enumerate(models_gradient_dict):
+        norm_2 = sum(torch.norm(diff, p=2) ** 2 for diff in gradient_dict.values())
+        newL = (alpha-1)*tasks_local_training_loss[chosen_clients[i]]**(alpha-2)*norm_2+tasks_local_training_loss[chosen_clients[i]]**(alpha-1)*L
+        denominator += (local_data_num[chosen_clients[i]]/np.sum(local_data_num)) / p_list[i] * newL
+
+
     for i, gradient_dict in enumerate(models_gradient_dict):
         for key in global_keys:
-            global_weights_dict[key] -= (local_data_num[chosen_clients[i]]/np.sum(local_data_num) * 1/p_list[i]) * gradient_dict[key]
+            global_weights_dict[key] -= (local_data_num[chosen_clients[i]]/np.sum(local_data_num) * 1/p_list[i]) * gradient_dict[key] *tasks_local_training_loss[chosen_clients[i]]**(alpha-1) / denominator
 
     return global_weights_dict
