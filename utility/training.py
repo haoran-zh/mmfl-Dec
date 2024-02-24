@@ -73,14 +73,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
                 #print(outputs.shape)
                 #print(labels.shape)
                 loss = local_criterion(outputs, labels)
-                alpha = args.alpha
-                if args.alpha_loss is True:
-                    clipped_loss = torch.clamp(loss, max=1e2)
-                    modified_loss = clipped_loss.pow(alpha)
-                    # print(modified_loss)
-                    modified_loss.backward()
-                else:
-                    loss.backward()
+                loss.backward()
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
@@ -137,8 +130,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
             # Create a local optimizer
             learning_rate, momentum, weight_decay, lr_step_size, gamma, milestones = optimizer_config(task_type[tasks_index])
             learning_rate = args.lr
-            local_optimizer = torch.optim.SGD(local_model.parameters(), lr=learning_rate, momentum=momentum,
-                                              weight_decay=weight_decay)
+            local_optimizer = torch.optim.SGD(local_model.parameters(), lr=learning_rate)
             # learning rate scheduler
             scheduler = lr_scheduler.StepLR(local_optimizer, step_size=lr_step_size, gamma=gamma)
             # scheduler = lr_scheduler.MultiStepLR(local_optimizer, milestones=milestones, gamma=gamma)
@@ -170,13 +162,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
                     # print(outputs.shape)
                     # print(labels.shape)
                     loss = local_criterion(outputs, labels)
-                    if args.alpha_loss is True:
-                        clipped_loss = torch.clamp(loss, max=1e2)
-                        modified_loss = clipped_loss.pow(alpha)
-                    # print(modified_loss)
-                        modified_loss.backward()
-                    else:
-                        loss.backward()
+                    loss.backward()
                     _, predicted = torch.max(outputs.data, 1)
                     total += labels.size(0)
                     correct += (predicted == labels).sum().item()
