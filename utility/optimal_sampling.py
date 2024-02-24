@@ -9,7 +9,35 @@ def get_gradient_norm(weights_this_round, weights_next_round, args):
     norm = sum(torch.norm(diff, p=2) ** 2 for diff in weight_diff.values()) ** 0.5 / args.lr
     norm.item()
     return norm.item(), weight_diff
-def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_record):
+
+
+def power_gradient_norm(gradient_norm, tasks_local_training_loss, args, all_data_num):
+    alpha = args.alpha
+    task_num = len(args.task_type)
+    gradient_norm = np.array(gradient_norm)
+    tasks_local_training_loss = np.array(tasks_local_training_loss)
+    if args.fairness == 'clientfair':
+        gradient_norm_power = gradient_norm * np.power(tasks_local_training_loss, (alpha - 1)) * alpha
+    elif args.fairness == 'taskfair':
+        # compute f_s
+        gradient_norm_power = np.zeros_like(gradient_norm)
+        for s in range(task_num):
+            f_s = 0
+            for i in range(gradient_norm.shape[1]):
+                d_is = all_data_num[s][i] / np.sum(all_data_num[s])
+                f_s += tasks_local_training_loss[s][i] * d_is
+            gradient_norm_power[s] = gradient_norm[s] * f_s ** (alpha - 1) * alpha
+    elif args.fairness == 'notfair':
+        gradient_norm_power = gradient_norm
+    else:
+        print("power gradient wrong!")
+        exit(1)
+
+    return gradient_norm_power
+
+
+
+def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_record): # gradient record is norm
     # gradient_record: the shape is [task_index][client_index]
     # chosen_clients provide the index of the chosen clients in a random order
     # clients_task has the same order as chosen_clients

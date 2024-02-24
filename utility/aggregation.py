@@ -34,18 +34,7 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
     L = 1/0.05
     denominator = 0
     # aggregate
-    # 1. client fair
-    # objective function: F = sum_s sum_i w_{i,s} * f_{i,s}^alpha
-    # update rule:
-    # W_{t+1} = W_t -
-    # 2. task fair
-    # objective function: F = sum_s (sum_i w_{i,s} * f_{i,s})^alpha
-    # W_{t+1} = W_t -
-    # 3. normal
-    # objective function: F = sum_s sum_i w_{i,s} * f_{i,s}
-    # W_{t+1} = W_t -
-    # Should make sure each local update in fact only compute one gradient! not mini-batch!
-    if args.fairness == 'notfair':
+    if (args.fairness == 'notfair') or (args.alpha_loss is False) or (args.optimal_sampling is False):
         denominator = L
         for i, gradient_dict in enumerate(models_gradient_dict):
             for key in global_keys:

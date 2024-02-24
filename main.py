@@ -174,10 +174,11 @@ if __name__=="__main__":
                                                                                         type_iid=type_iid, device=device, args=args)
                     # optimal sampling
                     if args.alpha_loss is True:
+                        all_weights_diff_power = optimal_sampling.power_gradient_norm(all_weights_diff, tasks_local_training_loss, args, all_data_num)
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                                      clients_task,
                                                                                                      all_data_num,
-                                                                                                     all_weights_diff)
+                                                                                                     all_weights_diff_power)
                     else:
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
                                                                                                          clients_task,
@@ -290,7 +291,7 @@ if __name__=="__main__":
                                     federated_prob(global_weights=global_models[task_idx],
                                                    models_gradient_dict=temp_local_gradients,
                                                    local_data_num=all_data_num[task_idx],
-                                                   p_list=temp_local_P, args=args, chosen_clients=chosen_clients, tasks_local_training_loss=tasks_local_training_loss[task_idx]))
+                                                   p_list=temp_local_P, args=args, chosen_clients=chosen_clients, tasks_local_training_loss=tasks_local_training_loss))
                                 print('p_list', temp_local_P, file=file)
                                 #print('p_list', temp_local_P)
                             else:
