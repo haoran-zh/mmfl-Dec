@@ -31,7 +31,7 @@ if __name__=="__main__":
     print('num_round', num_round)
     local_epochs = args.local_epochs
     print(local_epochs, 'local_epochs')
-    batch_size = 32
+    batch_size = 500
     EMNIST_powerfulCNN = args.powerfulCNN
     type_iid = args.iid_type  # 'iid', 'noniid'
     class_ratio = args.class_ratio  # non iid only

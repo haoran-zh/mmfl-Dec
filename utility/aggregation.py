@@ -41,7 +41,7 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
         denominator += (local_data_num[chosen_clients[i]]/np.sum(local_data_num)) / p_list[i] * newL
 
         # print('norm', np.sqrt(norm_2))
-    denominator = 1/0.05
+    denominator = 1
 
     for i, gradient_dict in enumerate(models_gradient_dict):
         for key in global_keys:
