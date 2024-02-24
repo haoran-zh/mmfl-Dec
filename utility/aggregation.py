@@ -36,12 +36,12 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
         norm_2 = sum(torch.norm(diff, p=2) ** 2 for diff in gradient_dict.values())
         a = (alpha-1)*tasks_local_training_loss[chosen_clients[i]]**(alpha-2)*norm_2
         b = tasks_local_training_loss[chosen_clients[i]]**(alpha-1)*L
-        print(a, b)
+        # print(a, b)
         newL = a + b
 
         denominator += (local_data_num[chosen_clients[i]]/np.sum(local_data_num)) / p_list[i] * newL
 
-    # denominator = 1
+    denominator = 1
 
     for i, gradient_dict in enumerate(models_gradient_dict):
         for key in global_keys:
