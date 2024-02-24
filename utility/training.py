@@ -170,6 +170,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
             norm, lr_gradients = optimal_sampling.get_gradient_norm(previous_local_state_dict, local_model.state_dict(), args)
             # new lr = original_lr * sum(f^alpha-1(w_t))
             weights_diff.append(norm)
+            print("norm", norm)
 
             if args.cpumodel is True:
                 local_model.to('cpu')
