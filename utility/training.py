@@ -35,7 +35,8 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         learning_rate = args.lr
         local_optimizer = torch.optim.SGD(local_model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay )
         # learning rate scheduler
-        scheduler=lr_scheduler.StepLR(local_optimizer, step_size=lr_step_size, gamma=gamma)
+        # scheduler=lr_scheduler.StepLR(local_optimizer, step_size=lr_step_size, gamma=gamma)
+        # if learning rate is a constant, then we don't need to use a scheduler
         #scheduler = lr_scheduler.MultiStepLR(local_optimizer, milestones=milestones, gamma=gamma)
         local_criterion = nn.CrossEntropyLoss()
 
@@ -57,21 +58,12 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
                 images = images.to(device)
                 labels = labels.to(device)
                 local_optimizer.zero_grad()
-                #print(images.shape)
-                #firstdim=images.shape[0]
-                #print(images.shape[0])
-                # Forward pass
-                
-                # if task_idx==0:
-                #     images = images.view(firstdim,-1)
-                #print(images.shape)
+
                 outputs = local_model(images)
                 if type_iid[task_idx] == 'noniid':
                     label_mask = torch.zeros(classes_size[task_idx][5], device=outputs.device)
                     label_mask[client_label] = 1
                     outputs = outputs.masked_fill(label_mask == 0, 0)
-                #print(outputs.shape)
-                #print(labels.shape)
                 loss = local_criterion(outputs, labels)
                 loss.backward()
                 _, predicted = torch.max(outputs.data, 1)
@@ -94,7 +86,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         
         
         #take a step once every global epoch
-        scheduler.step()
+        # scheduler.step()
     
     return tasks_weights_list, tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss
 
@@ -132,7 +124,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
             learning_rate = args.lr
             local_optimizer = torch.optim.SGD(local_model.parameters(), lr=learning_rate)
             # learning rate scheduler
-            scheduler = lr_scheduler.StepLR(local_optimizer, step_size=lr_step_size, gamma=gamma)
+            # scheduler = lr_scheduler.StepLR(local_optimizer, step_size=lr_step_size, gamma=gamma)
             # scheduler = lr_scheduler.MultiStepLR(local_optimizer, milestones=milestones, gamma=gamma)
             local_criterion = nn.CrossEntropyLoss()
 
@@ -185,7 +177,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
 
 
             # take a step once every global epoch
-            scheduler.step()
+            # scheduler.step()
         all_tasks_weights_list.append(tasks_weights_list)
         all_tasks_local_training_acc.append(tasks_local_training_acc)
         all_tasks_local_training_loss.append(tasks_local_training_loss)
