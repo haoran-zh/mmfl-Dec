@@ -167,7 +167,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
             tasks_local_training_acc.append(local_train_accuracy)
             tasks_local_training_loss.append(local_train_loss)
             # Append local model weights to list
-            norm, lr_gradients = optimal_sampling.get_gradient_norm(previous_local_state_dict, local_model.state_dict())
+            norm, lr_gradients = optimal_sampling.get_gradient_norm(previous_local_state_dict, local_model.state_dict(), args)
             # new lr = original_lr * sum(f^alpha-1(w_t))
             weights_diff.append(norm)
 
