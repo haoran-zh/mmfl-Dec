@@ -77,7 +77,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
 
         tasks_local_training_acc.append(local_train_accuracy)
         tasks_local_training_loss.append(local_train_loss)
-        norm, lr_gradients = optimal_sampling.get_gradient_norm(previous_local_state_dict, local_model.state_dict())
+        norm, lr_gradients = optimal_sampling.get_gradient_norm(previous_local_state_dict, local_model.state_dict(), args)
         # Append local model weights to list
         if args.cpumodel is True:
             local_model.to('cpu')
