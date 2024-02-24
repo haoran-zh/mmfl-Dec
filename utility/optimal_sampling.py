@@ -2,11 +2,11 @@ import torch
 import numpy as np
 import random
 
-def get_gradient_norm(weights_this_round, weights_next_round):
+def get_gradient_norm(weights_this_round, weights_next_round, args):
     # get gradient by subtracting weights_next_round from weights_this_round
     weight_diff = {name: (weights_this_round[name] - weights_next_round[name]).cpu() for name in weights_this_round}
     # Calculate the L2 norm of the weight differences
-    norm = sum(torch.norm(diff, p=2) ** 2 for diff in weight_diff.values()) ** 0.5
+    norm = sum(torch.norm(diff, p=2) ** 2 for diff in weight_diff.values()) ** 0.5 / args.lr
     norm.item()
     return norm.item(), weight_diff
 def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_record):
