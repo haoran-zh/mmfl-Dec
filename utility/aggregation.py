@@ -29,22 +29,61 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
     # Sum the state_dicts of all client models
     # sum loss power a-1
     alpha = args.alpha
+    N = args.num_clients
 
     L = 1/0.05
     denominator = 0
-    for i, gradient_dict in enumerate(models_gradient_dict):
-        norm_2 = sum(torch.norm(diff, p=2) ** 2 for diff in gradient_dict.values()) / (args.lr**2)
-        a = (alpha-1)*tasks_local_training_loss[chosen_clients[i]]**(alpha-2)*norm_2
-        b = tasks_local_training_loss[chosen_clients[i]]**(alpha-1)*L
-        newL = a + b
+    # aggregate
+    # 1. client fair
+    # objective function: F = sum_s sum_i w_{i,s} * f_{i,s}^alpha
+    # update rule:
+    # W_{t+1} = W_t -
+    # 2. task fair
+    # objective function: F = sum_s (sum_i w_{i,s} * f_{i,s})^alpha
+    # W_{t+1} = W_t -
+    # 3. normal
+    # objective function: F = sum_s sum_i w_{i,s} * f_{i,s}
+    # W_{t+1} = W_t -
+    # Should make sure each local update in fact only compute one gradient! not mini-batch!
+    if args.fairness == 'notfair':
+        denominator = L
+        for i, gradient_dict in enumerate(models_gradient_dict):
+            for key in global_keys:
+                global_weights_dict[key] -= (local_data_num[chosen_clients[i]] / np.sum(local_data_num) / p_list[
+                    i]) * gradient_dict[key] / denominator
 
-        denominator += (local_data_num[chosen_clients[i]]/np.sum(local_data_num)) / p_list[i] * newL
+    elif args.fairness == 'clientfair':
+        for i, gradient_dict in enumerate(models_gradient_dict):
+            norm_2 = sum(torch.norm(diff, p=2) ** 2 for diff in gradient_dict.values()) / (args.lr**2)
+            a = (alpha-1)*tasks_local_training_loss[chosen_clients[i]]**(alpha-2)*norm_2
+            b = tasks_local_training_loss[chosen_clients[i]]**(alpha-1)*L
+            newL = a + b
+            denominator += (local_data_num[chosen_clients[i]]/np.sum(local_data_num)) / p_list[i] * newL
 
-        # print('norm', np.sqrt(norm_2))
-    denominator = 1
+        for i, gradient_dict in enumerate(models_gradient_dict):
+            for key in global_keys:
+                global_weights_dict[key] -= (local_data_num[chosen_clients[i]] / np.sum(local_data_num) / p_list[
+                    i]) * gradient_dict[key] * tasks_local_training_loss[chosen_clients[i]] ** (alpha - 1) / denominator
 
-    for i, gradient_dict in enumerate(models_gradient_dict):
-        for key in global_keys:
-            global_weights_dict[key] -= (local_data_num[chosen_clients[i]]/np.sum(local_data_num) * 1/p_list[i]) * gradient_dict[key] * tasks_local_training_loss[chosen_clients[i]]**(alpha-1) / denominator
+    elif args.fairness == 'taskfair':
+        # get f_s and max gradient (H_s)
+        f_s = 0
+        H_s = 0
+        Ldp = 0
+        for i, gradient_dict in enumerate(models_gradient_dict):
+            d_is = local_data_num[chosen_clients[i]] / np.sum(local_data_num)
+            f_s += tasks_local_training_loss[chosen_clients[i]] * d_is / p_list[i] # estimate
+            Ldp += L * d_is / p_list[i]
+            norm = sum(torch.norm(diff, p=2) ** 2 for diff in gradient_dict.values()) ** 0.5 / args.lr
+            if H_s < norm*d_is:
+                H_s = norm*d_is
+        denominator = (alpha-1) * (N * H_s)**2 + f_s * Ldp
+        for i, gradient_dict in enumerate(models_gradient_dict):
+            d_is = local_data_num[chosen_clients[i]] / np.sum(local_data_num)
+            for key in global_keys:
+                global_weights_dict[key] -= d_is / p_list[i] * f_s * gradient_dict[key] / denominator
+    else:
+        print("aggregation wrong!")
+        exit(1)
 
     return global_weights_dict
