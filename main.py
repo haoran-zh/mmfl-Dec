@@ -12,6 +12,7 @@ import time
 import sys
 import math
 import os
+from torch.utils.data import Subset
 from tqdm import tqdm
 import argparse
 from utility.parser import ParserArgs
@@ -107,9 +108,7 @@ if __name__=="__main__":
             tasks_data_info = []
             tasks_data_idx = []
             globalAccResults=np.zeros((len(task_type),num_round))
-            localAccResults=np.zeros((len(task_type),num_round))
             globalLossResults=np.zeros((len(task_type),num_round))
-            localLossResults=np.zeros((len(task_type),num_round))
 
             TaskAllocCounter=np.zeros((len(task_type),num_round))
 
@@ -193,26 +192,7 @@ if __name__=="__main__":
                                                                                                    local_epochs=local_epochs, batch_size = batch_size, classes_size = tasks_data_info,
                                                                                                     type_iid=type_iid, device=device, args=args)
 
-                # record accuracy and loss
-                """print("Allocated Tasks:", clients_task, file=file)
-                temp_local_results = []
-                for task_idx in range(len(task_type)):
-                    local_acc_list = []
-                    local_loss_list = []
-                    for clients_idx, _ in enumerate(tasks_local_training_acc):
-                        if clients_task[clients_idx] == task_idx:
-                            local_acc_list.append(tasks_local_training_acc[clients_idx])
-                            local_loss_list.append(tasks_local_training_loss[clients_idx])
-                    if len(local_acc_list) != 0:
-                        local_acc = np.mean(local_acc_list)
-                        local_loss = np.mean(local_loss_list)
-                        temp_local_results.append([local_acc, local_loss])
-                        #print(f"Task[{task_idx}]: Local Acc-{temp_local_results[task_idx][0]} Local Loss-{temp_local_results[task_idx][1]}")
-                        print(f"Task[{task_idx}]: Local Acc-{temp_local_results[task_idx][0]} Local Loss-{temp_local_results[task_idx][1]}",file=file)
-                    else:
-                        temp_local_results.append(local_results[task_idx])
-                        #print(f"Task[{task_idx}]: Local not changed")
-                        print(f"Task[{task_idx}]: Local not changed",file=file)"""
+
 
                 if args.optimal_sampling is True:
                     # remember to process local_loss
@@ -243,7 +223,7 @@ if __name__=="__main__":
                             print(
                                 f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",
                                 file=file)
-                            print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             # print(f"Task[{task_idx}]: Global not changed")
@@ -310,8 +290,6 @@ if __name__=="__main__":
                     global_accs = []
                     for task_idx in range(len(task_type)):
                         global_accs.append(temp_global_results[task_idx][0])
-                # task allocation
-                # task allocation
                 # NEW: dec 6 2023
 
                 all_clients = list(range(0, num_clients))
@@ -368,9 +346,34 @@ if __name__=="__main__":
                 globalLossResults[:,round]=np.array(temp_global_results)[:,1]
                 #localLossResults[:,round]=np.array(temp_local_results)[:,1]
 
+            # record global model performance on local client data
+            # only record the last round performance
+            localAcc = np.zeros((task_number, num_clients))
+            localLoss = np.zeros((task_number, num_clients))
+            for cl in range(num_clients):
+                for task in range(task_number):
+                    if type_iid[task] == 'iid':
+                        client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
+                            cl])  # or iid_partition depending on your choice
+                    if type_iid[task] == 'noniid':
+                        client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
+                            cl])  # or iid_partition depending on your choice
+                    accu, loss = evaluation(model=global_models[task], data=client_data,
+                                            batch_size=batch_size, device=device, args=None)  # use all data
+                    localAcc[task, cl] = accu
+                    localLoss[task, cl] = loss
+
+
 
             filename='mcf_i_globalAcc_exp{}_algo{}.npy'.format(exp,algo)
             np.save('./result/'+folder_name+'/'+ filename, globalAccResults)
+            filename='mcf_i_globalLoss_exp{}_algo{}.npy'.format(exp,algo)
+            np.save('./result/'+folder_name+'/'+ filename, globalLossResults)
+
+            filename='localAcc_exp{}_algo{}.npy'.format(exp,algo)
+            np.save('./result/'+folder_name+'/'+ filename, localAcc)
+            filename='localLoss_exp{}_algo{}.npy'.format(exp,algo)
+            np.save('./result/'+folder_name+'/'+ filename, localLoss)
 
             filename = 'allocCounter_{}.npy'.format(algo)
             np.save('./result/'+folder_name+'/'+filename, TaskAllocCounter)

@@ -17,10 +17,14 @@ def evaluation(model, data, batch_size, device, args):
     val_indices = indices[:num_val_samples]
     test_indices = indices[num_val_samples:]
 
-    if args.validation is True:
-        data = Subset(data, val_indices)
+    if args is None:
+        # do nothing, use all data
+        pass
     else:
-        data = Subset(data, test_indices)
+        if args.validation is True:
+            data = Subset(data, val_indices)
+        else:
+            data = Subset(data, test_indices)
     data_loader = DataLoader(data, batch_size=batch_size, shuffle=False)
     criterion = nn.CrossEntropyLoss()
     correct = 0

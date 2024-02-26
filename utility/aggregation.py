@@ -31,7 +31,7 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
     alpha = args.alpha
     N = args.num_clients
 
-    L = 1/0.05
+    L = 1/0.02
     denominator = 0
     # aggregate
     if (args.fairness == 'notfair') or (args.alpha_loss is False) or (args.optimal_sampling is False):
