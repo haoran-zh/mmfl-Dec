@@ -186,6 +186,35 @@ if __name__=="__main__":
 
                     # optimal sampling needs to be moved after we get local_data_nums
                 else:
+                    # if args.approx_optimal, then get all local loss and acc, update chosen_clients and clients_task
+                    if args.approx_optimal is True:
+                        # 1 get all local loss
+                        localAcc = np.zeros((task_number, num_clients))
+                        localLoss = np.zeros((task_number, num_clients))
+                        for cl in range(num_clients):
+                            for task in range(task_number):
+                                if type_iid[task] == 'iid':
+                                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
+                                        cl])  # or iid_partition depending on your choice
+                                if type_iid[task] == 'noniid':
+                                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
+                                        cl])  # or iid_partition depending on your choice
+                                accu, loss = evaluation(model=global_models[task], data=client_data,
+                                                        batch_size=batch_size, device=device, args=None)  # use all data
+                                localAcc[task, cl] = accu
+                                localLoss[task, cl] = loss
+                        # use loss to replace gradient norm
+                        all_weights_diff_power = optimal_sampling.power_gradient_norm(localLoss,
+                                                                                  localLoss, args,
+                                                                                  all_data_num)
+                        clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
+                                                                                                     clients_task,
+                                                                                                     all_data_num,
+                                                                                                     all_weights_diff_power)
+
+
+
+
                     tasks_weights_list, tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                                    global_models=global_models, chosen_clients=chosen_clients,
                                                                                                    task_type=task_type, clients_task=clients_task,
@@ -247,6 +276,8 @@ if __name__=="__main__":
                                     if algorithm_name == 'bayesian':
                                         temp_local_P.append(P_task_client_bayesian[chosen_clients[clients_idx]][task_idx])
                                         # P_{i,s}=P(s|i)*P(i)
+                                    elif args.approx_optimal is True:
+                                        temp_local_P = p_dict[task_idx]
                                     else:
                                         # print('uniform distribution')
                                         p = C/task_number

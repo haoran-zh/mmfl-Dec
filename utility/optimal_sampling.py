@@ -165,7 +165,7 @@ def optimal_solver(client_num, task_num, all_gradients, ms_list):
     bounds = [(0, 1) for _ in range(task_num * client_num)]
 
     # Solve the problem
-    result = minimize(objective, p0, method='SLSQP', bounds=bounds, constraints=cons, options={'maxiter': 50000})
+    result = minimize(objective, p0, method='SLSQP', bounds=bounds, constraints=cons, options={'maxiter': 500000})
 
     if result.success:
         p_optimal = result.x.reshape(task_num, client_num)
