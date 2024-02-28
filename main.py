@@ -204,13 +204,19 @@ if __name__=="__main__":
                                 localAcc[task, cl] = accu
                                 localLoss[task, cl] = loss
                         # use loss to replace gradient norm
-                        all_weights_diff_power = optimal_sampling.power_gradient_norm(localLoss,
+                        if args.alpha_loss is True:
+                            all_weights_diff_power = optimal_sampling.power_gradient_norm(localLoss,
                                                                                   localLoss, args,
                                                                                   all_data_num)
-                        clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
+                            clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                                      clients_task,
                                                                                                      all_data_num,
                                                                                                      all_weights_diff_power)
+                        else:
+                            clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
+                                                                                                         clients_task,
+                                                                                                         all_data_num,
+                                                                                                         localLoss)
 
 
 
