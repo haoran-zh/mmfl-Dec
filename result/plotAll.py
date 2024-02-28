@@ -139,7 +139,7 @@ def MaxTimeTaken_1trial(exp_array, numTasks):
 parser = ParserArgs()
 args = parser.get_args()
 
-numRounds = 120
+numRounds = 300
 folder_name = args.plot_folder
 path_plot = os.path.join('./result', folder_name)
 
@@ -198,19 +198,19 @@ def sort_files(files):
     return sorted(files, key=extract_numbers)
 
 def load_extra_folder(folder_dict):
-    # each folder should only contain 1 algo result
+    # each folder should only contain 1 algo result_old
     # get keys of the folder_dict, key is the folder name
     files = []
     for key in folder_dict:
         this_path = os.path.join('./result', key)
-        files += [os.path.join(this_path, f) for f in os.listdir(this_path) if f.startswith('mcf')]
+        files += [os.path.join(this_path, f) for f in os.listdir(this_path) if f.startswith('mcf_i_globalAcc')]
     exp_list = []
     for f in files:
         t = np.load(f)
         t = np.where(t <= 0, 0, t)  # t shape: (task_num, numRounds)
         if t.shape[-1] != numRounds:
             # scale to 120 if it is not 120
-            num_samples = 120
+            num_samples = 300
             real_length = t.shape[-1]
             # Generate 120 evenly spaced indices from 0 to 299
             indices = np.linspace(0, real_length-1, num_samples, endpoint=False).astype(int)
@@ -224,45 +224,34 @@ def load_extra_folder(folder_dict):
 
 # read all files
 # find all files starting with mcf
-"""algo_name = ["bayesian", "alpha-fairness", "random", "round robin",
-             "alpha-le5-lr1.0", "alpha-le5-lr0.5",
-             "alpha-le2-lr1.0", "alpha-le2-lr0.5",
-             "newBayesian"]"""
-algo_name = ["rand"]
-#algo_name = ["alpha-fairness", "random", "round robin"]
+# algo_name = ["bayesian", "alpha-fairness", "random", "round robin","optimal_sampling"]
+
+
+algo_name = ["a3"]
 algo_num  = len(algo_name)
 extra_folder = {
-    "1task_i_C0.2c20d1.0OSlr0.5le2": "alpha-le2lr0.5",
-    "1task_i_C0.2c20d1.0OSlr1.0le2": "alpha-le2lr1.0"
+    "2task_nnn_0.02unbalance_ms_a3_lr1": "ms_a3",
+    "2task_nnn_0.02unbalance_OS_clientfair_a3_lr1": "OS_clientFair_a3",
+"2task_nnn_0.02unbalance_OS_taskfair_a3_lr1": "OS_taskFair_a3",
+"2task_nnn_0.02unbalance_random_lr1": "random",
+    "2task_nnn_0.02unbalance_AS_clientfair_a3_lr0.02": "AS_clientFair_a3",
+    "2task_nnn_0.02unbalance_AS_taskfair_a3_lr0.02": "AS_taskFair_a3",
 }
 
-"""extra_folder = {
-    "3task_nnn_exp4C1c20d1.0-seed15-o-alpha-le1-lr0.1": "alpha-le1lr0.1",
-    "3task_nnn_exp4C1c20d1.0-seed15-o-alpha-le1-lr0.3": "alpha-le1lr0.3",
-"3task_nnn_exp4C1c20d1.0-seed15-o-alpha-le1-lr0.5": "alpha-le1lr0.5",
-   "3task_nnn_exp4C1c20d1.0-seed15-o-alpha-le1-lr1.0": "alpha-le1lr1.0",
-   "3task_nnn_exp4C1c20d1.0-seed15-o-alpha-le2-lr0.1": "alpha-le2lr0.1",
-   "3task_nnn_exp4C1c20d1.0-seed15-o-alpha-le2-lr0.3": "alpha-le2lr0.3"
-}"""
 
 extra_array = load_extra_folder(extra_folder)
 
 # seeds
 paths = []
 paths.append(path_plot)
-#paths.append(os.path.join('./result', "5task_nnnnn_exp4C1c20d1.5-seed15"))
-#paths.append(os.path.join('./result', "5task_nnnnn_exp4C1c20d1.5-seed15"))
-#paths.append(os.path.join('./result', "5task_nnnnn_exp4C1c20d1.5-seed15"))
-#paths.append(os.path.join('./result', "5task_nnnnn_exp4C1c20d1.5-seed15"))
+#paths.append(os.path.join('./result_old', "5task_nnnnn_exp4C1c20d1.5-seed15"))
+#paths.append(os.path.join('./result_old', "5task_nnnnn_exp4C1c20d1.5-seed15"))
+#paths.append(os.path.join('./result_old', "5task_nnnnn_exp4C1c20d1.5-seed15"))
+#paths.append(os.path.join('./result_old', "5task_nnnnn_exp4C1c20d1.5-seed15"))
 exp_seeds_array = []
 for path_plot in paths:
-    files = [f for f in os.listdir(path_plot) if f.startswith('mcf')]
+    files = [f for f in os.listdir(path_plot) if f.startswith('mcf_i_globalAcc')]
     files = sort_files(files)
-    # skip the bayesian
-    """if 'algo3' in files[-1]:
-        algo_name = ["alpha-fairness", "random", "round robin"]
-        algo_num  = len(algo_name)
-        files = files[1:]"""
 
     exp_list = []
     for f in files:
@@ -270,9 +259,10 @@ for path_plot in paths:
         t = np.where(t <= 0, 0, t) # t shape: (task_num, numRounds)
         if t.shape[-1] != numRounds:
             # scale to 120 if it is not 120
-            num_samples = 120
+            num_samples = 300
+            real_length = t.shape[-1]
             # Generate 120 evenly spaced indices from 0 to 299
-            indices = np.linspace(0, 299, num_samples, endpoint=False).astype(int)
+            indices = np.linspace(0, real_length-1, num_samples, endpoint=False).astype(int)
             # Use these indices to sample from the original array
             t = t[:, indices]
         exp_list.append(t)
@@ -347,8 +337,6 @@ plt.clf()
 # min acc data and plots
 Min_array = MinAcc1trial(exp_array)
 for k in range(algo_num):
-    if k in [0,1,2]:
-        continue
     plt.plot(np.arange(0, numRounds), Min_array[k], label=f'{algo_name[k]}')
 plt.legend()
 plt.ylabel('Minimum Accuracy')
@@ -416,10 +404,3 @@ plt.tight_layout()
 # plt.rcParams['font.size'] = 18
 plt.savefig(os.path.join(path_plot, 'plot_maxTimeTaken.png'))
 plt.clf()
-
-
-
-"""plotgraph(min_seed1[0], min_seed2[0],min_seed3[0], min_seed4[0],
-          min_seed1[1], min_seed2[1], min_seed3[1], min_seed4[1],
-          min_seed1[2], min_seed2[2],min_seed3[2], min_seed4[2],
-          'Accuracy', 'Minimum Accuracy over 10 Tasks')"""
