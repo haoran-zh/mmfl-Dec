@@ -128,51 +128,42 @@ def get_clients_num_per_task(clients_task, tasks_num):
 import cvxpy as cp
 
 def optimal_solver(client_num, task_num, all_gradients, ms_list):
+    N = client_num  # Number of clients
+    S = task_num    # Number of tasks
+    U = np.array(all_gradients).reshape(task_num, client_num)  # Gradient record reshaped
+    ms = np.array(ms_list)  # List of ms values
 
-    N = client_num # client_num
-    S = task_num # task_num
-    # U = np.array(all_gradients) # gradient_record
-    ms = np.array(ms_list)
+    # Define the variable to solve for
+    p = cp.Variable((S, N), nonneg=True)
+    # print("curvature of p", p.curvature)
 
-    from scipy.optimize import minimize
+    # Objective function
+    # print("curvature of U", U.curvature)
+    U2 = cp.square(U)
+    objective = cp.Minimize(cp.sum(cp.multiply(U2, cp.power(p, -1))))
 
-    def objective(p):
-        U = np.array(all_gradients).reshape(task_num, client_num)
-        p_reshaped = p.reshape(task_num, client_num) + 1e-10
-        return np.sum(np.divide(np.square(U), p_reshaped))
+    # Constraints
+    constraints = []
+    # Sum of p for each client across tasks <= 1
+    constraints += [cp.sum(p, axis=0) <= 1]
+    # Sum of p for each task across clients <= ms
+    constraints += [cp.sum(p, axis=1) <= ms]
+    # p >= 0 (implicitly satisfies p <= 1 due to the constraints above)
+    #constraints += [p >= 0]
 
-    # Constraint functions
-    def constraint_sum_p_client(p):
-        # Each client's sum of p across tasks <= 1
-        return 1 - np.sum(p.reshape(task_num, client_num), axis=0)
-
-    def constraint_sum_p_task(p):
-        # Each task's sum of p across clients <= ms
-        return ms - np.sum(p.reshape(task_num, client_num), axis=1)
-
-    def bounds_p(p):
-        # p >= 0 and p <= 1
-        return p - np.zeros_like(p)  # lower bound
-        # Note: Upper bound handled by setting bounds in minimize call
-
-    # Initial guess (starting point for the optimizer)
-    p0 = np.ones(task_num * client_num) / task_num
-
-    # Constraints and bounds
-    cons = [{'type': 'ineq', 'fun': constraint_sum_p_client},
-            {'type': 'ineq', 'fun': constraint_sum_p_task},
-            {'type': 'ineq', 'fun': bounds_p}]
-    bounds = [(0, 1) for _ in range(task_num * client_num)]
+    # Problem definition
+    problem = cp.Problem(objective, constraints)
 
     # Solve the problem
-    result = minimize(objective, p0, method='SLSQP', bounds=bounds, constraints=cons, options={'maxiter': 500000})
+    problem.solve(solver=cp.SCS)
 
-    if result.success:
-        p_optimal = result.x.reshape(task_num, client_num)
-        # print("Optimal p:", p_optimal)
+    # Check if the problem is solved successfully
+    if problem.status not in ["infeasible", "unbounded"]:
+        # Successfully solved
+        p_optimal = p.value
     else:
-        print("Optimization failed:", result.message)
-        p_optimal = result.x.reshape(task_num, client_num)
+        print("Optimization failed:", problem.status)
+        p_optimal = np.ones((S, N)) / S  # Return a default value or handle the failure appropriately
 
     return p_optimal
 
