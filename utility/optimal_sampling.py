@@ -140,7 +140,7 @@ def optimal_solver(client_num, task_num, all_gradients, ms_list):
     # Objective function
     # print("curvature of U", U.curvature)
     U2 = cp.square(U)
-    objective = cp.Minimize(cp.sum(cp.multiply(U2, cp.power(p, -1))))
+    objective = cp.Minimize(cp.sum(cp.multiply(U2, cp.power(p+1e-10, -1))))
 
     # Constraints
     constraints = []
