@@ -132,7 +132,12 @@ def optimal_solver(client_num, task_num, all_gradients, ms_list):
     S = task_num    # Number of tasks
     U = np.array(all_gradients).reshape(task_num, client_num)  # Gradient record reshaped
     ms = np.array(ms_list)  # List of ms values
-
+    # if ms exist 0, then the problem is infeasible
+    # if 0 in ms, adjust ms to make it feasible
+    if 0 in ms:
+        for i in range(len(ms)):
+            if ms[i] == 0:
+                ms[i] = 1
     # Define the variable to solve for
     p = cp.Variable((S, N), nonneg=True)
     # print("curvature of p", p.curvature)
@@ -140,7 +145,7 @@ def optimal_solver(client_num, task_num, all_gradients, ms_list):
     # Objective function
     # print("curvature of U", U.curvature)
     U2 = cp.square(U)
-    objective = cp.Minimize(cp.sum(cp.multiply(U2, cp.power(p+1e-10, -1))))
+    objective = cp.Minimize(cp.sum(cp.multiply(U2, cp.power(p, -1))))
 
     # Constraints
     constraints = []
@@ -149,13 +154,14 @@ def optimal_solver(client_num, task_num, all_gradients, ms_list):
     # Sum of p for each task across clients <= ms
     constraints += [cp.sum(p, axis=1) <= ms]
     # p >= 0 (implicitly satisfies p <= 1 due to the constraints above)
-    #constraints += [p >= 0]
+    constraints += [p >= 1e-10]
+    constraints += [p <= 1]
 
     # Problem definition
     problem = cp.Problem(objective, constraints)
 
     # Solve the problem
-    problem.solve(solver=cp.SCS)
+    problem.solve(max_iters=800000)
 
     # Check if the problem is solved successfully
     if problem.status not in ["infeasible", "unbounded"]:
@@ -164,7 +170,6 @@ def optimal_solver(client_num, task_num, all_gradients, ms_list):
     else:
         print("Optimization failed:", problem.status)
         p_optimal = np.ones((S, N)) / S  # Return a default value or handle the failure appropriately
-
     return p_optimal
 
 
@@ -216,5 +221,4 @@ def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradien
     p_dict = []
     for task_index in range(tasks_num):
         p_dict.append([p_s_i[task_index][i] for i in range(all_clients_num) if allocation_result[i] == task_index])
-
     return clients_task, p_dict, chosen_clients
