@@ -34,15 +34,26 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
     L = args.L
     denominator = 0
     # aggregate
-    if (args.fairness == 'notfair') or (args.alpha_loss is False) or (args.optimal_sampling is False and args.approx_optimal is False):
+    if (args.fairness == 'notfair'):
         denominator = L
+        if args.enlarge is True:
+            if len(tasks_local_training_loss) == len(chosen_clients):
+                sum_loss = 0
+                for i, gradient_dict in enumerate(models_gradient_dict):
+                    sum_loss += tasks_local_training_loss[i]**alpha / p_list[i]
+            else:
+                sum_loss = 0
+                for i, gradient_dict in enumerate(models_gradient_dict):
+                    sum_loss += tasks_local_training_loss[chosen_clients[i]]**alpha / p_list[i]
+            denominator /= sum_loss
+
         for i, gradient_dict in enumerate(models_gradient_dict):
+            d_i = local_data_num[chosen_clients[i]] / np.sum(local_data_num)
             for key in global_keys:
-                global_weights_dict[key] -= (local_data_num[chosen_clients[i]] / np.sum(local_data_num) / p_list[
-                    i]) * gradient_dict[key] / denominator
+                global_weights_dict[key] -= (d_i / p_list[i]) * gradient_dict[key] / denominator
 
     elif args.fairness == 'clientfair':
-        if args.approx_optimal is True:
+        if len(tasks_local_training_loss) == len(chosen_clients):
             for i, gradient_dict in enumerate(models_gradient_dict):
                 norm_2 = sum(torch.norm(diff, p=2) ** 2 for diff in gradient_dict.values()) / (args.lr ** 2)
                 a = (alpha - 1) * tasks_local_training_loss[i] ** (alpha - 2) * norm_2
@@ -73,7 +84,7 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
         f_s = 0
         H_s = 0
         Ldp = 0
-        if args.approx_optimal is True:
+        if len(tasks_local_training_loss) == len(chosen_clients):
             for i, gradient_dict in enumerate(models_gradient_dict):
                 d_is = local_data_num[chosen_clients[i]] / np.sum(local_data_num)
                 f_s += tasks_local_training_loss[i] * d_is / p_list[i] # estimate

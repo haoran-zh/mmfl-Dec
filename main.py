@@ -161,8 +161,6 @@ if __name__=="__main__":
                 #print(f"Round [{round+1}/{num_round}]")
                 print(f"Round[ {round+1}/{num_round} ]",file=file)
                 #print("Allocated Tasks:", clients_task)
-
-
                 # training
                 if args.optimal_sampling is True:
                     all_tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training_all(
@@ -177,7 +175,7 @@ if __name__=="__main__":
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                                      clients_task,
                                                                                                      all_data_num,
-                                                                                                     all_weights_diff_power)
+                                                                                                     all_weights_diff_power, args)
                     else:
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
                                                                                                          clients_task,
@@ -211,7 +209,15 @@ if __name__=="__main__":
                             clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                                      clients_task,
                                                                                                      all_data_num,
-                                                                                                     all_weights_diff_power)
+                                                                                                     all_weights_diff_power, args)
+                        elif args.aggregation_fair is True:
+                            if round == 0:
+                                loss_bf_agg = localLoss
+                            loss_diff = optimal_sampling.aggregation_fair(localLoss, loss_bf_agg)
+                            clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
+                                                                                                         clients_task,
+                                                                                                         all_data_num,
+                                                                                                         loss_diff, args)
                         else:
                             clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
                                                                                                          clients_task,
@@ -221,7 +227,7 @@ if __name__=="__main__":
 
 
 
-                    tasks_weights_list, tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
+                    tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff, loss_bf_agg = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                                    global_models=global_models, chosen_clients=chosen_clients,
                                                                                                    task_type=task_type, clients_task=clients_task,
                                                                                                    local_epochs=local_epochs, batch_size = batch_size, classes_size = tasks_data_info,
