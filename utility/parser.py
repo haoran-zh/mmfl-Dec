@@ -39,6 +39,11 @@ class ParserArgs(object):
         self.parser.add_argument("--fairness", type=str, default='notfair', help="fairness type")
         self.parser.add_argument("--L", type=float, default=1/0.02, help="learning rate")
         self.parser.add_argument("--approx_optimal", action="store_true", help="act approx optimal")
+        self.parser.add_argument("--aggregation_fair", action="store_true", help="act aggregation fairness")
+        self.parser.add_argument("--equalP", action="store_true", help="make P equal")
+        self.parser.add_argument("--enlarge", action="store_true", help="make P large")
+
+
 
 
     def get_args(self):

@@ -37,7 +37,7 @@ def power_gradient_norm(gradient_norm, tasks_local_training_loss, args, all_data
 
 
 
-def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_record): # gradient record is norm
+def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_record, args): # gradient record is norm
     # gradient_record: the shape is [task_index][client_index]
     # chosen_clients provide the index of the chosen clients in a random order
     # clients_task has the same order as chosen_clients
@@ -52,11 +52,14 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
 
     all_gradients = gradient_record.copy()
 
-    for task_index in range(tasks_num):
-        for client_index in range(all_clients_num):
-        # from U to U~ in the paper
-            all_gradients[task_index][client_index] *= all_data_num[task_index][client_index] / np.sum(
-            all_data_num[task_index])
+    if args.equalP:
+        pass
+    else:
+        for task_index in range(tasks_num):
+            for client_index in range(all_clients_num):
+            # from U to U~ in the paper
+                all_gradients[task_index][client_index] *= all_data_num[task_index][client_index] / np.sum(
+                all_data_num[task_index])
 
     client_gradients_sumTasks = np.zeros(all_clients_num) # this is M_i in the proof
     for client_index in range(all_clients_num):
@@ -112,8 +115,12 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
     chosen_clients = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
     # get p_dict
     p_dict = []
-    for task_index in range(tasks_num):
-        p_dict.append([p_s_i[task_index][i] for i in range(all_clients_num) if allocation_result[i] == task_index])
+    active_rate = len(chosen_clients)/all_clients_num
+    if args.equalP:
+        p_dict.append([active_rate for i in range(all_clients_num) if allocation_result[i] == task_index])
+    else:
+        for task_index in range(tasks_num):
+            p_dict.append([p_s_i[task_index][i] for i in range(all_clients_num) if allocation_result[i] == task_index])
 
     return clients_task, p_dict, chosen_clients
 
@@ -222,3 +229,12 @@ def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradien
     for task_index in range(tasks_num):
         p_dict.append([p_s_i[task_index][i] for i in range(all_clients_num) if allocation_result[i] == task_index])
     return clients_task, p_dict, chosen_clients
+
+
+def aggregation_fair(loss_af_aggregation, loss_bf_aggregation):
+    loss_diff = loss_af_aggregation - loss_bf_aggregation
+    # we want loss_diff to be small
+    # if loss_diff is negative, change to 0
+    loss_diff = np.maximum(loss_diff, 1e-6)
+    return loss_diff
+
