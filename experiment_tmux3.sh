@@ -1,13 +1,23 @@
 #!/bin/bash
-# alpha-fair with ms optimal sampling
-seedlist=(11 12 13 14)
+# 1 task experiments
+#seedlist=(14 15 16 17)
+seedlist=(18 19 20 21)
 for sd in "${seedlist[@]}"; do
-  python main.py --L 100 --fairness notfair --unbalance 0.9 0.1 --alpha 1.5 --notes 0.01u_msAS_a1.5_$sd --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
-  python main.py --L 100 --fairness notfair --unbalance 0.9 0.1 --alpha 1.5 --notes 0.01u_random_$sd --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist --algo_type random --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
-  python main.py --L 100 --fairness notfair --unbalance 0.9 0.1 --alpha 1.5 --notes 0.01u_ms_a1.5_$sd --optimal_sampling --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
-  python main.py --L 100 --fairness notfair --unbalance 0.9 0.1 --alpha 1.5 --notes 0.01u_a1.5_$sd --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
-  python main.py --L 100 --fairness taskfair --unbalance 0.9 0.1 --alpha 1.5 --notes 0.01u_OS_taskfair_a1.5_$sd --alpha_loss --optimal_sampling --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
-  python main.py --L 100 --fairness clientfair --unbalance 0.9 0.1 --alpha 1.5 --notes 0.01u_OS_clientfair_a1.5_$sd --alpha_loss --optimal_sampling --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
-  python main.py --L 100 --fairness taskfair --unbalance 0.9 0.1 --alpha 1.5 --notes 0.01u_AS_taskfair_a1.5_$sd --alpha_loss --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
-  python main.py --L 100 --fairness clientfair --unbalance 0.9 0.1 --alpha 1.5 --notes 0.01u_AS_clientfair_a1.5_$sd --alpha_loss --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+# 18753 test, aggregation fair?
+python main.py --L 100 --unbalance 0.9 0.1 --fairness notfair --alpha 3 --notes u91c0.3_agg_$sd --aggregation_fair --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
+# random
+python main.py --L 100 --unbalance 0.9 0.1 --fairness notfair --alpha 3 --notes u91c0.3_random_$sd --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist --algo_type random --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
+# true optimal sampling, without alpha in the loss function
+python main.py --L 100 --unbalance 0.9 0.1 --fairness notfair --alpha 3 --notes u91c0.3_AS_a1_$sd --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
+# fake optimal sampling, with gradient norm, without alpha in the loss function
+python main.py --L 100 --unbalance 0.9 0.1 --fairness notfair --alpha 3 --notes u91c0.3_OS_a1_$sd --optimal_sampling --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
+# true optimal sampling, with alpha in the loss function
+python main.py --L 100 --unbalance 0.9 0.1 --fairness clientfair --alpha 3 --notes u91c0.3_AS_a3_$sd --approx_optimal --alpha_loss --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+# fake optimal sampling, with gradient norm, with alpha in the loss function
+python main.py --L 100 --unbalance 0.9 0.1 --fairness clientfair --alpha 3 --notes u91c0.3_OS_a3_$sd --optimal_sampling --alpha_loss --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+# q-Fel
+python main.py --L 100 --unbalance 0.9 0.1 --fairness clientfair --alpha 3 --notes u91c0.3_qFel_a3_$sd --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+# alpha-fair probability. consider alpha P when sampling, but update do not include alpha. in fact it is the optimal solution!
+python main.py --L 100 --unbalance 0.9 0.1 --fairness notfair --alpha 2 --equalP --approx_optimal --alpha_loss --notes u91c0.3_testfixed_a3_$sd --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
+python main.py --unbalance 0.9 0.1 --fairness notfair --alpha 2 --equalP --approx_optimal --alpha_loss --enlarge --notes u91c0.3_testEloss_a3_$sd --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
 done
