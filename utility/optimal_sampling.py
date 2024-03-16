@@ -116,7 +116,7 @@ def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_re
     # get p_dict
     p_dict = []
     active_rate = len(chosen_clients)/all_clients_num
-    if args.equalP:
+    if args.equalP or args.equalP2:
         p_dict.append([active_rate for i in range(all_clients_num) if allocation_result[i] == task_index])
     else:
         for task_index in range(tasks_num):

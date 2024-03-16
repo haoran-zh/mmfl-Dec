@@ -42,6 +42,7 @@ class ParserArgs(object):
         self.parser.add_argument("--aggregation_fair", action="store_true", help="act aggregation fairness")
         self.parser.add_argument("--equalP", action="store_true", help="make P equal")
         self.parser.add_argument("--enlarge", action="store_true", help="make P large")
+        self.parser.add_argument("--equalP2", action="store_true", help="make P equal, and use optimal Prob")
 
 
 
