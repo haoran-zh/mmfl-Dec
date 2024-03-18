@@ -1,24 +1,30 @@
 #!/bin/bash
 # find out if the unbalanced data help AS performs better.
-sd=13
-a=2
-python main.py --L 100 --fairness clientfair --unbalance 0.9 0.1 --alpha $a --notes 0.01u_OS_clientfair_a"$a"_$sd --alpha_loss --optimal_sampling --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
-python main.py --L 100 --fairness taskfair --unbalance 0.9 0.1 --alpha $a --notes 0.01u_AS_taskfair_a"$a"_$sd --alpha_loss --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
-python main.py --L 100 --fairness clientfair --unbalance 0.9 0.1 --alpha $a --notes 0.01u_AS_clientfair_a"$a"_$sd --alpha_loss --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
-python main.py --L 100 --fairness notfair --unbalance 0.9 0.1 --alpha 3 --notes 0.01u_random_$sd --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type random --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
+#sd=13
+#a=2
+#python main.py --L 100 --fairness clientfair --unbalance 0.9 0.1 --alpha $a --notes 0.01u_OS_clientfair_a"$a"_$sd --alpha_loss --optimal_sampling --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+#python main.py --L 100 --fairness taskfair --unbalance 0.9 0.1 --alpha $a --notes 0.01u_AS_taskfair_a"$a"_$sd --alpha_loss --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+#python main.py --L 100 --fairness clientfair --unbalance 0.9 0.1 --alpha $a --notes 0.01u_AS_clientfair_a"$a"_$sd --alpha_loss --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+#python main.py --L 100 --fairness notfair --unbalance 0.9 0.1 --alpha 3 --notes 0.01u_random_$sd --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type random --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
 
-seedlist=(14 15)
-a=2
-ms_a=4
+seedlist=(11 12 13 14)
+a=1
+ms_a=1
+unbalance_value=(0.1 0.5)
+dlist=(1.0)
 for sd in "${seedlist[@]}"; do
-python main.py --L 100 --fairness notfair --unbalance 0.9 0.1 --alpha $ms_a --notes 0.01u_msAS_a"$ms_a"_$sd --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
-python main.py --L 100 --fairness notfair --unbalance 0.9 0.1 --alpha $ms_a --notes 0.01u_ms_a"$ms_a"_$sd --optimal_sampling --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
-python main.py --L 100 --fairness notfair --unbalance 0.9 0.1 --alpha $a --notes 0.01u_a"$a"_$sd --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
-python main.py --L 100 --fairness taskfair --unbalance 0.9 0.1 --alpha $a --notes 0.01u_OS_taskfair_a"$a"_$sd --alpha_loss --optimal_sampling --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
-python main.py --L 100 --fairness clientfair --unbalance 0.9 0.1 --alpha $a --notes 0.01u_OS_clientfair_a"$a"_$sd --alpha_loss --optimal_sampling --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
-python main.py --L 100 --fairness taskfair --unbalance 0.9 0.1 --alpha $a --notes 0.01u_AS_taskfair_a"$a"_$sd --alpha_loss --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
-python main.py --L 100 --fairness clientfair --unbalance 0.9 0.1 --alpha $a --notes 0.01u_AS_clientfair_a"$a"_$sd --alpha_loss --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
-python main.py --L 100 --fairness notfair --unbalance 0.9 0.1 --alpha 3 --notes 0.01u_random_$sd --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type random --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 300 --insist
+  for uv in "${unbalance_value[@]}"; do
+    for d in "${dlist[@]}"; do
+python main.py --L 100 --fairness notfair --data_ratio $d --unbalance 0.9 $uv --alpha $ms_a --notes u"$uv"d"$d"_msAS_a"$ms_a"_$sd --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+python main.py --L 100 --fairness notfair --data_ratio $d --unbalance 0.9 $uv --alpha $ms_a --notes u"$uv"d"$d"_ms_a"$ms_a"_$sd --optimal_sampling --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+python main.py --L 100 --fairness notfair --data_ratio $d --unbalance 0.9 $uv --alpha $a --notes u"$uv"d"$d"_a"$a"_$sd --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+python main.py --L 100 --fairness taskfair --data_ratio $d --unbalance 0.9 $uv --alpha $a --notes u"$uv"d"$d"_OS_taskfair_a"$a"_$sd --alpha_loss --optimal_sampling --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+python main.py --L 100 --fairness clientfair --data_ratio $d --unbalance 0.9 $uv --alpha $a --notes u"$uv"d"$d"_OS_clientfair_a"$a"_$sd --alpha_loss --optimal_sampling --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+python main.py --L 100 --fairness taskfair --data_ratio $d --unbalance 0.9 $uv --alpha $a --notes u"$uv"d"$d"_AS_taskfair_a"$a"_$sd --alpha_loss --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+python main.py --L 100 --fairness clientfair --data_ratio $d --unbalance 0.9 $uv --alpha $a --notes u"$uv"d"$d"_AS_clientfair_a"$a"_$sd --alpha_loss --approx_optimal --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type proposed --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+python main.py --L 100 --fairness notfair --data_ratio $d --unbalance 0.9 $uv --alpha 1 --notes u"$uv"d"$d"_random_$sd --C 0.2 --num_clients 40 --class_ratio 0.3 0.3 0.3 --iid_type noniid noniid noniid --task_type fashion_mnist mnist emnist --algo_type random --seed $sd --cpumodel --local_epochs 1 1 1 --round_num 1500 --insist
+done
+done
 done
 # aggregation fairness
 # 1task
