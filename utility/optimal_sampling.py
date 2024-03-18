@@ -168,15 +168,12 @@ def optimal_solver(client_num, task_num, all_gradients, ms_list):
     problem = cp.Problem(objective, constraints)
 
     # Solve the problem
-    problem.solve(max_iters=800000)
-
-    # Check if the problem is solved successfully
-    if problem.status not in ["infeasible", "unbounded"]:
-        # Successfully solved
+    try:
+        problem.solve(max_iters=1600000)
         p_optimal = p.value
-    else:
-        print("Optimization failed:", problem.status)
-        p_optimal = np.ones((S, N)) / S  # Return a default value or handle the failure appropriately
+    except:
+        p_optimal = np.ones((S, N)) / S
+
     return p_optimal
 
 
