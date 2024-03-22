@@ -194,16 +194,18 @@ if __name__=="__main__":
                         localLoss = np.zeros((task_number, num_clients))
                         for cl in range(num_clients):
                             for task in range(task_number):
-                                """if type_iid[task] == 'iid':
-                                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
-                                        cl])  # or iid_partition depending on your choice
-                                if type_iid[task] == 'noniid':
-                                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
-                                        cl])  # or iid_partition depending on your choice
-                                accu, loss = evaluation(model=global_models[task], data=client_data,
-                                                        batch_size=batch_size, device=device, args=None)  # use all data"""
-                                accu = localAccResults[task, cl, round-1]
-                                loss = localLossResults[task, cl, round-1]
+                                if round == 0:
+                                    if type_iid[task] == 'iid':
+                                        client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
+                                            cl])  # or iid_partition depending on your choice
+                                    if type_iid[task] == 'noniid':
+                                        client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
+                                            cl])  # or iid_partition depending on your choice
+                                    accu, loss = evaluation(model=global_models[task], data=client_data,
+                                                            batch_size=batch_size, device=device, args=None)  # use all data
+                                else:
+                                    accu = localAccResults[task, cl, round-1]
+                                    loss = localLossResults[task, cl, round-1]
                                 localAcc[task, cl] = accu
                                 localLoss[task, cl] = loss
                         # use loss to replace gradient norm
