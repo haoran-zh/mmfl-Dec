@@ -109,6 +109,9 @@ if __name__=="__main__":
             tasks_data_idx = []
             globalAccResults=np.zeros((len(task_type),num_round))
             globalLossResults=np.zeros((len(task_type),num_round))
+            localAccResults= np.zeros((len(task_type),num_clients, num_round))
+            localLossResults= np.zeros((len(task_type),num_clients, num_round))
+            allocation_dict_list = []
 
             TaskAllocCounter=np.zeros((len(task_type),num_round))
 
@@ -191,14 +194,16 @@ if __name__=="__main__":
                         localLoss = np.zeros((task_number, num_clients))
                         for cl in range(num_clients):
                             for task in range(task_number):
-                                if type_iid[task] == 'iid':
+                                """if type_iid[task] == 'iid':
                                     client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
                                         cl])  # or iid_partition depending on your choice
                                 if type_iid[task] == 'noniid':
                                     client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
                                         cl])  # or iid_partition depending on your choice
                                 accu, loss = evaluation(model=global_models[task], data=client_data,
-                                                        batch_size=batch_size, device=device, args=None)  # use all data
+                                                        batch_size=batch_size, device=device, args=None)  # use all data"""
+                                accu = localAccResults[task, cl, round-1]
+                                loss = localLossResults[task, cl, round-1]
                                 localAcc[task, cl] = accu
                                 localLoss[task, cl] = loss
                         # use loss to replace gradient norm
@@ -233,6 +238,14 @@ if __name__=="__main__":
                                                                                                    local_epochs=local_epochs, batch_size = batch_size, classes_size = tasks_data_info,
                                                                                                     type_iid=type_iid, device=device, args=args)
 
+
+                # record chosen_clients and clients_task
+                #print('chosen_clients', chosen_clients)
+                #print('clients_task', clients_task)
+                allocation_dict = {}
+                for i in range(len(chosen_clients)):
+                    allocation_dict[chosen_clients[i]] = clients_task[i]
+                allocation_dict_list.append(allocation_dict)
 
 
                 if args.optimal_sampling is True:
@@ -389,22 +402,24 @@ if __name__=="__main__":
                 globalLossResults[:,round]=np.array(temp_global_results)[:,1]
                 #localLossResults[:,round]=np.array(temp_local_results)[:,1]
 
-            # record global model performance on local client data
-            # only record the last round performance
-            localAcc = np.zeros((task_number, num_clients))
-            localLoss = np.zeros((task_number, num_clients))
-            for cl in range(num_clients):
-                for task in range(task_number):
-                    if type_iid[task] == 'iid':
-                        client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
-                            cl])  # or iid_partition depending on your choice
-                    if type_iid[task] == 'noniid':
-                        client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
-                            cl])  # or iid_partition depending on your choice
-                    accu, loss = evaluation(model=global_models[task], data=client_data,
-                                            batch_size=batch_size, device=device, args=None)  # use all data
-                    localAcc[task, cl] = accu
-                    localLoss[task, cl] = loss
+                # record global model performance on local client data
+                # only record the last round performance
+                localAcc = np.zeros((task_number, num_clients))
+                localLoss = np.zeros((task_number, num_clients))
+                for cl in range(num_clients):
+                    for task in range(task_number):
+                        if type_iid[task] == 'iid':
+                            client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
+                                cl])  # or iid_partition depending on your choice
+                        if type_iid[task] == 'noniid':
+                            client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
+                                cl])  # or iid_partition depending on your choice
+                        accu, loss = evaluation(model=global_models[task], data=client_data,
+                                                batch_size=batch_size, device=device, args=None)  # use all data
+                        #localAcc[task, cl] = accu
+                        #localLoss[task, cl] = loss
+                        localAccResults[task, cl, round] = accu
+                        localLossResults[task, cl, round] = loss
 
 
 
@@ -414,12 +429,20 @@ if __name__=="__main__":
             np.save('./result/'+folder_name+'/'+ filename, globalLossResults)
 
             filename='localAcc_exp{}_algo{}.npy'.format(exp,algo)
-            np.save('./result/'+folder_name+'/'+ filename, localAcc)
+            np.save('./result/'+folder_name+'/'+ filename, localAccResults)
             filename='localLoss_exp{}_algo{}.npy'.format(exp,algo)
-            np.save('./result/'+folder_name+'/'+ filename, localLoss)
+            np.save('./result/'+folder_name+'/'+ filename, localLossResults)
 
             filename = 'allocCounter_{}.npy'.format(algo)
             np.save('./result/'+folder_name+'/'+filename, TaskAllocCounter)
+
+            # save allocation_dict_list
+            # allocation_dict_list is a list, each element is a dict
+            # each dict is the allocation of one round
+            import pickle
+            filename = 'allocation_dict_list_{}.pkl'.format(algo)
+            with open('./result/'+folder_name+'/'+filename, 'wb') as f:
+                pickle.dump(allocation_dict_list, f)
 
             print(f'Finished Training, lr:{args.lr}, Global acc:{globalAccResults[:, -1]}')
             print(f'Finished Training, lr:{args.lr}, Global acc:{globalAccResults[:, -1]}', file=file)
