@@ -190,9 +190,9 @@ if __name__=="__main__":
                             P[t_idx] = global_results[t_idx][0] ** (beta-1)
                         P = P / np.sum(P)
                         # choose tasks num
-                        clients_task = list(np.random.choice(np.arange(0, len(task_type)), num_clients, p=P))
-                        chosen_clients = np.arange(0, len(clients_task))
-
+                        clients_task = list(np.random.choice(np.arange(0, len(task_type)), len(chosen_clients), p=P))
+                        # chosen_clients = np.arange(0, len(clients_task))
+                        # clients_task will be used to count the number of clients for each task
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
                                                                                                          clients_task,
                                                                                                          all_data_num,
@@ -236,8 +236,8 @@ if __name__=="__main__":
                                 P[t_idx] = global_results[t_idx][0] ** (beta - 1)
                             P = P / np.sum(P)
                             # choose tasks num
-                            clients_task = list(np.random.choice(np.arange(0, len(task_type)), num_clients, p=P))
-                            chosen_clients = np.arange(0, len(clients_task))
+                            clients_task = list(np.random.choice(np.arange(0, len(task_type)), len(chosen_clients), p=P))
+                            # chosen_clients = np.arange(0, len(clients_task))
                             clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
                                                                                                          clients_task,
                                                                                                          all_data_num,
