@@ -6,9 +6,8 @@ from matplotlib.colors import ListedColormap, BoundaryNorm
 
 def plot_allocation(tasks_list, path_plot, round_num=120, algo=None):
     tasks_list = np.array(tasks_list)
-    # print(tasks_list.shape)
     tasks_list = tasks_list.reshape(round_num, -1)
-    tasks_list = tasks_list.T
+    tasks_list = tasks_list[:120].T
     plt.figure()
     # Define the colors for each task
     #colors = ['#d85a3b', '#e9a123', '#f47e17', '#ffcd38', '#ba3339']  # Add more colors if needed

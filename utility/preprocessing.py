@@ -1,3 +1,5 @@
+import random
+
 import torchvision.transforms as transforms
 import torchvision
 
@@ -79,7 +81,10 @@ def preprocessing(name_data, data_ratio, args):
     unbalanced_max = max_data_num * unbalanced_data
     unbalanced_min = min_data_num * unbalanced_data
     for i in range(clients_num):
-        if i < unbalanced_clients:
+        #if i < unbalanced_clients:
+        # unbalanced[0]=0.9
+        # provide a random number between 0 and 1, if it is less than 0.9, then the client is unbalanced.
+        if random.random() < unbalance[0]:
             max_data_list.append(unbalanced_max)
             min_data_list.append(unbalanced_min)
         else:

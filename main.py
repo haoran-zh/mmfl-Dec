@@ -129,8 +129,8 @@ if __name__=="__main__":
                                         class_ratio=class_ratio[i],
                                         num_users=num_clients)) # 0: clients_data_idx 1: clients_label
                 global_models.append(load_model(name_data=task_type[i], num_classes=tasks_data_info[i][5], args=args).to(device))
-                local_results.append([-1,-1])
-                global_results.append([-1,-1])
+                local_results.append([0.1, 1])
+                global_results.append([0.1, 1])
 
 
             # record all client data num
@@ -144,31 +144,34 @@ if __name__=="__main__":
                         local_data_num.append(len(tasks_data_idx[task_idx][0][client_idx]))
                 all_data_num.append(local_data_num)
 
-            # allocation_initialization !!
-            # NEW: dec 6 2023
+            # allocation_initialization
             all_clients = list(range(0, num_clients))
             chosen_clients = random.sample(all_clients, int(numUsersSel))
             # we first randomly allocate.
             clients_task = np.random.randint(0, len(task_type), int(num_clients * C), dtype=int)
 
-            # allocation_initialization
-            allocation_history_list = []  # record history of allocation for bayesian
-            allocation_history_list.append(clients_task)
 
-            # if bayesian, we need to initialize P_task_client_bayesian
-            if algorithm_name == 'bayesian':
-                P_task_client_bayesian = np.ones((num_clients, task_number)) / task_number
+            # define group_clients
+            import utility.group_sampling as group_sampling
+            group_num = args.group_num
+            group_clients = group_sampling.initialize_group(client_num=num_clients, group_num=group_num)
+            client_num_per_group = int(num_clients / group_num)
+            active_clientnum_per_group = int(client_num_per_group * C)
+            buffer = [i for i in range(group_num)]  # create the buffer
 
             for round in tqdm(range(num_round)):
-                #print(round)
-                #print(f"Round [{round+1}/{num_round}]")
                 print(f"Round[ {round+1}/{num_round} ]",file=file)
-                #print("Allocated Tasks:", clients_task)
+                # random sampling
+                all_clients = list(range(0, num_clients))
+                chosen_clients = random.sample(all_clients, int(numUsersSel))
+                # we first randomly allocate.
+                clients_task = np.random.randint(0, len(task_type), int(num_clients * C), dtype=int)
                 # training
                 if args.optimal_sampling is True:
+                    # train everything to get every gradient
                     all_tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training_all(
                                                                                         tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
-                                                                                        global_models=global_models, chosen_clients=chosen_clients,
+                                                                                        global_models=global_models, chosen_clients=None,
                                                                                         task_type=task_type, clients_task=None,
                                                                                         local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
                                                                                         type_iid=type_iid, device=device, args=args)
@@ -180,6 +183,16 @@ if __name__=="__main__":
                                                                                                      all_data_num,
                                                                                                      all_weights_diff_power, args)
                     else:
+                        # compute P(s) and decide client num for each task
+                        P = np.zeros(len(task_type))
+                        for t_idx in range(len(task_type)):
+                            # compute P(s)
+                            P[t_idx] = global_results[t_idx][0] ** (beta-1)
+                        P = P / np.sum(P)
+                        # choose tasks num
+                        clients_task = list(np.random.choice(np.arange(0, len(task_type)), num_clients, p=P))
+                        chosen_clients = np.arange(0, len(clients_task))
+
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
                                                                                                          clients_task,
                                                                                                          all_data_num,
@@ -190,23 +203,21 @@ if __name__=="__main__":
                     # if args.approx_optimal, then get all local loss and acc, update chosen_clients and clients_task
                     if args.approx_optimal is True:
                         # 1 get all local loss
-                        localAcc = np.zeros((task_number, num_clients))
+                        # localAcc = np.zeros((task_number, num_clients))
                         localLoss = np.zeros((task_number, num_clients))
                         for cl in range(num_clients):
                             for task in range(task_number):
-                                if round == 0:
-                                    if type_iid[task] == 'iid':
-                                        client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
-                                            cl])  # or iid_partition depending on your choice
-                                    if type_iid[task] == 'noniid':
-                                        client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
-                                            cl])  # or iid_partition depending on your choice
-                                    accu, loss = evaluation(model=global_models[task], data=client_data,
-                                                            batch_size=batch_size, device=device, args=None)  # use all data
-                                else:
-                                    accu = localAccResults[task, cl, round-1]
-                                    loss = localLossResults[task, cl, round-1]
-                                localAcc[task, cl] = accu
+                                if type_iid[task] == 'iid':
+                                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
+                                        cl])  # or iid_partition depending on your choice
+                                if type_iid[task] == 'noniid':
+                                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
+                                        cl])  # or iid_partition depending on your choice
+                                accu, loss = evaluation(model=global_models[task], data=client_data,
+                                                        batch_size=batch_size, device=device, args=None)  # use all data
+                                # accu = localAccResults[task, cl, round-1]
+                                localLossResults[task, cl, round] = loss
+                                # localAcc[task, cl] = accu
                                 localLoss[task, cl] = loss
                         # use loss to replace gradient norm
                         if args.alpha_loss is True:
@@ -217,33 +228,56 @@ if __name__=="__main__":
                                                                                                      clients_task,
                                                                                                      all_data_num,
                                                                                                      all_weights_diff_power, args)
-                        elif args.aggregation_fair is True:
-                            if round == 0:
-                                loss_bf_agg = localLoss
-                            loss_diff = optimal_sampling.aggregation_fair(localLoss, loss_bf_agg)
-                            clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
-                                                                                                         clients_task,
-                                                                                                         all_data_num,
-                                                                                                         loss_diff, args)
                         else:
+                            # compute P(s) and decide client num for each task
+                            P = np.zeros(len(task_type))
+                            for t_idx in range(len(task_type)):
+                                # compute P(s)
+                                P[t_idx] = global_results[t_idx][0] ** (beta - 1)
+                            P = P / np.sum(P)
+                            # choose tasks num
+                            clients_task = list(np.random.choice(np.arange(0, len(task_type)), num_clients, p=P))
+                            chosen_clients = np.arange(0, len(clients_task))
                             clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
                                                                                                          clients_task,
                                                                                                          all_data_num,
                                                                                                          localLoss)
+                    elif args.group_num > 1:  # if group_num > 1, then we need to sample from each group
+                        # use current buffer to arrange tasks to each group
+                        clients_task = []
+                        chosen_clients = []
+                        for group_index, task_index in enumerate(buffer):
+                            # sample from group_clients[group_index]
+                            chosen_clients_temp = group_sampling.index_sampling(
+                                available_clients=group_clients[group_index],
+                                sample_num=active_clientnum_per_group)
+                            chosen_clients.extend(chosen_clients_temp)
+                            clients_task.extend([task_index] * len(chosen_clients_temp))
+
+                        # update buffer
+                        # remove the last one in the buffer
+                        buffer.pop()
+                        # add a new one in the front
+                        # based on alph-fainess, compute the new task_index
+                        # get available tasks
+                        available_tasks = list(set(range(task_number)) - set(buffer))
+                        # get loss_list
+                        loss_list = []
+                        for task_index in available_tasks:
+                            loss_list.append(global_results[task_index][1])
+                        idx = group_sampling.alpha_fair_new_task(alpha=beta, loss_list=loss_list)
+                        new_task = available_tasks[idx]
+                        buffer.insert(0, new_task)
+                        assert len(buffer) == group_num
 
 
-
-
-                    tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff, loss_bf_agg = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
+                    tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                                    global_models=global_models, chosen_clients=chosen_clients,
                                                                                                    task_type=task_type, clients_task=clients_task,
                                                                                                    local_epochs=local_epochs, batch_size = batch_size, classes_size = tasks_data_info,
                                                                                                     type_iid=type_iid, device=device, args=args)
 
 
-                # record chosen_clients and clients_task
-                #print('chosen_clients', chosen_clients)
-                #print('clients_task', clients_task)
                 allocation_dict = {}
                 for i in range(len(chosen_clients)):
                     allocation_dict[chosen_clients[i]] = clients_task[i]
@@ -291,49 +325,35 @@ if __name__=="__main__":
                 else:
                     temp_global_results = []
                     for task_idx in range(len(task_type)):
-                        temp_local_weights = []
                         temp_local_gradients = []
                         temp_local_P = []
                         temp_local_data_num = []
                         local_data_nums = []
-                        if algorithm_name in ['bayesian', 'random', 'proposed'] and args.optimal_sampling is False:
-                            for clients_idx, local_gradients in enumerate(tasks_gradients_list):
-                                if clients_task[clients_idx] == task_idx:
-                                    temp_local_gradients.append(local_gradients)
-                                    if algorithm_name == 'bayesian':
-                                        temp_local_P.append(P_task_client_bayesian[chosen_clients[clients_idx]][task_idx])
-                                        # P_{i,s}=P(s|i)*P(i)
-                                    elif args.approx_optimal is True:
-                                        temp_local_P = p_dict[task_idx]
+
+                        for clients_idx, local_gradients in enumerate(tasks_gradients_list):
+                            if clients_task[clients_idx] == task_idx:
+                                temp_local_gradients.append(local_gradients)
+                                if args.approx_optimal is True:
+                                    temp_local_P = p_dict[task_idx]
+                                else:
+                                    # print('uniform distribution')
+                                    if args.group_num > 1:
+                                        p= C
                                     else:
-                                        # print('uniform distribution')
                                         p = C/task_number
-                                        temp_local_P.append(p)
-                                    # do not need to collect local_data num, just use all_local_data_num
-                        else:
-                            for clients_idx, local_weights in enumerate(tasks_weights_list):
-                                if clients_task[clients_idx] == task_idx:
-                                    temp_local_weights.append(local_weights)
-                                    if type_iid[task_idx] =='iid':
-                                        local_data_nums.append(len(tasks_data_idx[task_idx][chosen_clients[clients_idx]]))
-                                    if type_iid[task_idx] =='noniid':
-                                        local_data_nums.append(len(tasks_data_idx[task_idx][0][chosen_clients[clients_idx]]))
-                        #print('task, local data nums', task_idx, local_data_nums)
+                                    temp_local_P.append(p)
+                                # do not need to collect local_data num, just use all_local_data_num
+
                         # aggregation
-                        if ((len(temp_local_weights)+len(temp_local_gradients)) !=0):
+                        if (len(temp_local_gradients) != 0):
                             if args.cpumodel is True:
                                 global_models[task_idx].to('cpu')
-                            if algorithm_name in ['bayesian', 'random', 'proposed'] and args.optimal_sampling is False:
-                                # 抽取P_task_client_bayesian based on chosen_clients and clients_task, define a function to do that
-                                global_models[task_idx].load_state_dict(
-                                    federated_prob(global_weights=global_models[task_idx],
-                                                   models_gradient_dict=temp_local_gradients,
-                                                   local_data_num=all_data_num[task_idx],
-                                                   p_list=temp_local_P, args=args, chosen_clients=chosen_clients, tasks_local_training_loss=tasks_local_training_loss))
-                                print('p_list', temp_local_P, file=file)
-                                #print('p_list', temp_local_P)
-                            else:
-                                global_models[task_idx].load_state_dict(federated(models_state_dict=temp_local_weights, local_data_nums=local_data_nums, aggregation_mtd= aggregation_mtd, numUsersSel=numUsersSel))
+                            global_models[task_idx].load_state_dict(
+                                federated_prob(global_weights=global_models[task_idx],
+                                               models_gradient_dict=temp_local_gradients,
+                                               local_data_num=all_data_num[task_idx],
+                                               p_list=temp_local_P, args=args, chosen_clients=chosen_clients, tasks_local_training_loss=tasks_local_training_loss))
+                            print('p_list', temp_local_P, file=file)
                             if args.cpumodel is True:
                                 global_models[task_idx].to(device)
                             temp_global_results.append(evaluation(model = global_models[task_idx], data = tasks_data_info[task_idx][1], batch_size = batch_size, device = device, args=args))
@@ -350,48 +370,6 @@ if __name__=="__main__":
                         global_accs.append(temp_global_results[task_idx][0])
                 # NEW: dec 6 2023
 
-                all_clients = list(range(0, num_clients))
-                chosen_clients = random.sample(all_clients, int(numUsersSel))  # for next round.
-
-                if algorithm_name == 'round_robin':
-                    clients_task, rr_chosen_clients, firstIndRR, rr_taskAlloc = get_task_id_RR(num_tasks=len(task_type),
-                                                                        totNumCl=num_clients,
-                                                                        num_clients=int(num_clients * C),
-                                                                        algorithm_name=algorithm_name,
-                                                                       normalization=normalization,
-                                                                       tasks_weight=tasks_weight,
-                                                                       global_accs=global_accs,
-                                                                       beta=beta,
-                                                                       firstIndRR=firstIndRR,
-                                                                       rr_taskAlloc=rr_taskAlloc,
-                                                                       # rr_chosen_clients=rr_chosen_clients)
-                                                                       # NEW: dec 6 2023
-                                                                       rr_chosen_clients=chosen_clients)
-
-                elif algorithm_name == 'bayesian':
-                    clients_task, P_task_client_bayesian = get_task_idx(num_tasks=len(task_type), num_clients=num_clients,
-                                                algorithm_name=algorithm_name,
-                                                normalization=normalization,
-                                                tasks_weight=tasks_weight, global_accs=global_accs, beta=beta,
-                                                # NEW: dec 6 2023
-                                                chosen_clients=chosen_clients,
-                                                allocation_history=allocation_history_list,
-                                                args=args)
-                    allocation_history_list.append(clients_task) # use a longer clients_task (include inactive clients).
-                    # transform this longer clients_task to a shorter one. (cut all inactive clients)
-                    # if clients_task[i] == -1, delete this index
-                    print('Bayesian allocation, in right order', clients_task, file=file)
-                    clients_task = [clients_task[i] for i in range(len(clients_task)) if clients_task[i] != -1]
-                    clients_task = [clients_task[i] for i in chosen_clients]
-                else:
-                    clients_task = get_task_idx(num_tasks=len(task_type), num_clients=int(num_clients * C),
-                                                algorithm_name=algorithm_name,
-                                                normalization=normalization,
-                                                tasks_weight=tasks_weight, global_accs=global_accs, beta=beta,
-                                                # NEW: dec 6 2023
-                                                chosen_clients=chosen_clients,
-                                                allocation_history=allocation_history_list,
-                                                args=args)
 
                 TaskAllocCounter[:, round] = np.bincount(np.array(clients_task).astype(np.int64), minlength=len(task_type))
                 #print("alloc", TaskAllocCounter[:, round])
@@ -405,23 +383,23 @@ if __name__=="__main__":
                 #localLossResults[:,round]=np.array(temp_local_results)[:,1]
 
                 # record global model performance on local client data
-                # only record the last round performance
-                localAcc = np.zeros((task_number, num_clients))
-                localLoss = np.zeros((task_number, num_clients))
-                for cl in range(num_clients):
-                    for task in range(task_number):
-                        if type_iid[task] == 'iid':
-                            client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
-                                cl])  # or iid_partition depending on your choice
-                        if type_iid[task] == 'noniid':
-                            client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
-                                cl])  # or iid_partition depending on your choice
-                        accu, loss = evaluation(model=global_models[task], data=client_data,
-                                                batch_size=batch_size, device=device, args=None)  # use all data
-                        #localAcc[task, cl] = accu
-                        #localLoss[task, cl] = loss
-                        localAccResults[task, cl, round] = accu
-                        localLossResults[task, cl, round] = loss
+            # only record the last round performance
+            localAcc = np.zeros((task_number, num_clients))
+            localLoss = np.zeros((task_number, num_clients))
+            for cl in range(num_clients):
+                for task in range(task_number):
+                    if type_iid[task] == 'iid':
+                        client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
+                            cl])  # or iid_partition depending on your choice
+                    if type_iid[task] == 'noniid':
+                        client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
+                            cl])  # or iid_partition depending on your choice
+                    accu, loss = evaluation(model=global_models[task], data=client_data,
+                                            batch_size=batch_size, device=device, args=None)  # use all data
+                    #localAcc[task, cl] = accu
+                    #localLoss[task, cl] = loss
+                    localAccResults[task, cl, -1] = accu
+                    localLossResults[task, cl, -1] = loss
 
 
 
