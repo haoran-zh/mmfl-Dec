@@ -114,11 +114,11 @@ def allocation(folder_dict, seed=11):
         data = pickle.load(f) # data is a list (len: 1500). each element is a dict, dict[client_id] = task_id
     task_list = generate_task_list(data)
     # plot allocation
-    plot_allocation(task_list, this_path, round_num=1500, algo=next(iter(folder_dict.values())))
+    plot_allocation(task_list, this_path, round_num=all_rounds, algo=next(iter(folder_dict.values())))
     taskarray = np.array(task_list) # round_num client_num
     # count client resources for each task in each round
     task_count_all = []
-    for i in range(numRounds):
+    for i in range(all_rounds):
         task_thisround = taskarray[i]
         client_count = []
         # for each task, count the number of clients for this task
@@ -134,7 +134,6 @@ def allocation(folder_dict, seed=11):
         # remove the round with 0 clients
         client_count = task_count_all_copy[:, i]
         client_count = client_count[client_count != 0]
-        print(np.mean(client_count))
         # compute variance
         var_tasks.append(np.var(client_count))
     return np.mean(var_tasks), task_count_all
@@ -156,7 +155,7 @@ def plot_each_task(all_algorithm_curve, keys_list):
             ax.set_xlabel('Round')
             ax.set_ylabel('Global acc')
             ax.set_title(f'Global acc for task {i}')
-    fig_eachTask.savefig(f'./result/3task_nnn_u{u_value}d{d_value}_random_11/global_acc_each_task.png')
+    fig_eachTask.savefig(finalPath+'/global_acc_each_task.png')
 
 
 def plot_allocation_count(all_count_list, keys_list):
@@ -177,7 +176,7 @@ def plot_allocation_count(all_count_list, keys_list):
             ax.set_xlabel('Round')
             ax.set_ylabel('Global acc')
             ax.set_title(f'Global acc for task {i}')
-    fig_eachTask.savefig(f'./result/3task_nnn_u{u_value}d{d_value}_random_11/task_allocation.png')
+    fig_eachTask.savefig(finalPath+'/task_allocation.png')
 
 
 
@@ -250,24 +249,51 @@ f"3task_nnn_u{u_value}d{d_value}_random_": "random"
 seed_list = [11, 12, 13, 14]"""
 
 
-u_value = 0.5
-d_value = 0.3
+"""u_value = 1.0
+d_value = 0.1
+c = 1.0
 a = 2
 ms_a = 4
+tasknum=5
 extra_folder = {
-f"3task_nnn_u{u_value}d{d_value}_a{a}_": f"a{a}",
-f"3task_nnn_u{u_value}d{d_value}_ms_a{ms_a}_": f"ms_a{ms_a}",
-#f"3task_nnn_u{u_value}d{d_value}_msAS_a{ms_a}_": f"msAS_a{ms_a}",
-f"3task_nnn_u{u_value}d{d_value}_AS_clientfair_a{a}_": f"AS_CF_a{a}",
-#f"3task_nnn_u{u_value}d{d_value}_AS_taskfair_a{a}_": f"AS_TF_a{a}",
+#f"3task_nnn_u{u_value}d{d_value}_a{a}_": f"a{a}",
+#f"3task_nnn_u{u_value}d{d_value}_ms_a{ms_a}_": f"ms_a{ms_a}",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_msAS_a{ms_a}_": f"msAS_a{ms_a}",
+#f"3task_nnn_u{u_value}d{d_value}_AS_clientfair_a{a}_": f"AS_CF_a{a}",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_AS_taskfair_a{a}_": f"AS_TF_a{a}",
 #f"3task_nnn_u{u_value}d{d_value}_OS_clientfair_a{a}_": f"OS_CF_a{a}",
-#f"3task_nnn_u{u_value}d{d_value}_OS_taskfair_a{a}_": f"OS_TF_a{a}",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_taskfair_a{a}_": f"OS_TF_a{a}",
 #f"3task_nnn_u{u_value}d{d_value}_qFel_a{a}_": f"qFel_a{a}",
-f"3task_nnn_u{u_value}d{d_value}_random_": "random",
-f"3task_nnn_u{u_value}d{d_value}_test2_a3_": "test2_a2",
-f"3task_nnn_u{u_value}d{d_value}_GS_a_": "Group sample",
+#f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_": "random",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_test2_a2_": "test2_a2",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_GS_a{a}_": "Group sample",
 }
-seed_list = [11, 12, 13, 14, 15, 16, 17, 18, 19]
+all_rounds=800
+seed_list = [17]"""
+
+
+u_value = 51
+c = 0.3
+a = 2
+ms_a = 4
+tasknum=1
+all_rounds=600
+extra_folder = {
+#f"3task_nnn_u{u_value}d{d_value}_a{a}_": f"a{a}",
+#f"3task_nnn_u{u_value}d{d_value}_ms_a{ms_a}_": f"ms_a{ms_a}",
+#f"{tasknum}task_nnn_u{u_value}c{c}_msAS_a{ms_a}_": f"msAS_a{ms_a}",
+#f"3task_nnn_u{u_value}d{d_value}_AS_clientfair_a{a}_": f"AS_CF_a{a}",
+f"{tasknum}task_nnn_u{u_value}c{c}_AS_a{a}_": f"AS_a{a}",
+#f"3task_nnn_u{u_value}d{d_value}_OS_clientfair_a{a}_": f"OS_CF_a{a}",
+f"{tasknum}task_nnn_u{u_value}c{c}_OS_a{a}_": f"OS_a{a}",
+#f"3task_nnn_u{u_value}d{d_value}_qFel_a{a}_": f"qFel_a{a}",
+f"{tasknum}task_nnn_u{u_value}c{c}_random_": "random",
+f"{tasknum}task_nnn_u{u_value}c{c}_testfixed2_a3_": "test2_a2",
+}
+seed_list = [15, 16, 17, 18]
+
+finalPath = f'./result/{tasknum}task_nnn_u{u_value}c{c}_random_15'
+
 
 fig_avg = plt.figure()
 fig_min = plt.figure()
@@ -294,10 +320,13 @@ for key in extra_folder:
 
     for seed in seed_list:
         # plot allocation
-        allo_var, client_count_all = allocation(current_folder, seed)
-        if type(client_count_all) is not int:
-            count_list.append(client_count_all)
-            allocation_var += allo_var
+        if tasknum > 1:
+            allo_var, client_count_all = allocation(current_folder, seed)
+            if type(client_count_all) is not int:
+                count_list.append(client_count_all)
+                allocation_var += allo_var
+        else:
+            allocation_var = 0
 
 
         exp_array = load_extra_folder(current_folder, seed, header='localAcc_')
@@ -305,7 +334,7 @@ for key in extra_folder:
         if exp_array.shape[-1] == 0:
             algor_seed.remove(seed)
             continue
-        if exp_array.shape[-1] == 1500:
+        if exp_array.shape[-1] == all_rounds:
             exp_array = exp_array[:, :, :, -1].reshape(exp_array.shape[1], exp_array.shape[2])
         else:
             exp_array = exp_array.reshape(exp_array.shape[1], exp_array.shape[2])
@@ -357,8 +386,8 @@ for key in extra_folder:
     ax_min.plot(curve_min[1:], label=next(iter(algo_name)))
 
 # plot each task
-plot_each_task(all_algorithm_curve, keys_list)
-plot_allocation_count(all_count_list, keys_list)
+#plot_each_task(all_algorithm_curve, keys_list)
+#plot_allocation_count(all_count_list, keys_list)
 
 ax_avg.legend()
 ax_avg.set_xlabel('Round')
@@ -372,14 +401,6 @@ ax_min.set_title('Global min acc')
 
 fig = ax_avg.get_figure()
 # save to 3task_nnn_u{u_value}d{d_value}_random_11/global_avg_acc.png
-fig.savefig(f'./result/3task_nnn_u{u_value}d{d_value}_random_11/global_avg_acc.png')
+fig.savefig(finalPath+'/global_avg_acc.png')
 fig = ax_min.get_figure()
-fig.savefig(f'./result/3task_nnn_u{u_value}d{d_value}_random_11/global_min_acc.png')
-
-
-
-
-
-
-
-
+fig.savefig(finalPath+'/global_min_acc.png')

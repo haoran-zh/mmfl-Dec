@@ -38,6 +38,10 @@ if __name__=="__main__":
     class_ratio = args.class_ratio  # non iid only
     beta = args.alpha  # default 3
     task_type = args.task_type
+    if 'shakespeare' in task_type:
+        shakespeare_idx = task_type.index('shakespeare')
+    else:
+        shakespeare_idx = -1
     task_number = len(task_type)
     data_ratio = args.data_ratio
     # set record name
@@ -116,19 +120,35 @@ if __name__=="__main__":
             TaskAllocCounter=np.zeros((len(task_type),num_round))
 
             for i in range(len(task_type)):
-                tasks_data_info.append(preprocessing(task_type[i], data_ratio, args)) # 0: trainset, 1: testset, 2: min_data_num, 3: max_data_num 4: input_size, 5: classes_size
-                if type_iid[i] =='iid':
-                    tasks_data_idx.append(dataset.iid(dataset=tasks_data_info[i][0],
-                                                    min_data_num=tasks_data_info[i][2],
-                                                    max_data_num=tasks_data_info[i][3],
-                                                    num_users=num_clients)) # 0: clients_data_idx
-                elif type_iid[i] =='noniid':
-                    tasks_data_idx.append(dataset.noniid(dataset=tasks_data_info[i][0],
-                                        min_data_num=tasks_data_info[i][2],
-                                        max_data_num=tasks_data_info[i][3],
-                                        class_ratio=class_ratio[i],
-                                        num_users=num_clients)) # 0: clients_data_idx 1: clients_label
-                global_models.append(load_model(name_data=task_type[i], num_classes=tasks_data_info[i][5], args=args).to(device))
+                if task_type[i] == 'shakespeare':
+                    import utility.language_tools as language_tools
+                    dataset_train = language_tools.ShakeSpeare(train=True)
+                    dataset_test = language_tools.ShakeSpeare(train=False)
+                    dict_users = dataset_train.get_client_dic()
+                    # remove the key if the key is larger than num_clients
+                    data_ratio = args.data_ratio
+                    dict_users = {key: dict_users[key] for key in range(num_clients)}
+                    dict_users = [list(dict_users[key]) for key in dict_users] # become a list
+                    dict_users = [d[:int(data_ratio*len(d))] for d in dict_users]
+                    # only use part of the data
+                    tasks_data_info.append([dataset_train, dataset_test, -1, -1, -1, -1])
+                    # convert dict_users to tasks_data_idx
+                    tasks_data_idx.append(dict_users)
+                    global_models.append(load_model(name_data=task_type[i], num_classes=-1, args=args).to(device))
+                else:
+                    tasks_data_info.append(preprocessing(task_type[i], data_ratio, args)) # 0: trainset, 1: testset, 2: min_data_num, 3: max_data_num 4: input_size, 5: classes_size
+                    if type_iid[i] =='iid':
+                        tasks_data_idx.append(dataset.iid(dataset=tasks_data_info[i][0],
+                                                        min_data_num=tasks_data_info[i][2],
+                                                        max_data_num=tasks_data_info[i][3],
+                                                        num_users=num_clients)) # 0: clients_data_idx
+                    elif type_iid[i] =='noniid':
+                        tasks_data_idx.append(dataset.noniid(dataset=tasks_data_info[i][0],
+                                            min_data_num=tasks_data_info[i][2],
+                                            max_data_num=tasks_data_info[i][3],
+                                            class_ratio=class_ratio[i],
+                                            num_users=num_clients)) # 0: clients_data_idx 1: clients_label
+                    global_models.append(load_model(name_data=task_type[i], num_classes=tasks_data_info[i][5], args=args).to(device))
                 local_results.append([0.1, 1])
                 global_results.append([0.1, 1])
 
@@ -138,9 +158,9 @@ if __name__=="__main__":
             for task_idx in range(len(task_type)):
                 local_data_num = []
                 for client_idx in range(num_clients):
-                    if type_iid[task_idx] == 'iid':
+                    if type_iid[task_idx] == 'iid' or task_type[task_idx] == 'shakespeare':
                         local_data_num.append(len(tasks_data_idx[task_idx][client_idx]))
-                    if type_iid[task_idx] == 'noniid':
+                    elif type_iid[task_idx] == 'noniid':
                         local_data_num.append(len(tasks_data_idx[task_idx][0][client_idx]))
                 all_data_num.append(local_data_num)
 
@@ -179,7 +199,6 @@ if __name__=="__main__":
                     if args.alpha_loss is True:
                         all_weights_diff_power = optimal_sampling.power_gradient_norm(all_weights_diff, tasks_local_training_loss, args, all_data_num)
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
-                                                                                                     clients_task,
                                                                                                      all_data_num,
                                                                                                      all_weights_diff_power, args)
                     else:
@@ -207,10 +226,10 @@ if __name__=="__main__":
                         localLoss = np.zeros((task_number, num_clients))
                         for cl in range(num_clients):
                             for task in range(task_number):
-                                if type_iid[task] == 'iid':
+                                if type_iid[task] == 'iid' or task_type[task] == 'shakespeare':
                                     client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
                                         cl])  # or iid_partition depending on your choice
-                                if type_iid[task] == 'noniid':
+                                elif type_iid[task] == 'noniid':
                                     client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
                                         cl])  # or iid_partition depending on your choice
                                 accu, loss = evaluation(model=global_models[task], data=client_data,
@@ -224,8 +243,13 @@ if __name__=="__main__":
                             all_weights_diff_power = optimal_sampling.power_gradient_norm(localLoss,
                                                                                   localLoss, args,
                                                                                   all_data_num)
-                            clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
-                                                                                                     clients_task,
+                            if args.test is True:
+                                clients_task, p_dict, chosen_clients = optimal_sampling.evaluate_optimal_sampling(
+                                    chosen_clients,
+                                    all_data_num,
+                                    all_weights_diff_power, global_results, args.alpha)
+                            else:
+                                clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                                      all_data_num,
                                                                                                      all_weights_diff_power, args)
                         else:

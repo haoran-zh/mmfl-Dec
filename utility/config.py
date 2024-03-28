@@ -30,8 +30,13 @@ def optimizer_config(name_data):
         lr_step_size=1
         gamma=0.98
         milestones=[100]
-        
-        #0.01*math.pow(0.98,100)=0.001326 (rationale)
+    if name_data == 'shakespeare':
+        learning_rate = 1.4  # 0.002 # 2e-6
+        momentum = 0.9
+        weight_decay = 0.001
+        lr_step_size = 1
+        gamma = 0.98
+        milestones = [100]
         
 
     return learning_rate, momentum, weight_decay, lr_step_size, gamma, milestones

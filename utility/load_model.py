@@ -19,4 +19,7 @@ def load_model(name_data, num_classes, args):
     elif name_data=='emnist':
         model = model_list.emnistCNN(num_classes=num_classes, args=args)
         return model
+    elif name_data=='shakespeare':
+        model = model_list.CharLSTM()
+        return model
 

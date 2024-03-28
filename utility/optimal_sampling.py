@@ -36,15 +36,126 @@ def power_gradient_norm(gradient_norm, tasks_local_training_loss, args, all_data
     return gradient_norm_power
 
 
+def optimal_sampling_giventask(sample_num, all_data_num, gradient_record, task_subset, global_result, alpha): # gradient record is norm
+    # measure the improvement
+    # expected number of clients for each task: sum_{i} p_s_i
+    # therefore we can use the same function.
+    # m in the paper
+    tasks_num = len(gradient_record)
+    # random.shuffle(task_indices) # make task order random
+    all_clients_num = len(gradient_record[0])
 
-def get_optimal_sampling(chosen_clients, clients_task, all_data_num, gradient_record, args): # gradient record is norm
+    all_gradients = gradient_record.copy()
+
+    for task_index in task_subset:
+        for client_index in range(all_clients_num):
+            # from U to U~ in the paper
+            all_gradients[task_index][client_index] *= all_data_num[task_index][client_index] / np.sum(
+                all_data_num[task_index])
+
+    client_gradients_sumTasks = np.zeros(all_clients_num)  # this is M_i in the proof
+    for client_index in range(all_clients_num):
+        for task_index in task_subset:
+            client_gradients_sumTasks[client_index] += all_gradients[task_index][client_index]
+
+    # sort the gradients of the clients for this task, get a list of indices
+    sorted_indices = np.argsort(client_gradients_sumTasks)
+
+    n = all_clients_num
+    m = sample_num
+
+    l = n - m + 1
+    best_l = l
+    if m == 0:  # if m=0, we get best_l = n+1 above, which is wrong. how to solve?
+        best_l = n
+
+    while True:
+        l += 1
+        if l > n:
+            break
+        # sum the first l smallest gradients
+        sum_upto_l = sum(client_gradients_sumTasks[sorted_indices[i]] for i in range(l))
+        upper = sum_upto_l / client_gradients_sumTasks[sorted_indices[l - 1]]
+        # if 0<m+l-n<=upper, then this l is good. find the largest l satisfying this condition
+        if 0 < m + l - n <= upper:
+            best_l = l
+    # compute p
+    p_s_i = np.zeros((tasks_num, all_clients_num))
+    sum_upto_l = sum(client_gradients_sumTasks[sorted_indices[i]] for i in range(best_l))
+    # print('sum_upto_l', sum_upto_l)
+    for i in range(len(sorted_indices)):
+        if i >= best_l:
+            for task_index in task_subset:
+                p_s_i[task_index][sorted_indices[i]] = all_gradients[task_index][sorted_indices[i]] / \
+                                                       client_gradients_sumTasks[sorted_indices[i]]
+        else:
+            for task_index in task_subset:
+                p_s_i[task_index][sorted_indices[i]] = (m + best_l - n) * all_gradients[task_index][
+                    sorted_indices[i]] / sum_upto_l
+
+    allocation_result = np.zeros(all_clients_num, dtype=int)
+    for client_idx in range(all_clients_num):
+        if abs(1 - np.sum(p_s_i[:, client_idx])) < 1e-6:
+            p_not_choose = 0
+        else:
+            p_not_choose = 1 - np.sum(p_s_i[:, client_idx])
+        # append p_not_choose to the head of p_s_i
+        p_client = np.zeros(tasks_num + 1)
+        p_client[0] = p_not_choose
+        p_client[1:] = p_s_i[:, client_idx]
+        allocation_result[client_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
+    allocation_result = allocation_result.tolist()
+    clients_task = [s for s in allocation_result if s != -1]
+    chosen_clients = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
+    # get p_dict
+    p_dict = []
+    for task_index in task_subset:
+        p_dict.append([p_s_i[task_index][i] for i in range(all_clients_num) if allocation_result[i] == task_index])
+
+    expected_clients_Prob_per_task = [np.sum(p_s_i[task_index]) / all_clients_num for task_index in range(tasks_num)]
+    # uniform result
+    uniform = sum([np.sum(all_gradients[task_index]**2)/(1e-6 + expected_clients_Prob_per_task[task_index]) for task_index in task_subset])
+    # optimal sampling result
+    optimal = 0
+    for client_idx in range(all_clients_num):
+        optimal += sum(all_gradients[task_index][client_idx] **2 / p_s_i[task_index][client_idx] for task_index in task_subset)
+    # improvement rate=uniform/optimal
+    improvement_rate = uniform/optimal
+    r_sum = sum(global_result[i][0] ** alpha for i in task_subset)
+    # Calculating the average and scaling by improvement rate
+    r = r_sum / len(task_subset) * improvement_rate
+    return r, clients_task, p_dict, chosen_clients
+
+def evaluate_optimal_sampling(chosen_clients, all_data_num, gradient_record, global_result, alpha): # gradient record is norm
+    import itertools
+    sample_num = len(chosen_clients)  # m in the paper
+    tasks_num = len(gradient_record)
+    tasks_indices = np.arange(tasks_num)
+    # all possible subsets of tasks
+    max_subset_size = sample_num
+    all_tasks_subsets = []
+    for i in range(1, max_subset_size+1):
+        all_tasks_subsets.extend(list(itertools.combinations(tasks_indices, i)))
+    # print(all_tasks_subsets)
+    best_task_set_value = 0
+    for task_subset in all_tasks_subsets:
+        r, clients_task, p_dict, chosen_clients = optimal_sampling_giventask(sample_num, all_data_num, gradient_record, task_subset, global_result, alpha)
+        if r > best_task_set_value:
+            best_task_set_value = r
+            beset_task_set = task_subset
+            clients_task = clients_task
+            p_dict = p_dict
+            chosen_clients = chosen_clients
+    print(beset_task_set)
+    return clients_task, p_dict, chosen_clients
+
+
+def get_optimal_sampling(chosen_clients, all_data_num, gradient_record, args): # gradient record is norm
     # gradient_record: the shape is [task_index][client_index]
     # chosen_clients provide the index of the chosen clients in a random order
     # clients_task has the same order as chosen_clients
     # multiple tasks sampling will degenerate to single task sampling when task=1
     # therefore we can use the same function.
-    if type(clients_task) == list:
-        clients_task = np.array(clients_task)
     sample_num = len(chosen_clients)  # m in the paper
     tasks_num = len(gradient_record)
     # random.shuffle(task_indices) # make task order random
