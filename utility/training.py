@@ -41,7 +41,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         # Create a local optimizer
         learning_rate = args.lr
         if task_idx == shakespeare_index:
-            learning_rate = 50
+            learning_rate = 1.4
         local_optimizer = torch.optim.SGD(local_model.parameters(), lr=learning_rate)
         local_criterion = nn.CrossEntropyLoss()
 
