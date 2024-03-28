@@ -412,10 +412,10 @@ if __name__=="__main__":
             localLoss = np.zeros((task_number, num_clients))
             for cl in range(num_clients):
                 for task in range(task_number):
-                    if type_iid[task] == 'iid':
+                    if type_iid[task] == 'iid' or task_type[task] == 'shakespeare':
                         client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
                             cl])  # or iid_partition depending on your choice
-                    if type_iid[task] == 'noniid':
+                    elif type_iid[task] == 'noniid':
                         client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
                             cl])  # or iid_partition depending on your choice
                     accu, loss = evaluation(model=global_models[task], data=client_data,
