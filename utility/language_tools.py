@@ -186,10 +186,9 @@ class DatasetSplit(Dataset):
         image, label = self.dataset[self.idxs[item]]
         return image, label
 
-dataset_train = ShakeSpeare(train=True)
+"""dataset_train = ShakeSpeare(train=True)
 dataset_test = ShakeSpeare(train=False)
 dict_users = dataset_train.get_client_dic()
 #print(dict_users.keys()) # it has 138 clients
 dict_users = [list(dict_users[key]) for key in dict_users]
-print(dict_users[1])
-from model_list import CharLSTM
+print(dict_users[1])"""
