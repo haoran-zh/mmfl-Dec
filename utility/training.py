@@ -18,10 +18,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
     # find out which task index is shakespeare
     tasks_list = args.task_type
     # find if we have shakespeare in the task list, if yes, get the index, if no, return -1
-    if 'shakespeare' in tasks_list:
-        shakespeare_index = tasks_list.index('shakespeare')
-    else:
-        shakespeare_index = -1
+    shakespeare_index = [i for i, x in enumerate(tasks_list) if x == "shakespeare"]
 
     # print(clients_task, 'cl task')
     for data_idx, task_idx in enumerate(clients_task):
@@ -40,13 +37,13 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
 
         # Create a local optimizer
         learning_rate = args.lr
-        if task_idx == shakespeare_index:
+        if task_idx in shakespeare_index:
             learning_rate = 1.4
         local_optimizer = torch.optim.SGD(local_model.parameters(), lr=learning_rate)
         local_criterion = nn.CrossEntropyLoss()
 
         # Get client's data
-        if type_iid[task_idx] == 'iid' or task_idx == shakespeare_index:
+        if type_iid[task_idx] == 'iid' or task_idx in shakespeare_index:
             client_data = Subset(tasks_data_info[task_idx][0], tasks_data_idx[task_idx][
                 chosen_clients[data_idx]])  # or iid_partition depending on your choice
         elif type_iid[task_idx] == 'noniid':
@@ -67,7 +64,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
                 local_optimizer.zero_grad()
 
                 outputs = local_model(images)
-                if type_iid[task_idx] == 'noniid' and task_idx != shakespeare_index:
+                if type_iid[task_idx] == 'noniid' and task_idx not in shakespeare_index:
                     label_mask = torch.zeros(classes_size[task_idx][5], device=outputs.device)
                     label_mask[client_label] = 1
                     outputs = outputs.masked_fill(label_mask == 0, 0)
@@ -105,10 +102,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
     all_tasks_local_training_loss = []
     all_weights_diff = []
     tasks_list = args.task_type
-    if 'shakespeare' in tasks_list:
-        shakespeare_index = tasks_list.index('shakespeare')
-    else:
-        shakespeare_index = -1
+    shakespeare_index = [i for i, x in enumerate(tasks_list) if x == "shakespeare"]
     # we want to get a list of weights, weights_list[task_index][client_index].
     # client_index is in the order of chosen_clients
 
@@ -140,7 +134,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
             local_criterion = nn.CrossEntropyLoss()
 
                 # Get client's data
-            if type_iid[tasks_index] == 'iid' or tasks_index == shakespeare_index:
+            if type_iid[tasks_index] == 'iid' or tasks_index in shakespeare_index:
                 client_data = Subset(tasks_data_info[tasks_index][0], tasks_data_idx[tasks_index][client_index])  # or iid_partition depending on your choice
             elif type_iid[tasks_index] == 'noniid':
                 client_data = Subset(tasks_data_info[tasks_index][0], tasks_data_idx[tasks_index][0][client_index])  # or iid_partition depending on your choice
@@ -158,7 +152,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
                     labels = labels.to(device)
                     local_optimizer.zero_grad()
                     outputs = local_model(images)
-                    if type_iid[tasks_index] == 'noniid' and tasks_index != shakespeare_index:
+                    if type_iid[tasks_index] == 'noniid' and tasks_index not in shakespeare_index:
                         label_mask = torch.zeros(classes_size[tasks_index][5], device=outputs.device)
                         label_mask[client_label] = 1
                         outputs = outputs.masked_fill(label_mask == 0, 0)

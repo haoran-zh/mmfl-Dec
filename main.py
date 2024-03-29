@@ -38,10 +38,7 @@ if __name__=="__main__":
     class_ratio = args.class_ratio  # non iid only
     beta = args.alpha  # default 3
     task_type = args.task_type
-    if 'shakespeare' in task_type:
-        shakespeare_idx = task_type.index('shakespeare')
-    else:
-        shakespeare_idx = -1
+
     task_number = len(task_type)
     data_ratio = args.data_ratio
     # set record name
