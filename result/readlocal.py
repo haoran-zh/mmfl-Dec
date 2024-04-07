@@ -91,7 +91,7 @@ def load_extra_folder(folder_dict, seed=11, header='localAcc_'):
 # algo_name = ["bayesian", "alpha-fairness", "random", "round robin","optimal_sampling"]
 
 def generate_task_list(data, replace=-1):
-    client_num = 40
+    client_num = 80
     taskarray = np.ones((len(data), client_num))*replace
     for i in range(len(data)):
         for key in data[i]:
@@ -194,20 +194,24 @@ f"2task_nnn_0.01u_OS_taskfair_a{alpha}_": f"OS_TF_a{alpha}",
 }
 seed_list = [11, 12, 13]"""
 
-"""extra_folder = {
+extra_folder = {
     #"1task_nnn_u91c0.3_agg_": "test",
-    "1task_nnn_u91c0.3_AS_a1_": "AS_a1",
-    "1task_nnn_u91c0.3_OS_a1_": "OS_a1",
-    "1task_nnn_u91c0.3_AS_a3_": "AS_a3",
-    "1task_nnn_u91c0.3_OS_a3_": "OS_a3",
-    "1task_nnn_u91c0.3_qFel_a3_": "qFel_a3",
-    "1task_nnn_u91c0.3_test_a3_": "test_a3",
-    "1task_nnn_u91c0.3_testfixed_a3_": "testfixed_a3",
-    "1task_nnn_u91c0.3_testfixed2_a3_": "testfixed2_a3",
+    #"1task_nnn_u91c0.3_AS_a1_": "AS_a1",
+    #"1task_nnn_u91c0.3_OS_a1_": "OS_a1",
+    #"1task_nnn_u91c0.3_AS_a3_": "AS_a3",
+    #"1task_nnn_u91c0.3_OS_a3_": "OS_a3",
+    "1task_nnn_u91c0.3_qFel_a3_": "qFel_a2",
+    #"1task_nnn_u91c0.3_test_a3_": "test_a3",
+    "1task_nnn_u91c0.3_testfixed_a3_": "our proposed",
+    #"1task_nnn_u91c0.3_testfixed2_a3_": "testfixed2_a3",
     #"1task_nnn_u91c0.3_testEloss_a3_": "testEloss_a3",
-    "1task_nnn_u91c0.3_random_": "random"
+    #"1task_nnn_u91c0.3_random_": "random"
+    "1task_nnn_u0.918753_random_": "random"
 }
-seed_list = [14, 15, 16, 17]"""
+tasknum=1
+all_rounds = 1500
+seed_list = [14,15,16,17]
+finalPath = f'./result/1task_nnn_u91c0.3_random_14'
 
 """extra_folder = {
     "3task_nnn_0.01u_a2_": "a2",
@@ -264,17 +268,18 @@ f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_AS_taskfair_a{a}_": f"AS_TF_a{a}"
 #f"3task_nnn_u{u_value}d{d_value}_OS_clientfair_a{a}_": f"OS_CF_a{a}",
 f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_taskfair_a{a}_": f"OS_TF_a{a}",
 #f"3task_nnn_u{u_value}d{d_value}_qFel_a{a}_": f"qFel_a{a}",
-#f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_": "random",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_": "random",
 f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_test2_a2_": "test2_a2",
 f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_GS_a{a}_": "Group sample",
 }
 all_rounds=800
-seed_list = [17]"""
+seed_list = [14]
+finalPath = f'./result/{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_14'"""
 
-
-u_value = 51
+"""u_value = 0.4
 c = 0.3
 a = 2
+a2 = 1
 ms_a = 4
 tasknum=1
 all_rounds=600
@@ -283,16 +288,83 @@ extra_folder = {
 #f"3task_nnn_u{u_value}d{d_value}_ms_a{ms_a}_": f"ms_a{ms_a}",
 #f"{tasknum}task_nnn_u{u_value}c{c}_msAS_a{ms_a}_": f"msAS_a{ms_a}",
 #f"3task_nnn_u{u_value}d{d_value}_AS_clientfair_a{a}_": f"AS_CF_a{a}",
+f"{tasknum}task_nnn_u{u_value}c{c}_AS_a{a2}_": f"AS_a{a2}",
 f"{tasknum}task_nnn_u{u_value}c{c}_AS_a{a}_": f"AS_a{a}",
 #f"3task_nnn_u{u_value}d{d_value}_OS_clientfair_a{a}_": f"OS_CF_a{a}",
+f"{tasknum}task_nnn_u{u_value}c{c}_OS_a{a2}_": f"OS_a{a2}",
 f"{tasknum}task_nnn_u{u_value}c{c}_OS_a{a}_": f"OS_a{a}",
 #f"3task_nnn_u{u_value}d{d_value}_qFel_a{a}_": f"qFel_a{a}",
 f"{tasknum}task_nnn_u{u_value}c{c}_random_": "random",
 f"{tasknum}task_nnn_u{u_value}c{c}_testfixed2_a3_": "test2_a2",
 }
-seed_list = [15, 16, 17, 18]
+seed_list = [15, 16, 17, 18, 19]
+finalPath = f'./result/{tasknum}task_nnn_u{u_value}c{c}_random_15'"""
 
-finalPath = f'./result/{tasknum}task_nnn_u{u_value}c{c}_random_15'
+"""u_value = 0.4
+c = 0.3
+a = 2
+a2 = 1
+ms_a = 4
+tasknum=3
+all_rounds=500
+extra_folder = {
+f"3task_nnnnn_c0.15u0.0d0.5_msASSP_a4_": "msASSP_a4",
+f"3task_nnnnn_c0.15u0.0d0.5_test2SP_a2_": "test2SP_a2",
+    "3task_nnnnn_c0.15u0.0d0.5_randomSP_": "randomSP",
+    "3task_nnnnn_c0.15u0.0d0.5_ASSP_taskfair_a1_": "ASSP_TF_a1",
+    "3task_nnnnn_c0.15u0.0d0.5_ASSP_taskfair_a2_": "ASSP_TF_a2",
+}
+seed_list = [14, 15, 16, 21, 22, 23]
+finalPath = './result/3task_nnnnn_c0.15u0.0d0.5_msASSP_a4_14'"""
+
+"""u_value = 0.4
+c = 0.3
+a = 2
+a2 = 1
+ms_a = 4
+tasknum=4
+all_rounds=800
+extra_folder = {
+f"4task_nnnnn_c0.3u0.0d1.0_msAS_a4_": "msASSP_a4",
+f"4task_nnnnn_c0.3u0.0d1.0_test2_a2_": "test2SP_a2",
+    "4task_nnnnn_c0.3u0.0d1.0_random_": "randomSP",
+    "4task_nnnnn_c0.3u0.0d1.0_AS_taskfair_a2_": "ASSP_TF_a2",
+}
+seed_list = [18, 19, 20, 21]
+finalPath = './result/4task_nnnnn_c0.3u0.0d1.0_random_18'"""
+
+
+"""u_value = 0.9
+c = 0.3
+a = 2
+a2 = 1
+ms_a = 4
+tasknum=1
+all_rounds=1500
+extra_folder = {
+f"1task_nnn_u{u_value}18753_qFel_a2_": "qFel_a2",
+f"1task_nnn_u{u_value}18753_random_": "random",
+f"1task_nnn_u{u_value}18753_testfixed_a3_": "testfixed_a2",
+}
+seed_list = [14,15,16,17]
+finalPath = f'./result/1task_nnn_u{u_value}18753_random_14'"""
+
+
+
+"""u_value = 0.0
+c = 0.3
+a = 2
+a2 = 1
+ms_a = 4
+tasknum=3
+all_rounds=800
+extra_folder = {
+f"3task_nnnnn_c0.1u0.0d1.0_GS_a2_": "GS",
+f"3task_nnnnn_c0.1u0.0d1.0_random_": "random",
+f"3task_nnnnn_c0.1u0.0d1.0_AS_taskfair_a2_": "AS_TF_a2",
+}
+seed_list = [18,19,20]
+finalPath = f'./result/3task_nnnnn_c0.1u0.0d1.0_random_18'"""
 
 
 fig_avg = plt.figure()
@@ -302,6 +374,7 @@ ax_min = fig_min.add_subplot(1, 1, 1)
 all_algorithm_curve = []
 keys_list = []
 all_count_list = []
+cnt=0
 for key in extra_folder:
     current_folder = {}
     current_folder[key] = extra_folder[key]
@@ -319,6 +392,7 @@ for key in extra_folder:
     count_list = []
 
     for seed in seed_list:
+        #seed = list(current_folder.keys())[0][-2:]
         # plot allocation
         if tasknum > 1:
             allo_var, client_count_all = allocation(current_folder, seed)
@@ -344,25 +418,41 @@ for key in extra_folder:
         clients_num = exp_array.shape[1]
         # compute average
         exp_array_avg = np.mean(exp_array, axis=0)
+
+
         client_var = np.var(exp_array, axis=1)
         client_var_avg += np.mean(client_var)
+        # compute entropy
+        # normalize to prob using softmax
+        # softmax
+        exp_array2 = np.exp(exp_array)
+        exp_array2 = exp_array2 / np.sum(exp_array2)
+        exp_array_entropy = -np.sum(exp_array2 * np.log(exp_array2))
+        # compute KL divergence
+        P_a = exp_array2.reshape(-1)
+
+        P_uniform = np.ones_like(P_a) / len(P_a)
+        kl = np.sum(P_a * np.log(P_a / P_uniform))
+
+
+
         # compute minimum
         # sort avg and min
         exp_array_avg = np.sort(exp_array_avg)
-        worst10_avg += np.mean(exp_array_avg[:int(clients_num * 0.1)])
+        worst10_avg += np.mean(exp_array_avg[:int(clients_num * 0.2)])
         worst10_std = np.std(exp_array_avg[:int(clients_num * 0.1)])
-        best10_avg += np.mean(exp_array_avg[-int(clients_num * 0.1):])
+        best10_avg += np.mean(exp_array_avg[-int(clients_num * 0.2):])
         best10_std = np.std(exp_array_avg[-int(clients_num * 0.1):])
 
         # get global final acc
-        exp_array = load_extra_folder(current_folder, seed, header='mcf_i_globalLoss_')
+        exp_array = load_extra_folder(current_folder, seed, header='mcf_i_globalAcc_')
         exp_array = exp_array.reshape(exp_array.shape[1], exp_array.shape[2])
         curve.append(exp_array)
 
         last = -1
-        global_avg_acc += np.mean(exp_array[:, last])
-        global_min_acc += np.min(exp_array[:, last])
-        global_max_acc += np.max(exp_array[:, last])
+        global_avg_acc += np.mean(exp_array[:, last-20:])
+        global_min_acc += np.mean(np.min(exp_array[:, last-20:], axis=1))
+        global_max_acc += np.mean(np.max(exp_array[:, last-20:], axis=1))
         var_avg += np.mean(np.var(exp_array))
     global_avg_acc /= len(algor_seed)
     global_min_acc /= len(algor_seed)
@@ -373,11 +463,11 @@ for key in extra_folder:
     client_var_avg /= len(algor_seed)
     allocation_var /= len(algor_seed)
     algoName = next(iter(algo_name))
-    print(f"{algoName: <10}: \t worst10% {worst10_avg:.3f}, best10% {best10_avg:.3f}, gap:{best10_avg-worst10_avg:.3f}; Global acc: {global_avg_acc:.3f}, max: {global_max_acc:.3f}, min: {global_min_acc:.3f}, gap: {global_max_acc-global_min_acc:.3f}, client_var: {client_var_avg:.3f}, allocation_var: {allocation_var:.3f}")
-    # plot
-    # plot global average acc
+    #print(f"{algoName: <10}: \t worst10% {worst10_avg:.3f}, best10% {best10_avg:.3f}, gap:{best10_avg-worst10_avg:.3f}; Global acc: {global_avg_acc:.3f}, max: {global_max_acc:.3f}, min: {global_min_acc:.3f}, gap: {global_max_acc-global_min_acc:.3f}, client_var: {client_var_avg:.3f}, allocation_var: {allocation_var:.3f}")
+    print(f"{algoName: <10}: \t worst20% {worst10_avg:.3f}, best20% {best10_avg:.3f}; Global acc: {global_avg_acc:.3f} entropy: {exp_array_entropy:.3f}, KL{kl} client_var: {client_var_avg:.3f}")
     #averge the curve
     curve = np.array(curve) # shape: seed tasknum numRounds
+
     all_algorithm_curve.append(np.mean(curve, axis=0))
     all_count_list.append(count_list)
     curve_avg = np.mean(curve, axis=(0,1)).reshape(-1)
@@ -386,13 +476,14 @@ for key in extra_folder:
     ax_min.plot(curve_min[1:], label=next(iter(algo_name)))
 
 # plot each task
-#plot_each_task(all_algorithm_curve, keys_list)
-#plot_allocation_count(all_count_list, keys_list)
+if tasknum > 1:
+    plot_each_task(all_algorithm_curve, keys_list)
+    plot_allocation_count(all_count_list, keys_list)
 
 ax_avg.legend()
 ax_avg.set_xlabel('Round')
-ax_avg.set_ylabel('Global avg acc')
-ax_avg.set_title('Global avg acc')
+ax_avg.set_ylabel('Global avg Acc')
+ax_avg.set_title('Global avg Acc')
 
 ax_min.legend()
 ax_min.set_xlabel('Round')

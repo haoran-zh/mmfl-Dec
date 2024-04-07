@@ -234,6 +234,14 @@ def get_optimal_sampling(chosen_clients, all_data_num, gradient_record, args): #
         for task_index in range(tasks_num):
             p_dict.append([p_s_i[task_index][i] for i in range(all_clients_num) if allocation_result[i] == task_index])
 
+    # improvement rate, compute the KL divergence.
+    # uniform result
+    #uniform_prob = np.ones_like(p_s_i) / tasks_num * args.C
+    #kl_divergence = np.sum(p_s_i * np.log(p_s_i / uniform_prob), axis=1)
+    #total_kl_divergence = np.mean(kl_divergence)
+    #print("kl_divergence", total_kl_divergence)
+
+
     return clients_task, p_dict, chosen_clients
 
 def get_clients_num_per_task(clients_task, tasks_num):

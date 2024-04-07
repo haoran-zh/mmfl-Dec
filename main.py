@@ -4,7 +4,7 @@ import utility.dataset as dataset
 from utility.preprocessing import preprocessing
 from utility.load_model import load_model
 from utility.training import training, training_all
-from utility.evalation import evaluation
+from utility.evalation import evaluation, get_local_loss
 from utility.aggregation import federated, federated_prob
 from utility.taskallocation import get_task_idx, get_task_id_RR
 import random
@@ -123,7 +123,7 @@ if __name__=="__main__":
                     dataset_test = language_tools.ShakeSpeare(train=False)
                     dict_users = dataset_train.get_client_dic()
                     # remove the key if the key is larger than num_clients
-                    data_ratio = args.data_ratio
+                    data_ratio = args.data_ratio - 0.1*i
                     dict_users = {key: dict_users[key] for key in range(num_clients)}
                     dict_users = [list(dict_users[key]) for key in dict_users] # become a list
                     dict_users = [d[:int(data_ratio*len(d))] for d in dict_users]
@@ -146,7 +146,7 @@ if __name__=="__main__":
                                             class_ratio=class_ratio[i],
                                             num_users=num_clients)) # 0: clients_data_idx 1: clients_label
                     global_models.append(load_model(name_data=task_type[i], num_classes=tasks_data_info[i][5], args=args).to(device))
-                local_results.append([0.1, 1])
+                local_results.append([0.1, 1])  # 0: acc, 1: loss
                 global_results.append([0.1, 1])
 
 
@@ -171,7 +171,7 @@ if __name__=="__main__":
             # define group_clients
             import utility.group_sampling as group_sampling
             group_num = args.group_num
-            group_clients = group_sampling.initialize_group(client_num=num_clients, group_num=group_num)
+            group_clients = group_sampling.initialize_group(client_num=num_clients, group_num=group_num, label_info=tasks_data_idx[task_idx][1])
             client_num_per_group = int(num_clients / group_num)
             active_clientnum_per_group = int(client_num_per_group * C)
             buffer = [i for i in range(group_num)]  # create the buffer
@@ -186,6 +186,12 @@ if __name__=="__main__":
                 # training
                 if args.optimal_sampling is True:
                     # train everything to get every gradient
+                    if args.alpha_loss is True:
+                        # need to record local loss before the training
+                        localLoss = get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info,
+                                                   tasks_data_idx, global_models, device, batch_size)
+                        localLossResults[:, :, round] = localLoss
+
                     all_tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training_all(
                                                                                         tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                         global_models=global_models, chosen_clients=None,
@@ -194,7 +200,7 @@ if __name__=="__main__":
                                                                                         type_iid=type_iid, device=device, args=args)
                     # optimal sampling
                     if args.alpha_loss is True:
-                        all_weights_diff_power = optimal_sampling.power_gradient_norm(all_weights_diff, tasks_local_training_loss, args, all_data_num)
+                        all_weights_diff_power = optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args, all_data_num)
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                                      all_data_num,
                                                                                                      all_weights_diff_power, args)
@@ -220,33 +226,16 @@ if __name__=="__main__":
                     if args.approx_optimal is True:
                         # 1 get all local loss
                         # localAcc = np.zeros((task_number, num_clients))
-                        localLoss = np.zeros((task_number, num_clients))
-                        for cl in range(num_clients):
-                            for task in range(task_number):
-                                if type_iid[task] == 'iid' or task_type[task] == 'shakespeare':
-                                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
-                                        cl])  # or iid_partition depending on your choice
-                                elif type_iid[task] == 'noniid':
-                                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
-                                        cl])  # or iid_partition depending on your choice
-                                accu, loss = evaluation(model=global_models[task], data=client_data,
-                                                        batch_size=batch_size, device=device, args=None)  # use all data
-                                # accu = localAccResults[task, cl, round-1]
-                                localLossResults[task, cl, round] = loss
-                                # localAcc[task, cl] = accu
-                                localLoss[task, cl] = loss
+                        # localLoss = np.zeros((task_number, num_clients))
+                        localLoss = get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info,
+                                                   tasks_data_idx, global_models, device, batch_size)
+                        localLossResults[:, :, round] = localLoss
                         # use loss to replace gradient norm
                         if args.alpha_loss is True:
                             all_weights_diff_power = optimal_sampling.power_gradient_norm(localLoss,
                                                                                   localLoss, args,
                                                                                   all_data_num)
-                            if args.test is True:
-                                clients_task, p_dict, chosen_clients = optimal_sampling.evaluate_optimal_sampling(
-                                    chosen_clients,
-                                    all_data_num,
-                                    all_weights_diff_power, global_results, args.alpha)
-                            else:
-                                clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
+                            clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                                      all_data_num,
                                                                                                      all_weights_diff_power, args)
                         else:
@@ -307,7 +296,6 @@ if __name__=="__main__":
 
                 if args.optimal_sampling is True:
                     # remember to process local_loss
-
                     temp_global_results = []
                     for task_idx in range(len(task_type)):
                         this_task_gradients_list = []
@@ -321,8 +309,8 @@ if __name__=="__main__":
                             if args.cpumodel is True:
                                 global_models[task_idx].to('cpu')
                             global_models[task_idx].load_state_dict(
-                                federated_prob(global_weights =global_models[task_idx], models_gradient_dict=this_task_gradients_list, local_data_num=all_data_num[task_idx],
-                                          p_list=p_dict[task_idx], args=args, chosen_clients=chosen_clients, tasks_local_training_loss=tasks_local_training_loss[task_idx]))
+                                federated_prob(global_weights=global_models[task_idx], models_gradient_dict=this_task_gradients_list, local_data_num=all_data_num[task_idx],
+                                          p_list=p_dict[task_idx], args=args, chosen_clients=chosen_clients, tasks_local_training_loss=localLoss[task_idx]))
                             if args.cpumodel is True:
                                 global_models[task_idx].to(device)
                             temp_global_results.append(

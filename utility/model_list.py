@@ -226,8 +226,8 @@ def emnistCNN(num_classes, args):
 class CharLSTM(nn.Module):
     def __init__(self):
         super(CharLSTM, self).__init__()
-        self.embed = nn.Embedding(80, 8)
-        self.lstm = nn.LSTM(8, 256, 2, batch_first=True)
+        self.embed = nn.Embedding(80, 128)
+        self.lstm = nn.LSTM(128, 256, 2, batch_first=True)
         self.drop = nn.Dropout()
         self.out = nn.Linear(256, 80)
 

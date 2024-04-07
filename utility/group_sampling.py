@@ -1,16 +1,28 @@
 import numpy as np
-def initialize_group(client_num, group_num):
+def initialize_group(client_num, group_num, label_info):
     # input
     # client_num: number of clients
     # group_num: number of groups
+    # label_info: list of labels of clients. label_info[i] is the available labels of client i
     # output
     # group_clients: list of clients in each group
     # group_clients[i] is a list of clients in group i
-    clients_list = np.arange(client_num)
-    np.random.shuffle(clients_list)
-    group_clients = []
-    for i in range(group_num):
-        group_clients.append(clients_list[i::group_num])
+
+    # fin max class idx
+    group_labels = [[0,1,2,3,4],
+                    [5,6,7,8,9]]
+    # group number should be 2
+    g1_list = []
+    g2_list = []
+    for clent_idx in range(client_num):
+        client_labels = label_info[clent_idx]
+        g1 = sum([1 for label in client_labels if label in group_labels[0]])
+        g2 = sum([1 for label in client_labels if label in group_labels[1]])
+        if g1 > g2: # assign to group 1
+            g1_list.append(clent_idx)
+        else:
+            g2_list.append(clent_idx)
+    group_clients = [g1_list, g2_list]
     return group_clients
 
 

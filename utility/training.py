@@ -11,6 +11,8 @@ from utility.language_tools import DatasetSplit
 
 def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, task_type, clients_task, local_epochs,
              batch_size, classes_size, type_iid, device, args):
+    # chosen_clients=[3,10,15]
+    # clients_task=[0, 0, 0]
     weights_diff_list = []
     tasks_local_training_acc = []
     tasks_local_training_loss = []
@@ -143,7 +145,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
             local_model.train()
             local_train_accuracy = 0
 
-            for _ in range(local_epochs[tasks_index]):
+            for epoch in range(local_epochs[tasks_index]):
                 correct = 0
                 running_loss = 0
                 total = 0
@@ -169,18 +171,16 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
                 local_train_accuracy = correct / total
                 local_train_loss = running_loss / total
 
-            tasks_local_training_acc.append(local_train_accuracy)
+            tasks_local_training_acc.append(local_train_accuracy) # only save the last epoch's accuracy
             tasks_local_training_loss.append(local_train_loss)
             # Append local model weights to list
             norm, lr_gradients = optimal_sampling.get_gradient_norm(previous_local_state_dict, local_model.state_dict(), args)
             # new lr = original_lr * sum(f^alpha-1(w_t))
-            weights_diff.append(norm)
+            weights_diff.append(norm) # the norm without learning rate
 
             if args.cpumodel is True:
                 local_model.to('cpu')
-            tasks_weights_list.append(lr_gradients.copy())
-
-
+            tasks_weights_list.append(lr_gradients.copy()) # lr_gradient considers the learning rate
             # take a step once every global epoch
             # scheduler.step()
         all_tasks_weights_list.append(tasks_weights_list)
