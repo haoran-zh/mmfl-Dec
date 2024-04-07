@@ -333,6 +333,8 @@ if __name__=="__main__":
                         global_accs.append(temp_global_results[task_idx][0])
                 else:
                     temp_global_results = []
+                    if algorithm_name == 'random':
+                        localLoss = np.zeros((task_number, num_clients))
                     for task_idx in range(len(task_type)):
                         temp_local_gradients = []
                         temp_local_P = []
@@ -361,7 +363,7 @@ if __name__=="__main__":
                                 federated_prob(global_weights=global_models[task_idx],
                                                models_gradient_dict=temp_local_gradients,
                                                local_data_num=all_data_num[task_idx],
-                                               p_list=temp_local_P, args=args, chosen_clients=chosen_clients, tasks_local_training_loss=tasks_local_training_loss))
+                                               p_list=temp_local_P, args=args, chosen_clients=chosen_clients, tasks_local_training_loss=localLoss[task_idx]))
                             print('p_list', temp_local_P, file=file)
                             if args.cpumodel is True:
                                 global_models[task_idx].to(device)

@@ -194,7 +194,7 @@ f"2task_nnn_0.01u_OS_taskfair_a{alpha}_": f"OS_TF_a{alpha}",
 }
 seed_list = [11, 12, 13]"""
 
-extra_folder = {
+"""extra_folder = {
     #"1task_nnn_u91c0.3_agg_": "test",
     #"1task_nnn_u91c0.3_AS_a1_": "AS_a1",
     #"1task_nnn_u91c0.3_OS_a1_": "OS_a1",
@@ -211,7 +211,7 @@ extra_folder = {
 tasknum=1
 all_rounds = 1500
 seed_list = [14,15,16,17]
-finalPath = f'./result/1task_nnn_u91c0.3_random_14'
+finalPath = f'./result/1task_nnn_u91c0.3_random_14'"""
 
 """extra_folder = {
     "3task_nnn_0.01u_a2_": "a2",
@@ -253,9 +253,9 @@ f"3task_nnn_u{u_value}d{d_value}_random_": "random"
 seed_list = [11, 12, 13, 14]"""
 
 
-"""u_value = 1.0
-d_value = 0.1
-c = 1.0
+u_value = 0.7
+d_value = 0.3
+c = 0.2
 a = 2
 ms_a = 4
 tasknum=5
@@ -266,15 +266,15 @@ f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_msAS_a{ms_a}_": f"msAS_a{ms_a}",
 #f"3task_nnn_u{u_value}d{d_value}_AS_clientfair_a{a}_": f"AS_CF_a{a}",
 f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_AS_taskfair_a{a}_": f"AS_TF_a{a}",
 #f"3task_nnn_u{u_value}d{d_value}_OS_clientfair_a{a}_": f"OS_CF_a{a}",
-f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_taskfair_a{a}_": f"OS_TF_a{a}",
+##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_taskfair_a{a}_": f"OS_TF_a{a}",
 #f"3task_nnn_u{u_value}d{d_value}_qFel_a{a}_": f"qFel_a{a}",
 f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_": "random",
 f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_test2_a2_": "test2_a2",
-f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_GS_a{a}_": "Group sample",
+##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_GS_a{a}_": "Group sample",
 }
 all_rounds=800
-seed_list = [14]
-finalPath = f'./result/{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_14'"""
+seed_list = [14,15,16,17,18,19,20]
+finalPath = f'./result/{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_14'
 
 """u_value = 0.4
 c = 0.3

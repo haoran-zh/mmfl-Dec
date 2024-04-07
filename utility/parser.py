@@ -33,7 +33,7 @@ class ParserArgs(object):
         self.parser.add_argument("--alpha_loss", action="store_true", help="use alpha-fairness loss function, remember to adjust learning rate")
         self.parser.add_argument("--optimal_sampling", action="store_true", help="use optimal sampling")
         self.parser.add_argument("--insist", action="store_true", help="if insist, then experiment will be conducted even if the folder exists")
-        self.parser.add_argument("--lr", type=float, default=1, help="learning rate")
+        self.parser.add_argument("--lr", type=float, default=0.01, help="learning rate")
         self.parser.add_argument("--validation", action="store_true", help="use validation set instead of test set")
         self.parser.add_argument("--unbalance", nargs='*', type=float, default=[1.0, 1.0], help="unbalance[0]% clients will get unbalance[1]% data")
         self.parser.add_argument("--fairness", type=str, default='notfair', help="fairness type")

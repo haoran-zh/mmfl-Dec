@@ -56,10 +56,12 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
             if H_s < norm*d_is:
                 H_s = norm*d_is
         denominator = (alpha-1) * (N * H_s)**2 + f_s * L
+        #print(denominator)
+        #print(f_s)
         for i, gradient_dict in enumerate(models_gradient_dict):
             d_is = local_data_num[chosen_clients[i]] / np.sum(local_data_num)
             for key in global_keys:
-                global_weights_dict[key] -= d_is / p_list[i] * f_s * gradient_dict[key] / denominator
+                global_weights_dict[key] -= d_is / p_list[i] * f_s * gradient_dict[key]*L / denominator
     else:
         print("aggregation wrong!")
         exit(1)
