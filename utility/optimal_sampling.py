@@ -36,27 +36,37 @@ def power_gradient_norm(gradient_norm, tasks_local_training_loss, args, all_data
     return gradient_norm_power
 
 
-def optimal_sampling_giventask(sample_num, all_data_num, gradient_record, task_subset, global_result, alpha): # gradient record is norm
-    # measure the improvement
-    # expected number of clients for each task: sum_{i} p_s_i
-    # therefore we can use the same function.
+def optimal_sampling_giventask(sample_num, all_data_num, gradient_record, task_index, group_client): # gradient record is norm
+    # get the task idx, and current group of clients available to this task
+    # do the optimal sampling only on this task (so it is a single task sampling in fact)
     # m in the paper
-    tasks_num = len(gradient_record)
+    # input-----
+    # sample_num: the number of expected active clients in total
+    # all_data_num: the number of data for each client
+    # gradient_record: U_{i,s} in the paper. It can be gradient, or loss value.
+    # task_index: the index of the current task
+    # group_clients: the group of clients used for this task
+    # output-----
+    # chosen_client: active clients for this round.
+    # clients_task: the task of each client.
+    # p_dict: the probability of each client to be chosen for its task.
+    # using group_sampling need fewer clients to run their current loss.
+    tasks_num = 1
     # random.shuffle(task_indices) # make task order random
-    all_clients_num = len(gradient_record[0])
-
+    all_clients_num = len(group_client)
     all_gradients = gradient_record.copy()
-
-    for task_index in task_subset:
-        for client_index in range(all_clients_num):
-            # from U to U~ in the paper
-            all_gradients[task_index][client_index] *= all_data_num[task_index][client_index] / np.sum(
-                all_data_num[task_index])
+    dis = np.zeros(all_clients_num)
+    for i in range(all_clients_num):
+        dis[i] = all_data_num[task_index][group_client[i]]
+    dis = dis / np.sum(dis)
+    for i in range(all_clients_num):
+        # from U to U~ in the paper
+        all_gradients[task_index][group_client[i]] *= dis[i]
 
     client_gradients_sumTasks = np.zeros(all_clients_num)  # this is M_i in the proof
-    for client_index in range(all_clients_num):
-        for task_index in task_subset:
-            client_gradients_sumTasks[client_index] += all_gradients[task_index][client_index]
+    #for client_index in range(all_clients_num):
+    for i, client_index in enumerate(group_client):
+        client_gradients_sumTasks[i] += all_gradients[task_index][client_index]
 
     # sort the gradients of the clients for this task, get a list of indices
     sorted_indices = np.argsort(client_gradients_sumTasks)
@@ -80,51 +90,34 @@ def optimal_sampling_giventask(sample_num, all_data_num, gradient_record, task_s
         if 0 < m + l - n <= upper:
             best_l = l
     # compute p
-    p_s_i = np.zeros((tasks_num, all_clients_num))
+    p_s_i = np.zeros(all_clients_num)
     sum_upto_l = sum(client_gradients_sumTasks[sorted_indices[i]] for i in range(best_l))
     # print('sum_upto_l', sum_upto_l)
     for i in range(len(sorted_indices)):
         if i >= best_l:
-            for task_index in task_subset:
-                p_s_i[task_index][sorted_indices[i]] = all_gradients[task_index][sorted_indices[i]] / \
-                                                       client_gradients_sumTasks[sorted_indices[i]]
+            p_s_i[sorted_indices[i]] = 1.0
         else:
-            for task_index in task_subset:
-                p_s_i[task_index][sorted_indices[i]] = (m + best_l - n) * all_gradients[task_index][
-                    sorted_indices[i]] / sum_upto_l
+            p_s_i[sorted_indices[i]] = (m + best_l - n) * client_gradients_sumTasks[
+                sorted_indices[i]] / sum_upto_l
 
     allocation_result = np.zeros(all_clients_num, dtype=int)
     for client_idx in range(all_clients_num):
-        if abs(1 - np.sum(p_s_i[:, client_idx])) < 1e-6:
+        if abs(1 - np.sum(p_s_i[client_idx])) < 1e-6:
             p_not_choose = 0
         else:
-            p_not_choose = 1 - np.sum(p_s_i[:, client_idx])
+            p_not_choose = 1 - p_s_i[client_idx]
         # append p_not_choose to the head of p_s_i
         p_client = np.zeros(tasks_num + 1)
         p_client[0] = p_not_choose
-        p_client[1:] = p_s_i[:, client_idx]
+        p_client[1] = p_s_i[client_idx]
         allocation_result[client_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
     allocation_result = allocation_result.tolist()
-    clients_task = [s for s in allocation_result if s != -1]
-    chosen_clients = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
+    clients_task = [task_index for s in allocation_result if s != -1]
+    chosen_clients = [group_client[i] for i in range(len(allocation_result)) if allocation_result[i] != -1]
     # get p_dict
-    p_dict = []
-    for task_index in task_subset:
-        p_dict.append([p_s_i[task_index][i] for i in range(all_clients_num) if allocation_result[i] == task_index])
+    p_dict = [p_s_i[i] for i in range(all_clients_num) if allocation_result[i] == 0]
+    return clients_task, p_dict, chosen_clients
 
-    expected_clients_Prob_per_task = [np.sum(p_s_i[task_index]) / all_clients_num for task_index in range(tasks_num)]
-    # uniform result
-    uniform = sum([np.sum(all_gradients[task_index]**2)/(1e-6 + expected_clients_Prob_per_task[task_index]) for task_index in task_subset])
-    # optimal sampling result
-    optimal = 0
-    for client_idx in range(all_clients_num):
-        optimal += sum(all_gradients[task_index][client_idx] **2 / p_s_i[task_index][client_idx] for task_index in task_subset)
-    # improvement rate=uniform/optimal
-    improvement_rate = uniform/optimal
-    r_sum = sum(global_result[i][0] ** alpha for i in task_subset)
-    # Calculating the average and scaling by improvement rate
-    r = r_sum / len(task_subset) * improvement_rate
-    return r, clients_task, p_dict, chosen_clients
 
 def evaluate_optimal_sampling(chosen_clients, all_data_num, gradient_record, global_result, alpha): # gradient record is norm
     import itertools

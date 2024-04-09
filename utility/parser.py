@@ -45,6 +45,7 @@ class ParserArgs(object):
         self.parser.add_argument("--equalP2", action="store_true", help="make P equal, and use optimal Prob")
         self.parser.add_argument("--test", action="store_true", help="test new things")
         self.parser.add_argument("--group_num", type=int, default=1, help="group number")
+        self.parser.add_argument("--group_optimal", action="store_true", help="group optimal")
 
 
 

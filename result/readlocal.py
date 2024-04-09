@@ -253,7 +253,7 @@ f"3task_nnn_u{u_value}d{d_value}_random_": "random"
 seed_list = [11, 12, 13, 14]"""
 
 
-u_value = 0.7
+"""u_value = 0.7
 d_value = 0.3
 c = 0.2
 a = 2
@@ -274,7 +274,7 @@ f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_test2_a2_": "test2_a2",
 }
 all_rounds=800
 seed_list = [14,15,16,17,18,19,20]
-finalPath = f'./result/{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_14'
+finalPath = f'./result/{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_14'"""
 
 """u_value = 0.4
 c = 0.3
@@ -365,6 +365,30 @@ f"3task_nnnnn_c0.1u0.0d1.0_AS_taskfair_a2_": "AS_TF_a2",
 }
 seed_list = [18,19,20]
 finalPath = f'./result/3task_nnnnn_c0.1u0.0d1.0_random_18'"""
+
+
+u_value = 0.5
+d_value = 0.3
+c = 0.2
+a = 2
+ms_a = 4
+tasknum=4
+extra_folder = {
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_msAS_a{ms_a}_": f"msAS_a{ms_a}",
+#f"3task_nnn_u{u_value}d{d_value}_AS_clientfair_a{a}_": f"AS_CF_a{a}",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_AS_taskfair_a{a}_": f"AS_TF_a{a}",
+#f"3task_nnn_u{u_value}d{d_value}_OS_clientfair_a{a}_": f"OS_CF_a{a}",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_taskfair_a{a}_": f"OS_TF_a{a}",
+#f"3task_nnn_u{u_value}d{d_value}_qFel_a{a}_": f"qFel_a{a}",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_": "random",
+##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_test2_a2_": "test2_a2",
+##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_GS_a{a}_": "Group sample",
+}
+all_rounds=150
+seed_list = [14,15,16]
+# sd 21 is good,
+# sd 19, 20 is bad,
+finalPath = f'./result/{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_19'
 
 
 fig_avg = plt.figure()
@@ -463,8 +487,8 @@ for key in extra_folder:
     client_var_avg /= len(algor_seed)
     allocation_var /= len(algor_seed)
     algoName = next(iter(algo_name))
-    #print(f"{algoName: <10}: \t worst10% {worst10_avg:.3f}, best10% {best10_avg:.3f}, gap:{best10_avg-worst10_avg:.3f}; Global acc: {global_avg_acc:.3f}, max: {global_max_acc:.3f}, min: {global_min_acc:.3f}, gap: {global_max_acc-global_min_acc:.3f}, client_var: {client_var_avg:.3f}, allocation_var: {allocation_var:.3f}")
-    print(f"{algoName: <10}: \t worst20% {worst10_avg:.3f}, best20% {best10_avg:.3f}; Global acc: {global_avg_acc:.3f} entropy: {exp_array_entropy:.3f}, KL{kl} client_var: {client_var_avg:.3f}")
+    print(f"{algoName: <10}: \t worst10% {worst10_avg:.3f}, best10% {best10_avg:.3f}, gap:{best10_avg-worst10_avg:.3f}; Global acc: {global_avg_acc:.3f}, max: {global_max_acc:.3f}, min: {global_min_acc:.3f}, gap: {global_max_acc-global_min_acc:.3f}, client_var: {client_var_avg:.3f}, allocation_var: {allocation_var:.3f}")
+    #print(f"{algoName: <10}: \t worst20% {worst10_avg:.3f}, best20% {best10_avg:.3f}; Global acc: {global_avg_acc:.3f} entropy: {exp_array_entropy:.3f}, KL{kl:.4f} client_var: {client_var_avg:.3f}")
     #averge the curve
     curve = np.array(curve) # shape: seed tasknum numRounds
 

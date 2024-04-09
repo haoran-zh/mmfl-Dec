@@ -256,13 +256,31 @@ if __name__=="__main__":
                         # use current buffer to arrange tasks to each group
                         clients_task = []
                         chosen_clients = []
+                        p_dict = {}
+                        for t_idx in range(len(task_type)):
+                            p_dict[t_idx] = []
+                            # initialize p_dict
+                        # sample from each group
                         for group_index, task_index in enumerate(buffer):
                             # sample from group_clients[group_index]
-                            chosen_clients_temp = group_sampling.index_sampling(
-                                available_clients=group_clients[group_index],
-                                sample_num=active_clientnum_per_group)
-                            chosen_clients.extend(chosen_clients_temp)
-                            clients_task.extend([task_index] * len(chosen_clients_temp))
+                            if args.group_optimal is True:
+                                # prepare gradient record list
+                                localLoss = get_local_loss(task_number, num_clients, task_type, type_iid,
+                                                           tasks_data_info,
+                                                           tasks_data_idx, global_models, device, batch_size)
+                                localLossResults[:, :, round] = localLoss
+                                # sample_num = active_clientnum_per_group
+                                clients_task_temp, p_dict_temp, chosen_clients_temp = optimal_sampling.optimal_sampling_giventask(sample_num=active_clientnum_per_group, all_data_num=all_data_num,
+                                                                                                  gradient_record=localLoss, task_index=task_index, group_client=group_clients[group_index])
+                                chosen_clients.extend(chosen_clients_temp)
+                                clients_task.extend(clients_task_temp)
+                                p_dict[task_index] = p_dict_temp
+                            else:
+                                chosen_clients_temp = group_sampling.index_sampling(
+                                    available_clients=group_clients[group_index],
+                                    sample_num=active_clientnum_per_group)
+                                chosen_clients.extend(chosen_clients_temp)
+                                clients_task.extend([task_index] * len(chosen_clients_temp))
 
                         # update buffer
                         # remove the last one in the buffer
@@ -349,10 +367,14 @@ if __name__=="__main__":
                                 else:
                                     # print('uniform distribution')
                                     if args.group_num > 1:
-                                        p= C
+                                        if args.group_optimal is True:
+                                            temp_local_P = p_dict[task_idx]
+                                        else:
+                                            p= C
+                                            temp_local_P.append(p)
                                     else:
                                         p = C/task_number
-                                    temp_local_P.append(p)
+                                        temp_local_P.append(p)
                                 # do not need to collect local_data num, just use all_local_data_num
 
                         # aggregation
