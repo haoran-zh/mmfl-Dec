@@ -59,7 +59,7 @@ def gradient_similarity(total_gradient_each_task):
     client_num = len(total_gradient_each_task)
     gradient_dict = total_gradient_each_task.state_dict()
     global_keys = list(gradient_dict.keys())
-    similarity_martrix = np.zeros((client_num, client_num))
+    similarity_martrix = np.ones((client_num, client_num))
     for i in range(client_num):
         for j in range(i+1, client_num):
             diff = gradient_dict[i] - gradient_dict[j]
@@ -81,12 +81,24 @@ def clustering_similarity(similarity_matrices):
     for matrix in similarity_matrices:
         total_similarity_matrix += matrix
     # clustering
-    from sklearn.cluster import KMeans
+    from sklearn.cluster import SpectralClustering
     cluster_num = 2
-    kmeans = KMeans(n_clusters=cluster_num, random_state=0).fit(total_similarity_matrix)
-    cluster_list = []
-    for i in range(cluster_num):
-        cluster_list.append(np.where(kmeans.labels_ == i))
+    # convert similarity to distance
+    total_similarity_matrix = np.max(total_similarity_matrix) - total_similarity_matrix
+    # seems not correct
+    # kmeans = KMeans(n_clusters=cluster_num, random_state=0).fit(total_similarity_matrix)
+    clustering = SpectralClustering(n_clusters=3,
+                                    affinity='precomputed',
+                                    assign_labels='kmeans',
+                                    random_state=0).fit(total_similarity_matrix)
+    cluster_labels = clustering.labels_
+
+    # Prepare a list to hold items for each cluster
+    cluster_list = [[] for _ in range(max(cluster_labels) + 1)]
+
+    # Assign items to their respective clusters
+    for item_index, cluster_label in enumerate(cluster_labels):
+        cluster_list[cluster_label].append(item_index)
     return cluster_list
 
 
