@@ -48,3 +48,48 @@ def alpha_fair_new_task(alpha, loss_list):
     prob = loss_list / np.sum(loss_list)
     task_idx = np.random.choice(np.arange(len(loss_list)), p=prob)
     return task_idx
+
+
+def gradient_similarity(total_gradient_each_task):
+    # input:
+    # total_gradient_each_task: list of gradients of clients for a specific task.
+    # total_gradient_each_task[i] is the gradient of the i-th client
+    # output:
+    # similarity_martrix: matrix of similarity between clients
+    client_num = len(total_gradient_each_task)
+    gradient_dict = total_gradient_each_task.state_dict()
+    global_keys = list(gradient_dict.keys())
+    similarity_martrix = np.zeros((client_num, client_num))
+    for i in range(client_num):
+        for j in range(i+1, client_num):
+            diff = gradient_dict[i] - gradient_dict[j]
+            similarity_martrix[i][j] = np.linalg.norm(diff)
+            similarity_martrix[j][i] = similarity_martrix[i][j]
+    return similarity_martrix
+
+
+def clustering_similarity(similarity_matrices):
+    # input:
+    # similarity_matrices: list of similarity matrices of tasks
+    # similarity_matrices[i] is the similarity matrix of task i
+    # output:
+    # cluster_list: list of clusters
+    # cluster_list[i] includes all clients belong to the i-th cluster
+
+    # aggregate similarity matrix
+    total_similarity_matrix = np.zeros_like(similarity_matrices[0])
+    for matrix in similarity_matrices:
+        total_similarity_matrix += matrix
+    # clustering
+    from sklearn.cluster import KMeans
+    cluster_num = 2
+    kmeans = KMeans(n_clusters=cluster_num, random_state=0).fit(total_similarity_matrix)
+    cluster_list = []
+    for i in range(cluster_num):
+        cluster_list.append(np.where(kmeans.labels_ == i))
+    return cluster_list
+
+
+
+
+
