@@ -82,12 +82,12 @@ def clustering_similarity(similarity_matrices):
         total_similarity_matrix += matrix
     # clustering
     from sklearn.cluster import SpectralClustering
-    cluster_num = 2
+    cluster_num = 3
     # convert similarity to distance
-    total_similarity_matrix = np.max(total_similarity_matrix) - total_similarity_matrix
-    # seems not correct
+    # total_similarity_matrix = np.max(total_similarity_matrix) - total_similarity_matrix
+    # spectral clustering doesn't need to convert similarity to distance
     # kmeans = KMeans(n_clusters=cluster_num, random_state=0).fit(total_similarity_matrix)
-    clustering = SpectralClustering(n_clusters=3,
+    clustering = SpectralClustering(n_clusters=cluster_num,
                                     affinity='precomputed',
                                     assign_labels='kmeans',
                                     random_state=0).fit(total_similarity_matrix)
