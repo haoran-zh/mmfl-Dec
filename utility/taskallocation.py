@@ -13,20 +13,14 @@ def get_task_idx(num_tasks,
                  ):
     mixed_loss = [1.] * num_tasks  # create a list of num_tasks elements, each element is 1
     for task_idx in range(num_tasks):
-        if normalization == 'accuracy':
-            mixed_loss[task_idx] *= tasks_weight[task_idx] * \
-                                    np.power(100 * (1. - global_accs[task_idx]), beta - 1)
+        mixed_loss[task_idx] *= tasks_weight[task_idx] * \
+                                np.power(100 * (1. - global_accs[task_idx]), beta - 1)
 
-    if algorithm_name == 'proposed':
+    if algorithm_name == 'alphafair':
         # print('prop')
         probabilities = np.zeros((num_tasks))
         for task_idx in range(num_tasks):
             probabilities[task_idx] = mixed_loss[task_idx] / (np.sum(mixed_loss))
-        # print(probabilities)
-        # to double check!!!
-        # 1,2,3
-        # client 1: P(alpha-fairness), task 1,2,3
-        # client 2:
         return list(np.random.choice(np.arange(0, num_tasks), num_clients, p=probabilities))
     elif algorithm_name == 'bayesian':
         past_counts = np.zeros((num_clients, num_tasks))  # num_clients needs to be changed to len(chosen_clients) in the future
@@ -84,12 +78,7 @@ def get_task_idx(num_tasks,
         return list(np.random.randint(0, num_tasks, num_clients, dtype=int))
 
 
-def get_task_id_RR(num_tasks, totNumCl,
-                   num_clients,
-                   algorithm_name,
-                   normalization,
-                   tasks_weight,
-                   global_accs, beta, firstIndRR, rr_taskAlloc, rr_chosen_clients):
+def get_task_id_RR(num_tasks, firstIndRR, rr_taskAlloc, rr_chosen_clients):
     # numUsersSel=num_clients
     # numTasks=len(tasks_weight)
     # #resetting
@@ -117,8 +106,27 @@ def get_task_id_RR(num_tasks, totNumCl,
     # print(clients_task)
 
     return clients_task, rr_chosen_clients, firstIndRR, rr_taskAlloc
-       
 
-
-
-    
+def random_communcation_selection(chosen_communication, task_num):
+    # count each client communication times
+    communication_count = dict()
+    for client in chosen_communication:
+        if client not in communication_count:
+            communication_count[client] = 1
+        else:
+            communication_count[client] += 1
+    # randomly assign task to each client based on the communication times
+    # for each client in dict, randomly assign a task
+    task_record = dict()
+    for client in communication_count:
+        task_record[client] = np.random.randint(0, task_num, communication_count[client], dtype=int).tolist()
+    # get client_task, which is a list of task index for the chosen clients
+    clients_task = []
+    for client in chosen_communication:
+        clients_task.append(task_record[client].pop())
+    # check if task_record is empty
+    for client in task_record:
+        if len(task_record[client]) != 0:
+            print('Error: task_record is not empty')
+            exit(1)
+    return clients_task
