@@ -500,34 +500,20 @@ def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradien
 
     # p_optimal = optimal_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, ms_list=ms_list)
     #p_optimal = tradeoff_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, active_num=sample_num, dis=d_is)
-    #p_optimal = communication_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients,
-                                #active_num=sample_num, ki=client_task_ability)
-    p_optimal = optimal_sampling2(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients,
+    p_optimal = communication_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients,
                                 active_num=sample_num, ki=client_task_ability)
+    # p_optimal = optimal_sampling2(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients,
+                                #active_num=sample_num, ki=client_task_ability)
     p_s_i = p_optimal
-
-    allocation_result = np.zeros(all_clients_num, dtype=int)
-    for client_idx in range(all_clients_num):
-        if abs(1 - np.sum(p_s_i[:, client_idx])) < 1e-6:
-            p_not_choose = 0
-        else:
-            p_not_choose = 1 - np.sum(p_s_i[:, client_idx])
-        # append p_not_choose to the head of p_s_i
-        p_client = np.zeros(tasks_num + 1)
-        p_client[0] = p_not_choose
-        p_client[1:] = p_s_i[:, client_idx]
-        try:
-            allocation_result[client_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
-        except:
-            allocation_result[client_idx] = np.random.choice(np.arange(-1, tasks_num), p=np.ones(tasks_num+1)/(1+tasks_num))
-
-    allocation_result = allocation_result.tolist()
-    clients_task = [s for s in allocation_result if s != -1]
-    chosen_clients = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
-    # get p_dict
     p_dict = []
-    for task_index in range(tasks_num):
-        p_dict.append([p_s_i[task_index][i] for i in range(all_clients_num) if allocation_result[i] == task_index])
+    clients_task = []
+    chosen_clients = []
+    for s in range(tasks_num):
+        for i in range(all_clients_num):
+            if p_s_i[s][i] > random.random():
+                clients_task.append(s)
+                chosen_clients.append(i)
+                p_dict.append(p_s_i[s][i])
     return clients_task, p_dict, chosen_clients
 
 
