@@ -332,7 +332,47 @@ def tradeoff_solver(client_num, task_num, all_gradients, active_num, dis):
     return p_optimal
 
 
-def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradient_record):
+def communication_solver(client_num, task_num, all_gradients, active_num, ki):
+    N = client_num  # Number of clients
+    S = task_num    # Number of tasks
+    U = np.array(all_gradients).reshape(task_num, client_num)  # Gradient record reshaped
+    m = active_num
+    # Define the variable to solve for
+    p = cp.Variable((S, N), nonneg=True)
+    # print("curvature of p", p.curvature)
+
+    # Objective function
+    # print("curvature of U", U.curvature)
+    U2 = cp.square(U)
+    # objective:
+    # min unbalance_level * U2/p + U_punishment/p
+    objective = cp.Minimize(cp.sum(cp.multiply(U2, cp.power(p, -1))))
+    # objective = cp.Minimize(cp.sum(cp.multiply(U2, cp.power(p, -1))))
+
+    # Constraints
+    constraints = []
+    # Sum of p for each client across tasks <= 1
+    constraints += [cp.sum(p, axis=0) <= ki]
+    # Sum of all p for all task across clients <= m
+    constraints += [cp.sum(p) <= m]
+    # p >= 0 (implicitly satisfies p <= 1 due to the constraints above)
+    constraints += [p >= 1e-10]
+    constraints += [p <= 1]
+
+    # Problem definition
+    problem = cp.Problem(objective, constraints)
+
+    # Solve the problem
+    try:
+        problem.solve(max_iters=1600000)
+        p_optimal = p.value
+    except:
+        p_optimal = np.ones((S, N)) / S
+
+    return p_optimal
+
+
+def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradient_record, client_task_ability):
     # gradient_record: the shape is [task_index][client_index]
     # chosen_clients provide the index of the chosen clients in a random order
     # clients_task has the same order as chosen_clients
@@ -358,7 +398,9 @@ def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradien
             d_is[task_index][client_index] = all_data_num[task_index][client_index] / np.sum(all_data_num[task_index])
 
     # p_optimal = optimal_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, ms_list=ms_list)
-    p_optimal = tradeoff_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, active_num=sample_num, dis=d_is)
+    #p_optimal = tradeoff_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, active_num=sample_num, dis=d_is)
+    p_optimal = communication_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients,
+                                active_num=sample_num, ki=client_task_ability)
     p_s_i = p_optimal
 
     allocation_result = np.zeros(all_clients_num, dtype=int)
