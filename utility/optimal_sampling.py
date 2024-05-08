@@ -198,7 +198,6 @@ def optimal_sampling2(client_num, task_num, all_gradients, active_num, ki):
                 cnt += 1
         if cnt == client_num:
             easiest_done = True
-    print('finish step 1, remove the easiest clients')
     # separate p_si to esaiest and not
     # record not-easiest index
     not_easiest_index = []
@@ -209,8 +208,6 @@ def optimal_sampling2(client_num, task_num, all_gradients, active_num, ki):
     all_gradients_temp = np.delete(all_gradients, easiest_index, axis=1)
     sum_easiest = np.sum(p_si_matrix_easiest)
     active_num_temp = active_num - sum_easiest
-
-    print('start the step 2')
     while np.all(evaluation_matrix) != 1:
         p_s_i = get_optimal_sampling_tasks(m=active_num_temp, gradient_record=all_gradients_temp)
         print("finish step 2.1, if not consider sum<ki, then we are good")
@@ -473,7 +470,7 @@ def communication_solver(client_num, task_num, all_gradients, active_num, ki):
     return p_optimal
 
 
-def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradient_record, client_task_ability):
+def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradient_record, client_task_ability, args):
     # gradient_record: the shape is [task_index][client_index]
     # chosen_clients provide the index of the chosen clients in a random order
     # clients_task has the same order as chosen_clients
@@ -500,12 +497,16 @@ def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradien
 
     # p_optimal = optimal_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, ms_list=ms_list)
     #p_optimal = tradeoff_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, active_num=sample_num, dis=d_is)
-    p_optimal = communication_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients,
+    if args.suboptimal:
+        p_optimal = optimal_sampling2(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients,
+                                      active_num=sample_num, ki=client_task_ability)
+    else:
+        p_optimal = communication_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients,
                                 active_num=sample_num, ki=client_task_ability)
-    # p_optimal = optimal_sampling2(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients,
-                                #active_num=sample_num, ki=client_task_ability)
     p_s_i = p_optimal
     p_dict = []
+    for s in range(tasks_num):
+        p_dict.append([])
     clients_task = []
     chosen_clients = []
     for s in range(tasks_num):
@@ -513,7 +514,7 @@ def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradien
             if p_s_i[s][i] > random.random():
                 clients_task.append(s)
                 chosen_clients.append(i)
-                p_dict.append(p_s_i[s][i])
+                p_dict[s].append(p_s_i[s][i])
     return clients_task, p_dict, chosen_clients
 
 

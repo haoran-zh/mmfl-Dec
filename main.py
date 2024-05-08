@@ -263,7 +263,7 @@ if __name__=="__main__":
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
                                                                                                          clients_task,
                                                                                                          all_data_num,
-                                                                                                         all_weights_diff_power)
+                                                                                                         all_weights_diff_power, client_task_ability, args)
 
                     # optimal sampling needs to be moved after we get local_data_nums
                 else:
@@ -300,7 +300,7 @@ if __name__=="__main__":
                                                                                                          clients_task,
                                                                                                          all_data_num,
                                                                                                          all_weights_diff_power,
-                                                                                                        client_task_ability)
+                                                                                                        client_task_ability, args)
                     elif args.group_num > 1:  # if group_num > 1, then we need to sample from each group
                         # use current buffer to arrange tasks to each group
                         clients_task = []
