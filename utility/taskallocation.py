@@ -106,27 +106,3 @@ def get_task_id_RR(num_tasks, firstIndRR, rr_taskAlloc, rr_chosen_clients):
     # print(clients_task)
 
     return clients_task, rr_chosen_clients, firstIndRR, rr_taskAlloc
-
-def random_communcation_selection(chosen_communication, task_num):
-    # count each client communication times
-    communication_count = dict()
-    for client in chosen_communication:
-        if client not in communication_count:
-            communication_count[client] = 1
-        else:
-            communication_count[client] += 1
-    # randomly assign task to each client based on the communication times
-    # for each client in dict, randomly assign a task
-    task_record = dict()
-    for client in communication_count:
-        task_record[client] = np.random.randint(0, task_num, communication_count[client], dtype=int).tolist()
-    # get client_task, which is a list of task index for the chosen clients
-    clients_task = []
-    for client in chosen_communication:
-        clients_task.append(task_record[client].pop())
-    # check if task_record is empty
-    for client in task_record:
-        if len(task_record[client]) != 0:
-            print('Error: task_record is not empty')
-            exit(1)
-    return clients_task

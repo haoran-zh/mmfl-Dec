@@ -241,37 +241,36 @@ def optimal_sampling2(client_num, task_num, all_gradients, active_num, ki):
     # print('final evaluation_matrix\n', evaluation_matrix)
     return p_si_matrix
 
-def get_optimal_sampling(chosen_clients, all_data_num, gradient_record, args): # gradient record is norm
+def get_optimal_sampling(chosen_processes, all_data_num, gradient_record, args, client_task_ability, clients_process): # gradient record is norm
     # gradient_record: the shape is [task_index][client_index]
     # chosen_clients provide the index of the chosen clients in a random order
     # clients_task has the same order as chosen_clients
     # multiple tasks sampling will degenerate to single task sampling when task=1
     # therefore we can use the same function.
-    sample_num = len(chosen_clients)  # m in the paper
+    sample_num = len(chosen_processes)  # m in the paper
     tasks_num = len(gradient_record)
     # random.shuffle(task_indices) # make task order random
     all_clients_num = len(gradient_record[0])
+    processes_num = sum(client_task_ability) # client_task_ability [4,2,1,..] client 1 has 4 processes, client 2 has 2 processes
 
-    all_gradients = gradient_record.copy()
+    all_gradients = np.zeros((tasks_num, processes_num))
 
-    if args.equalP:
-        pass
-    else:
+    for task_index in range(tasks_num):
+        for process_index in range(processes_num):
+        # from U to U~ in the paper
+            client_index = clients_process[process_index]
+            all_gradients[task_index][process_index] = gradient_record[task_index][client_index] * all_data_num[task_index][client_index] / np.sum(
+            all_data_num[task_index]) / client_task_ability[client_index]
+
+    process_gradients_sumTasks = np.zeros(processes_num) # this is M_i in the proof
+    for process_index in range(processes_num):
         for task_index in range(tasks_num):
-            for client_index in range(all_clients_num):
-            # from U to U~ in the paper
-                all_gradients[task_index][client_index] *= all_data_num[task_index][client_index] / np.sum(
-                all_data_num[task_index])
-
-    client_gradients_sumTasks = np.zeros(all_clients_num) # this is M_i in the proof
-    for client_index in range(all_clients_num):
-        for task_index in range(tasks_num):
-            client_gradients_sumTasks[client_index] += all_gradients[task_index][client_index]
+            process_gradients_sumTasks[process_index] += all_gradients[task_index][process_index]
 
     # sort the gradients of the clients for this task, get a list of indices
-    sorted_indices = np.argsort(client_gradients_sumTasks)
+    sorted_indices = np.argsort(process_gradients_sumTasks)
 
-    n = all_clients_num
+    n = processes_num
     m = sample_num
 
     l = n - m + 1
@@ -284,37 +283,38 @@ def get_optimal_sampling(chosen_clients, all_data_num, gradient_record, args): #
         if l > n:
             break
         # sum the first l smallest gradients
-        sum_upto_l = sum(client_gradients_sumTasks[sorted_indices[i]] for i in range(l))
-        upper = sum_upto_l / client_gradients_sumTasks[sorted_indices[l-1]]
+        sum_upto_l = sum(process_gradients_sumTasks[sorted_indices[i]] for i in range(l))
+        upper = sum_upto_l / process_gradients_sumTasks[sorted_indices[l-1]]
         # if 0<m+l-n<=upper, then this l is good. find the largest l satisfying this condition
         if 0 < m + l - n <= upper:
             best_l = l
     # compute p
-    p_s_i = np.zeros((tasks_num, all_clients_num))
-    sum_upto_l = sum(client_gradients_sumTasks[sorted_indices[i]] for i in range(best_l))
+    p_s_i = np.zeros((tasks_num, processes_num))
+    sum_upto_l = sum(process_gradients_sumTasks[sorted_indices[i]] for i in range(best_l))
     # print('sum_upto_l', sum_upto_l)
     for i in range(len(sorted_indices)):
         if i >= best_l:
             for task_index in range(tasks_num):
-                p_s_i[task_index][sorted_indices[i]] = all_gradients[task_index][sorted_indices[i]] / client_gradients_sumTasks[sorted_indices[i]]
+                p_s_i[task_index][sorted_indices[i]] = all_gradients[task_index][sorted_indices[i]] / process_gradients_sumTasks[sorted_indices[i]]
         else:
             for task_index in range(tasks_num):
                 p_s_i[task_index][sorted_indices[i]] = (m + best_l - n) * all_gradients[task_index][sorted_indices[i]] / sum_upto_l
 
-    allocation_result = np.zeros(all_clients_num, dtype=int)
-    for client_idx in range(all_clients_num):
-        if abs(1-np.sum(p_s_i[:, client_idx])) < 1e-6:
+    allocation_result = np.zeros(processes_num, dtype=int)
+    for process_idx in range(processes_num):
+        if abs(1-np.sum(p_s_i[:, process_idx])) < 1e-6:
             p_not_choose = 0
         else:
-            p_not_choose = 1 - np.sum(p_s_i[:, client_idx])
+            p_not_choose = 1 - np.sum(p_s_i[:, process_idx])
         # append p_not_choose to the head of p_s_i
         p_client = np.zeros(tasks_num+1)
         p_client[0] = p_not_choose
-        p_client[1:] = p_s_i[:, client_idx]
-        allocation_result[client_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
+        p_client[1:] = p_s_i[:, process_idx]
+        allocation_result[process_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
     allocation_result = allocation_result.tolist()
     clients_task = [s for s in allocation_result if s != -1]
-    chosen_clients = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
+    chosen_process_order = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
+    chosen_clients = [clients_process[i] for i in chosen_process_order]
     # get p_dict
     p_dict = []
     active_rate = len(chosen_clients)/all_clients_num
@@ -323,15 +323,7 @@ def get_optimal_sampling(chosen_clients, all_data_num, gradient_record, args): #
             p_dict.append([active_rate for i in range(all_clients_num) if allocation_result[i] == task_index])
     else:
         for task_index in range(tasks_num):
-            p_dict.append([p_s_i[task_index][i] for i in range(all_clients_num) if allocation_result[i] == task_index])
-
-    # improvement rate, compute the KL divergence.
-    # uniform result
-    #uniform_prob = np.ones_like(p_s_i) / tasks_num * args.C
-    #kl_divergence = np.sum(p_s_i * np.log(p_s_i / uniform_prob), axis=1)
-    #total_kl_divergence = np.mean(kl_divergence)
-    #print("kl_divergence", total_kl_divergence)
-
+            p_dict.append([p_s_i[task_index][i] * client_task_ability[clients_process[i]] for i in range(processes_num) if allocation_result[i] == task_index])
 
     return clients_task, p_dict, chosen_clients
 

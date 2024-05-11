@@ -91,7 +91,7 @@ def load_extra_folder(folder_dict, seed=11, header='localAcc_'):
 # algo_name = ["bayesian", "alpha-fairness", "random", "round robin","optimal_sampling"]
 
 def generate_task_list(data, replace=-1):
-    client_num = 80
+    global client_num
     taskarray = np.ones((len(data), client_num))*replace
     for i in range(len(data)):
         for key in data[i]:
@@ -367,32 +367,70 @@ seed_list = [18,19,20]
 finalPath = f'./result/3task_nnnnn_c0.1u0.0d1.0_random_18'"""
 
 
-u_value = 0.5
+"""u_value = 0.9
 d_value = 0.3
-c = 0.2
+c = 0.1
 a = 2
 ms_a = 4
-tasknum=4
+tasknum=3
+client_num=80
+# task=3 ,client_num=80
 extra_folder = {
-f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_msAS_a{ms_a}_": f"msAS_a{ms_a}",
+#f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_msAS_a{ms_a}_": f"msAS_a{ms_a}",
 #f"3task_nnn_u{u_value}d{d_value}_AS_clientfair_a{a}_": f"AS_CF_a{a}",
 f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_AS_taskfair_a{a}_": f"AS_TF_a{a}",
 #f"3task_nnn_u{u_value}d{d_value}_OS_clientfair_a{a}_": f"OS_CF_a{a}",
-f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_taskfair_a{a}_": f"OS_TF_a{a}",
+##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_taskfair_a{a}_": f"OS_TF_a{a}",
 #f"3task_nnn_u{u_value}d{d_value}_qFel_a{a}_": f"qFel_a{a}",
 f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_": "random",
 ##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_test2_a2_": "test2_a2",
-##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_GS_a{a}_": "Group sample",
+##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_GSo_a{a}_": "Group sample",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{a}_": "tradeoff_a2",
+##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{ms_a}_": "tradeoff_notfair",
 }
 all_rounds=150
-seed_list = [14,15,16]
+seed_list = [14,15,16,17,18]
 # sd 21 is good,
 # sd 19, 20 is bad,
-finalPath = f'./result/{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_19'
+finalPath = f'./result/{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_14'"""
 
 
-fig_avg = plt.figure()
-fig_min = plt.figure()
+u_value = 0.9
+d_value = 0.3
+c = 0.1  # active rate
+a = 1 # alpha
+#ms_a = 4
+tasknum=5 # task number
+client_num=120 # client number
+# task=3 ,client_num=80
+extra_folder = {
+#f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_msAS_a{ms_a}_": f"msAS_a{ms_a}",
+#f"3task_nnn_u{u_value}d{d_value}_AS_clientfair_a{a}_": f"AS_CF_a{a}",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_ASsub_a{a}_": f"suboptimal",
+#f"3task_nnn_u{u_value}d{d_value}_OS_clientfair_a{a}_": f"OS_CF_a{a}",
+##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_taskfair_a{a}_": f"OS_TF_a{a}",
+#f"3task_nnn_u{u_value}d{d_value}_qFel_a{a}_": f"qFel_a{a}",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_AS_a{a}_": "optimal",
+##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_test2_a2_": "test2_a2",
+#f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{a}_": "tradeoff_a2",
+f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_random_": "random",
+######f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_a1_": "a1",
+######f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_a2_": "a2",
+##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_GSo_a{a}_": "Group sample",
+###f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{a}_": "tradeoff_a2",
+##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{ms_a}_": "tradeoff_notfair",
+}
+all_rounds=150
+seed_list = [14,15,16,17,18,19]
+line_list = ['-', '--', ':', ':']
+# sd 21 is good,
+# sd 19, 20 is bad,
+finalPath = f'./result/{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_14'
+
+# make figure wide=8, height=5
+
+fig_avg = plt.figure(figsize=(6, 4))
+fig_min = plt.figure(figsize=(6, 4))
 ax_avg = fig_avg.add_subplot(1, 1, 1)
 ax_min = fig_min.add_subplot(1, 1, 1)
 all_algorithm_curve = []
@@ -491,31 +529,46 @@ for key in extra_folder:
     #print(f"{algoName: <10}: \t worst20% {worst10_avg:.3f}, best20% {best10_avg:.3f}; Global acc: {global_avg_acc:.3f} entropy: {exp_array_entropy:.3f}, KL{kl:.4f} client_var: {client_var_avg:.3f}")
     #averge the curve
     curve = np.array(curve) # shape: seed tasknum numRounds
+    x = np.arange(curve.shape[-1])
+    # get the upper and lower bound of the curve
+    aver_each_seed_curve = np.mean(curve, axis=1)
 
     all_algorithm_curve.append(np.mean(curve, axis=0))
     all_count_list.append(count_list)
     curve_avg = np.mean(curve, axis=(0,1)).reshape(-1)
     curve_min = np.min(np.mean(curve, axis=0).reshape(tasknum, -1), axis=0).reshape(-1)
-    ax_avg.plot(curve_avg[2:], label=next(iter(algo_name)))
-    ax_min.plot(curve_min[1:], label=next(iter(algo_name)))
+
+    curve_upper = curve_avg + aver_each_seed_curve.std(axis=0)
+    curve_lower = curve_avg - aver_each_seed_curve.std(axis=0)
+
+    ax_avg.plot(x, curve_avg, label=next(iter(algo_name)), linestyle=line_list[cnt])
+    cnt+=1
+    # ax_avg.fill_between(x, curve_lower, curve_upper, alpha=0.2)
+
+
+    ax_min.plot(x, curve_min, label=next(iter(algo_name)))
 
 # plot each task
 if tasknum > 1:
     plot_each_task(all_algorithm_curve, keys_list)
     plot_allocation_count(all_count_list, keys_list)
 
-ax_avg.legend()
-ax_avg.set_xlabel('Round')
-ax_avg.set_ylabel('Global avg Acc')
-ax_avg.set_title('Global avg Acc')
+ax_avg.legend(fontsize=14)
+# make label size larger
+ax_avg.set_xlabel('Num. Global Iterations', fontsize=14)
+ax_avg.set_ylabel('Accuracy', fontsize=14)
+ax_avg.set_title('Average Accuracy over 5 Models', fontsize=14)
+# make the figure is tight
 
 ax_min.legend()
-ax_min.set_xlabel('Round')
-ax_min.set_ylabel('Global min acc')
-ax_min.set_title('Global min acc')
+ax_min.set_xlabel('Num. Global Iterations')
+ax_min.set_ylabel('Accuracy')
+ax_min.set_title('Min Accuracy over 5 Models')
 
 fig = ax_avg.get_figure()
 # save to 3task_nnn_u{u_value}d{d_value}_random_11/global_avg_acc.png
+fig.tight_layout()
 fig.savefig(finalPath+'/global_avg_acc.png')
 fig = ax_min.get_figure()
+fig.tight_layout()
 fig.savefig(finalPath+'/global_min_acc.png')

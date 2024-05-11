@@ -6,7 +6,7 @@ from utility.load_model import load_model
 from utility.training import training, training_all
 from utility.evalation import evaluation, get_local_loss
 from utility.aggregation import federated, federated_prob
-from utility.taskallocation import get_task_idx, get_task_id_RR, random_communcation_selection
+from utility.taskallocation import get_task_idx, get_task_id_RR
 import random
 import time
 import sys
@@ -26,7 +26,6 @@ if __name__=="__main__":
     C = args.C  # communication active rate.
     num_clients = args.num_clients  # default 30 #100
     numUsersSel = C * num_clients # numUsersel
-    numCommunicationSel = C * num_clients
 
     normalization = 'accuracy'  # accuracy
     num_round = args.round_num  # 100#200
@@ -46,17 +45,18 @@ if __name__=="__main__":
     # get task ability of each client
     # 3 levels: straggler, common, expert
     # straggler can only train 1 task, common can train half, expert can train all
-    # TODO: package this part into a function later
-    task_level_list = [1, task_number//2, task_number]
+
+    task_level_list = [1, task_number//2, task_number] # we simulate 3 levels of clients
     client_task_ability = []
     # random decide the ability of each client
     for i in range(num_clients):
-        client_task_ability.append(random.choices(task_level_list, client_cpu_list)[0])
+        client_task_ability.append(random.choices(task_level_list, client_cpu_list)[0]) # randomly decide the ability of each client
     # expand total_clients by client_task_ability
-    total_clients = [i for i in range(num_clients)]
-    total_clients_expand = []
+    clients_process = []
     for i in range(num_clients):
-        total_clients_expand.extend([i] * client_task_ability[i])
+        clients_process.extend([i] * client_task_ability[i])
+    allowed_communication = int(C * len(clients_process))
+
 
     # set record name
     iid_str = ''.join([x[0] for x in type_iid])
@@ -107,9 +107,7 @@ if __name__=="__main__":
                 first_ind=math.floor((i+1)*num_clients/len(task_type))
             firstIndRR=0
             clients_task=0
-
             file =  open('./result/'+folder_name+'/Algorithm_'+algorithm_name+'_normalization_'+normalization+'_type_'+iid_filename+'_seed_'+str(random_seed)+''+'.txt', 'w')
-
 
             np.random.seed(random_seed)
             torch.manual_seed(random_seed)
@@ -176,22 +174,6 @@ if __name__=="__main__":
                         local_data_num.append(len(tasks_data_idx[task_idx][0][client_idx]))
                 all_data_num.append(local_data_num)
 
-            # allocation_initialization
-            all_clients = list(range(0, num_clients))
-            chosen_clients = random.sample(all_clients, int(numUsersSel))
-            # we first randomly allocate.
-            # maybe not used, can delete this.
-            clients_task = np.random.randint(0, len(task_type), int(num_clients * C), dtype=int)
-
-
-            # define group_clients
-            import utility.group_sampling as group_sampling
-            group_num = args.group_num
-            group_clients = group_sampling.initialize_group(client_num=num_clients, group_num=group_num, label_info=tasks_data_idx[task_idx][1])
-            client_num_per_group = int(num_clients / group_num)
-            active_clientnum_per_group = int(client_num_per_group * C)
-            buffer = [i for i in range(group_num)]  # create the buffer
-
             global_accs = []
             for task_idx in range(len(task_type)):
                 global_accs.append(0.1)
@@ -199,32 +181,12 @@ if __name__=="__main__":
             for round in tqdm(range(num_round)):
                 print(f"Round[ {round+1}/{num_round} ]",file=file)
                 # random sampling
-                all_clients = list(range(0, num_clients))
+                # all_clients = list(range(0, num_clients))
                 #chosen_clients = random.sample(all_clients, int(numUsersSel))
                 # random selection
-                chosen_clients = random.sample(total_clients_expand, int(numCommunicationSel))
-
-                # we first randomly allocate.
-                if algorithm_name == 'round_robin':
-                    # get clients_task in round robin way
-                    clients_task, rr_chosen_clients, firstIndRR, rr_taskAlloc = get_task_id_RR(num_tasks=len(task_type),
-                                                                                               firstIndRR=firstIndRR,
-                                                                                               rr_taskAlloc=rr_taskAlloc,
-                                                                                               rr_chosen_clients=chosen_clients)
-
-                elif algorithm_name == "alphafair": # alpha-fair
-                    clients_task = get_task_idx(num_tasks=len(task_type), num_clients=int(num_clients * C),
-                                                algorithm_name=algorithm_name,
-                                                normalization=normalization,
-                                                tasks_weight=tasks_weight, global_accs=global_accs, beta=beta,
-                                                # NEW: dec 6 2023
-                                                chosen_clients=chosen_clients,
-                                                allocation_history=None,
-                                                args=args)
-
-                else:
-                    # clients_task = np.random.randint(0, len(task_type), int(numCommunicationSel), dtype=int)
-                    clients_task = random_communcation_selection(chosen_clients, task_number)
+                chosen_clients = random.sample(clients_process, int(allowed_communication))
+                clients_task = np.random.randint(0, len(task_type), len(chosen_clients), dtype=int)
+                # this will be used for random sampling
                 # training
                 if args.optimal_sampling is True:
                     # train everything to get every gradient
@@ -245,7 +207,7 @@ if __name__=="__main__":
                         all_weights_diff_power = optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args, all_data_num)
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                                      all_data_num,
-                                                                                                     all_weights_diff_power, args)
+                                                                                                     all_weights_diff_power, args, client_task_ability, clients_process)
                     else:
                         # compute P(s) and decide client num for each task
                         """P = np.zeros(len(task_type))
@@ -270,8 +232,6 @@ if __name__=="__main__":
                     # if args.approx_optimal, then get all local loss and acc, update chosen_clients and clients_task
                     if args.approx_optimal is True:
                         # 1 get all local loss
-                        # localAcc = np.zeros((task_number, num_clients))
-                        # localLoss = np.zeros((task_number, num_clients))
                         localLoss = get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info,
                                                    tasks_data_idx, global_models, device, batch_size)
                         localLossResults[:, :, round] = localLoss
@@ -282,16 +242,9 @@ if __name__=="__main__":
                                                                                   all_data_num)
                             clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                                      all_data_num,
-                                                                                                     all_weights_diff_power, args)
+                                                                                                     all_weights_diff_power, args, client_task_ability, clients_process)
                         else:
                             # compute P(s) and decide client num for each task
-                            """P = np.zeros(len(task_type))
-                            for t_idx in range(len(task_type)):
-                                # compute P(s)
-                                P[t_idx] = global_results[t_idx][0] ** (beta - 1)
-                            P = P / np.sum(P)
-                            # choose tasks num
-                            clients_task = list(np.random.choice(np.arange(0, len(task_type)), len(chosen_clients), p=P))"""
                             all_weights_diff_power = optimal_sampling.power_gradient_norm(localLoss, localLoss,
                                                                                           args,
                                                                                           all_data_num)
@@ -301,52 +254,6 @@ if __name__=="__main__":
                                                                                                          all_data_num,
                                                                                                          all_weights_diff_power,
                                                                                                         client_task_ability, args)
-                    elif args.group_num > 1:  # if group_num > 1, then we need to sample from each group
-                        # use current buffer to arrange tasks to each group
-                        clients_task = []
-                        chosen_clients = []
-                        p_dict = {}
-                        for t_idx in range(len(task_type)):
-                            p_dict[t_idx] = []
-                            # initialize p_dict
-                        # sample from each group
-                        for group_index, task_index in enumerate(buffer):
-                            # sample from group_clients[group_index]
-                            if args.group_optimal is True:
-                                # prepare gradient record list
-                                localLoss = get_local_loss(task_number, num_clients, task_type, type_iid,
-                                                           tasks_data_info,
-                                                           tasks_data_idx, global_models, device, batch_size)
-                                localLossResults[:, :, round] = localLoss
-                                # sample_num = active_clientnum_per_group
-                                clients_task_temp, p_dict_temp, chosen_clients_temp = optimal_sampling.optimal_sampling_giventask(sample_num=active_clientnum_per_group, all_data_num=all_data_num,
-                                                                                                  gradient_record=localLoss, task_index=task_index, group_client=group_clients[group_index])
-                                chosen_clients.extend(chosen_clients_temp)
-                                clients_task.extend(clients_task_temp)
-                                p_dict[task_index] = p_dict_temp
-                            else:
-                                chosen_clients_temp = group_sampling.index_sampling(
-                                    available_clients=group_clients[group_index],
-                                    sample_num=active_clientnum_per_group)
-                                chosen_clients.extend(chosen_clients_temp)
-                                clients_task.extend([task_index] * len(chosen_clients_temp))
-
-                        # update buffer
-                        # remove the last one in the buffer
-                        buffer.pop()
-                        # add a new one in the front
-                        # based on alph-fainess, compute the new task_index
-                        # get available tasks
-                        available_tasks = list(set(range(task_number)) - set(buffer))
-                        # get loss_list
-                        loss_list = []
-                        for task_index in available_tasks:
-                            loss_list.append(global_results[task_index][1])
-                        idx = group_sampling.alpha_fair_new_task(alpha=beta, loss_list=loss_list)
-                        new_task = available_tasks[idx]
-                        buffer.insert(0, new_task)
-                        assert len(buffer) == group_num
-
 
                     tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                                    global_models=global_models, chosen_clients=chosen_clients,

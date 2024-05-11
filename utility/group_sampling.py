@@ -100,8 +100,3 @@ def clustering_similarity(similarity_matrices):
     for item_index, cluster_label in enumerate(cluster_labels):
         cluster_list[cluster_label].append(item_index)
     return cluster_list
-
-
-
-
-

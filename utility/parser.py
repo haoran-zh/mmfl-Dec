@@ -48,7 +48,7 @@ class ParserArgs(object):
         self.parser.add_argument("--group_optimal", action="store_true", help="group optimal")
         self.parser.add_argument("--client_cpu", nargs='*', type=float, default=[0.25, 0.5, 0.25], help="clients are separated into serveral groups with different "
                                                                                                  "cpu power. straggler, common, expert")
-
+        self.parser.add_argument("--suboptimal", action="store_true", help="sub optimal")
 
 
     def get_args(self):
