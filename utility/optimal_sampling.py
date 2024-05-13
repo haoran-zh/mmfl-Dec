@@ -255,6 +255,10 @@ def get_optimal_sampling(chosen_processes, all_data_num, gradient_record, args, 
 
     all_gradients = np.zeros((tasks_num, processes_num))
 
+    if args.suboptimal: # set client_task_ability to all 1
+        client_task_ability = np.ones(all_clients_num)
+
+
     for task_index in range(tasks_num):
         for process_index in range(processes_num):
         # from U to U~ in the paper
