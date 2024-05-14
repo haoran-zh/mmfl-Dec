@@ -25,6 +25,7 @@ class ParserArgs(object):
         self.parser.add_argument("--iid_type", nargs='*', default=['noniid', 'noniid', 'noniid', 'iid', 'iid'], help="List of type_iid")
         self.parser.add_argument("--task_type", nargs='*', default=['mnist', 'cifar10', 'fashion_mnist', 'emnist', 'cifar10'], help="List of task types")
         self.parser.add_argument("--alpha", type=float, default=3.0, help="alpha value, alpha-fairness")
+        self.parser.add_argument("--alpha2", type=float, default=2.0, help="alpha value, group fairness loss function")
         self.parser.add_argument("--notes", type=str, default='', help="notes to add on the folder name")
         self.parser.add_argument("--bayes_decay", type=float, default=1.0, help="Decay factor for bayesian method")
         self.parser.add_argument("--algo_type", nargs='*', default=['bayesian', 'proposed','random','round_robin'], help="List of algorithms")
@@ -45,7 +46,7 @@ class ParserArgs(object):
         self.parser.add_argument("--equalP2", action="store_true", help="make P equal, and use optimal Prob")
         self.parser.add_argument("--test", action="store_true", help="test new things")
         self.parser.add_argument("--group_num", type=int, default=1, help="group number")
-        self.parser.add_argument("--group_optimal", action="store_true", help="group optimal")
+        self.parser.add_argument("--group_fairness", action="store_true", help="group optimal")
         self.parser.add_argument("--client_cpu", nargs='*', type=float, default=[0.25, 0.5, 0.25], help="clients are separated into serveral groups with different "
                                                                                                  "cpu power. straggler, common, expert")
         self.parser.add_argument("--suboptimal", action="store_true", help="sub optimal")

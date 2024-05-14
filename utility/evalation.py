@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.utils.data import Subset
 import numpy as np
+from collections import defaultdict
 
 def evaluation(model, data, batch_size, device, args):
     model.eval()
@@ -65,3 +66,86 @@ def get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_inf
             # localAcc[task, cl] = accu
             localLoss[task, cl] = loss
     return localLoss
+
+
+def group_fairness_evaluation(model, data, batch_size, device, args):
+    model.eval()
+    # split data into validation set (first 30%) and test set (last 70%)
+    # Calculate the number of validation samples
+    num_val_samples = int(len(data) * 0.3)
+    indices = list(range(len(data)))
+
+    # Shuffle indices if you want to randomize the validation set
+    # random.shuffle(indices)
+
+    # Select the indices for the validation and test sets
+    val_indices = indices[:num_val_samples]
+    test_indices = indices[num_val_samples:]
+
+    if args is None:
+        # do nothing, use all data
+        pass
+    else:
+        if args.validation is True:
+            data = Subset(data, val_indices)
+        else:
+            data = Subset(data, test_indices)
+
+    data_loader = DataLoader(data, batch_size=batch_size, shuffle=False)
+    criterion = nn.CrossEntropyLoss()
+    correct = 0
+    running_loss = 0
+    total = 0
+
+    label_correct = defaultdict(int)
+    label_total = defaultdict(int)
+    label_positive = defaultdict(int)
+    label_true_positive = defaultdict(int)
+
+    with torch.no_grad():
+        for images, labels in data_loader:
+            images = images.to(device)
+            labels = labels.to(device)
+            outputs = model(images)
+            loss = criterion(outputs, labels)
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+            running_loss += loss.item()
+
+            # Record accuracy for each label and true positive rates
+            for label in torch.unique(labels):
+                label_mask = (labels == label)
+                label_correct[label.item()] += (predicted[label_mask] == labels[label_mask]).sum().item()
+                label_total[label.item()] += label_mask.sum().item()
+
+                # True positives for the label
+                label_positive[label.item()] += label_mask.sum().item()
+                label_true_positive[label.item()] += (predicted[label_mask] == labels[label_mask]).sum().item()
+
+    accuracy = correct / total
+    loss = running_loss / total
+
+    # Calculate accuracy for each label
+    label_accuracies = {label: label_correct[label] / label_total[label] for label in label_total}
+
+    # Calculate true positive rates for each label
+    label_tprs = {label: label_true_positive[label] / label_positive[label] for label in label_positive}
+
+    # Calculate Equal Opportunity Difference
+    eod = max(label_tprs.values()) - min(label_tprs.values())
+
+    # Calculate the difference in accuracy as a group fairness measure
+    accuracy_diff = max(label_accuracies.values()) - min(label_accuracies.values())
+
+    # Save the results using pickle
+    results = {
+        'accuracy': accuracy,
+        'loss': loss,
+        'label_accuracies': label_accuracies,
+        'accuracy_diff': accuracy_diff,
+        'label_tprs': label_tprs,
+        'eod': eod
+    }
+
+    return results

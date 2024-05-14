@@ -406,14 +406,16 @@ client_num=120 # client number
 extra_folder = {
 #f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_msAS_a{ms_a}_": f"msAS_a{ms_a}",
 #f"3task_nnn_u{u_value}d{d_value}_AS_clientfair_a{a}_": f"AS_CF_a{a}",
-f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_ASsub_a{a}_": f"suboptimal",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_a{a}_": f"OS-gn",
 #f"3task_nnn_u{u_value}d{d_value}_OS_clientfair_a{a}_": f"OS_CF_a{a}",
 ##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_taskfair_a{a}_": f"OS_TF_a{a}",
 #f"3task_nnn_u{u_value}d{d_value}_qFel_a{a}_": f"qFel_a{a}",
-f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_AS_a{a}_": "optimal",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_AS_a{a}_": "OS-loss",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_AS-sub_a{a}_": "OS-loss-sub",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS-sub_a{a}_": "OS-gn-sub",
 ##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_test2_a2_": "test2_a2",
 #f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{a}_": "tradeoff_a2",
-f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_random_": "random",
+f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_": "random",
 ######f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_a1_": "a1",
 ######f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_a2_": "a2",
 ##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_GSo_a{a}_": "Group sample",
@@ -421,8 +423,8 @@ f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_random_": "random",
 ##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{ms_a}_": "tradeoff_notfair",
 }
 all_rounds=150
-seed_list = [14,15,16,17,18,19]
-line_list = ['-', '--', ':', ':']
+seed_list = [15, 16, 17, 18,19]
+line_list = ['-', '-', '-', '-', '-']
 # sd 21 is good,
 # sd 19, 20 is bad,
 finalPath = f'./result/{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_14'

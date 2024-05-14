@@ -4,10 +4,11 @@ import utility.dataset as dataset
 from utility.preprocessing import preprocessing
 from utility.load_model import load_model
 from utility.training import training, training_all
-from utility.evalation import evaluation, get_local_loss
+from utility.evalation import evaluation, get_local_loss, group_fairness_evaluation
 from utility.aggregation import federated, federated_prob
 from utility.taskallocation import get_task_idx, get_task_id_RR
 import random
+import pickle
 import time
 import sys
 import math
@@ -389,6 +390,15 @@ if __name__=="__main__":
                     #localLoss[task, cl] = loss
                     localAccResults[task, cl, -1] = accu
                     localLossResults[task, cl, -1] = loss
+
+            # group fairness evaluation
+            for task_idx in range(task_number):
+                results = group_fairness_evaluation(model=global_models[task_idx], data=tasks_data_info[task_idx][1],
+                                          batch_size=batch_size, device=device, args=args)
+                results_file = './result/'+folder_name+'/'+f'groupfairness_results_task{task_idx}.pkl'
+                with open(results_file, 'wb') as f:
+                    pickle.dump(results, f)
+
 
 
 

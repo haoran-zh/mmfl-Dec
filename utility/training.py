@@ -7,7 +7,32 @@ import torch.optim.lr_scheduler as lr_scheduler
 import utility.optimal_sampling as optimal_sampling
 import numpy as np
 from utility.language_tools import DatasetSplit
+import torch.nn.functional as F
 
+class AlphaFairnessLoss(nn.Module):
+    def __init__(self, alpha=2.0):
+        super(AlphaFairnessLoss, self).__init__()
+        self.alpha = alpha
+
+    def forward(self, outputs, labels, client_labels=None):
+        # outputs: predictions from the model
+        # labels: true labels
+        # client_labels: list of unique labels for the client (optional)
+
+        if client_labels is None:
+            client_labels = torch.unique(labels)
+
+        alpha_loss = 0.0
+        for label in client_labels:
+            mask = (labels == label)
+            if mask.sum() == 0:
+                continue
+            label_outputs = outputs[mask]
+            label_labels = labels[mask]
+            ce_loss = F.cross_entropy(label_outputs, label_labels, reduction='sum')
+            alpha_loss += ce_loss.pow(self.alpha)
+
+        return alpha_loss
 
 def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, task_type, clients_task, local_epochs,
              batch_size, classes_size, type_iid, device, args):
@@ -42,7 +67,10 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         if task_idx in shakespeare_index:
             learning_rate = 1.4
         local_optimizer = torch.optim.SGD(local_model.parameters(), lr=learning_rate)
-        local_criterion = nn.CrossEntropyLoss()
+        if args.group_fairness is True:
+            local_criterion = AlphaFairnessLoss(alpha=args.alpha2)
+        else:
+            local_criterion = nn.CrossEntropyLoss()
 
         # Get client's data
         if type_iid[task_idx] == 'iid' or task_idx in shakespeare_index:
