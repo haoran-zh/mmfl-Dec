@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 import random
+import pickle
+
 
 def get_gradient_norm(weights_this_round, weights_next_round, args):
     # get gradient by subtracting weights_next_round from weights_this_round
@@ -9,6 +11,27 @@ def get_gradient_norm(weights_this_round, weights_next_round, args):
     norm = sum(torch.norm(diff, p=2) ** 2 for diff in weight_diff.values()) ** 0.5 / args.lr
     norm.item()
     return norm.item(), weight_diff
+
+def append_to_pickle(file_path, new_data):
+    # Step 1: Load existing data from the pickle file
+    try:
+        with open(file_path, 'rb') as file:
+            existing_data = pickle.load(file)
+    except FileNotFoundError:
+        existing_data = []
+    except EOFError:
+        existing_data = []
+
+    # Ensure the loaded data is a list (or another suitable data structure)
+    if not isinstance(existing_data, list):
+        raise ValueError("Existing data is not a list")
+
+    # Step 2: Append new data
+    existing_data.append(new_data)
+
+    # Step 3: Save the updated data back to the pickle file
+    with open(file_path, 'wb') as file:
+        pickle.dump(existing_data, file)
 
 
 def power_gradient_norm(gradient_norm, tasks_local_training_loss, args, all_data_num):
@@ -241,7 +264,7 @@ def optimal_sampling2(client_num, task_num, all_gradients, active_num, ki):
     # print('final evaluation_matrix\n', evaluation_matrix)
     return p_si_matrix
 
-def get_optimal_sampling(chosen_processes, all_data_num, gradient_record, args, client_task_ability, clients_process): # gradient record is norm
+def get_optimal_sampling(chosen_processes, all_data_num, gradient_record, args, client_task_ability, clients_process, venn_matrix): # gradient record is norm
     # gradient_record: the shape is [task_index][client_index]
     # chosen_clients provide the index of the chosen clients in a random order
     # clients_task has the same order as chosen_clients
@@ -264,7 +287,7 @@ def get_optimal_sampling(chosen_processes, all_data_num, gradient_record, args, 
         # from U to U~ in the paper
             client_index = clients_process[process_index]
             all_gradients[task_index][process_index] = gradient_record[task_index][client_index] * all_data_num[task_index][client_index] / np.sum(
-            all_data_num[task_index]) / client_task_ability[client_index]
+            all_data_num[task_index]) / client_task_ability[client_index] * venn_matrix[task_index][client_index]
 
     process_gradients_sumTasks = np.zeros(processes_num) # this is M_i in the proof
     for process_index in range(processes_num):
@@ -328,6 +351,38 @@ def get_optimal_sampling(chosen_processes, all_data_num, gradient_record, args, 
     else:
         for task_index in range(tasks_num):
             p_dict.append([p_s_i[task_index][i] * client_task_ability[clients_process[i]] for i in range(processes_num) if allocation_result[i] == task_index])
+
+    # store p_s_i, process_gradients_sumTasks
+    if args.optimal_sampling is True:
+        type = 'OS'
+    elif args.approx_optimal is True:
+        type = 'AS'
+    else:
+        type = 'none'
+    file_path = 'psi_'+type+'.pkl'
+    append_to_pickle(file_path, p_s_i)
+    file_path = 'gradient_'+type+'.pkl'
+    append_to_pickle(file_path, process_gradients_sumTasks)
+    file_path = 'k_' + type + '.pkl'
+    append_to_pickle(file_path, l)
+
+    # compute the punishment
+    punishment_avg_task = 0
+    for task_index in range(tasks_num):
+        punishment_each_task = 0
+        for process_index in range(processes_num):
+            client_index = clients_process[process_index]
+            if p_s_i[task_index][process_index] == 0:
+                continue
+            else:
+                punishment_each_task += all_data_num[task_index][client_index] / client_task_ability[client_index] / p_s_i[task_index][process_index]
+        punishment_each_task = (punishment_each_task - 1)**2
+        punishment_avg_task += punishment_each_task
+    punishment = punishment_avg_task / tasks_num
+
+    # save the punishment
+    file_path = 'punishment_' + type + '.pkl'
+    append_to_pickle(file_path, punishment)
 
     return clients_task, p_dict, chosen_clients
 

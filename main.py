@@ -41,16 +41,33 @@ if __name__=="__main__":
     task_type = args.task_type
     task_number = len(task_type)
     data_ratio = args.data_ratio
+
+    # venn diagram conditions setting
+    # total task number
+    venn_list = args.venn_list # [0.3,0.4,0.3]
+    venn_matrix = np.zeros((task_number, num_clients))
+    # 30% can handle , 40% can handle handle task_num-1, 30% can handle task_num-2
+    venn_task_num_list = [task_number, max(1,task_number-1), max(1,task_number-2)]
+    task_num_venn_list = []
+    for i in range(num_clients):
+        task_num_venn = random.choices(venn_task_num_list, venn_list, k=1)[0]
+        task_num_venn_list.append(task_num_venn)
+        # choose task_num_venn tasks, set them to 1 in venn_matrix
+        # random decide the task indices
+        task_indices = random.sample(range(task_number), task_num_venn)
+        for idx in task_indices:
+            venn_matrix[idx, i] = 1
+
+
     client_cpu_list = args.client_cpu
     assert sum(client_cpu_list) == 1.0
     # get task ability of each client
     # 3 levels: straggler, common, expert
     # straggler can only train 1 task, common can train half, expert can train all
-
-    task_level_list = [1, task_number//2, task_number] # we simulate 3 levels of clients
     client_task_ability = []
     # random decide the ability of each client
     for i in range(num_clients):
+        task_level_list = [1, max(1, task_num_venn_list[i] // 2), task_num_venn_list[i]]  # we simulate 3 levels of clients
         client_task_ability.append(random.choices(task_level_list, client_cpu_list)[0]) # randomly decide the ability of each client
     # expand total_clients by client_task_ability
     clients_process = []
@@ -194,7 +211,7 @@ if __name__=="__main__":
                     if args.alpha_loss is True:
                         # need to record local loss before the training
                         localLoss = get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info,
-                                                   tasks_data_idx, global_models, device, batch_size)
+                                                   tasks_data_idx, global_models, device, batch_size, venn_matrix)
                         localLossResults[:, :, round] = localLoss
 
                     all_tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training_all(
@@ -208,7 +225,7 @@ if __name__=="__main__":
                         all_weights_diff_power = optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args, all_data_num)
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                                      all_data_num,
-                                                                                                     all_weights_diff_power, args, client_task_ability, clients_process)
+                                                                                                     all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix)
                     else:
                         # compute P(s) and decide client num for each task
                         """P = np.zeros(len(task_type))
@@ -234,7 +251,7 @@ if __name__=="__main__":
                     if args.approx_optimal is True:
                         # 1 get all local loss
                         localLoss = get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info,
-                                                   tasks_data_idx, global_models, device, batch_size)
+                                                   tasks_data_idx, global_models, device, batch_size, venn_matrix)
                         localLossResults[:, :, round] = localLoss
                         # use loss to replace gradient norm
                         if args.alpha_loss is True:
@@ -243,7 +260,7 @@ if __name__=="__main__":
                                                                                   all_data_num)
                             clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                                      all_data_num,
-                                                                                                     all_weights_diff_power, args, client_task_ability, clients_process)
+                                                                                                     all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix)
                         else:
                             # compute P(s) and decide client num for each task
                             all_weights_diff_power = optimal_sampling.power_gradient_norm(localLoss, localLoss,

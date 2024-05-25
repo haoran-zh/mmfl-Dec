@@ -49,7 +49,7 @@ def evaluation(model, data, batch_size, device, args):
     return accuracy, loss
 
 
-def get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info, tasks_data_idx, global_models, device, batch_size):
+def get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info, tasks_data_idx, global_models, device, batch_size, venn_matrix):
     localLoss = np.zeros((task_number, num_clients))
     for cl in range(num_clients):
         for task in range(task_number):
@@ -64,7 +64,7 @@ def get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_inf
             # accu = localAccResults[task, cl, round-1]
             # localLossResults[task, cl, round] = loss
             # localAcc[task, cl] = accu
-            localLoss[task, cl] = loss
+            localLoss[task, cl] = loss * venn_matrix[task, cl] # if venn_matrix[task, cl] == 0, then the loss is also 0
     return localLoss
 
 

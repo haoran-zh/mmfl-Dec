@@ -31,6 +31,10 @@ class AlphaFairnessLoss(nn.Module):
             label_labels = labels[mask]
             ce_loss = F.cross_entropy(label_outputs, label_labels, reduction='sum')
             alpha_loss += ce_loss.pow(self.alpha)
+        # compute the mean
+        # number of samples
+        num_samples = outputs.size(0)
+        alpha_loss = alpha_loss / num_samples
 
         return alpha_loss
 
