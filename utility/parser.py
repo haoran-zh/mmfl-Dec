@@ -49,7 +49,7 @@ class ParserArgs(object):
         self.parser.add_argument("--group_fairness", action="store_true", help="group optimal")
         self.parser.add_argument("--client_cpu", nargs='*', type=float, default=[0.25, 0.5, 0.25], help="clients are separated into serveral groups with different "
                                                                                                  "cpu power. straggler, common, expert")
-        self.parser.add_argument("--venn_list", nargs='*', type=float, default=[0.3, 0.4, 0.3],
+        self.parser.add_argument("--venn_list", nargs='*', type=float, default=[0.6, 0.3, 0.1],
                                  help="clients can handle different tasks")
         self.parser.add_argument("--suboptimal", action="store_true", help="sub optimal")
 

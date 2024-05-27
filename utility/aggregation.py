@@ -31,13 +31,14 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
     alpha = args.alpha
     N = args.num_clients
     L = args.L
+    dis_s = local_data_num
     denominator = 0
     # aggregate
     if (args.fairness == 'notfair'):
         denominator = L
 
         for i, gradient_dict in enumerate(models_gradient_dict):
-            d_i = local_data_num[chosen_clients[i]] / np.sum(local_data_num)
+            d_i = dis_s[chosen_clients[i]]
             if args.equalP2 is True:
                 d_i = 1
             for key in global_keys:
@@ -48,10 +49,10 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
         H_s = 0
         assert len(tasks_local_training_loss) == N
         for i in range(N):
-            d_is = local_data_num[i] / np.sum(local_data_num)
+            d_is = dis_s[i]
             f_s += tasks_local_training_loss[i] * d_is
         for i, gradient_dict in enumerate(models_gradient_dict):
-            d_is = local_data_num[chosen_clients[i]] / np.sum(local_data_num)
+            d_is = dis_s[chosen_clients[i]]
             norm = sum(torch.norm(diff, p=2) ** 2 for diff in gradient_dict.values()) ** 0.5 * L
             if H_s < norm*d_is:
                 H_s = norm*d_is
@@ -59,7 +60,7 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
         #print(denominator)
         #print(f_s)
         for i, gradient_dict in enumerate(models_gradient_dict):
-            d_is = local_data_num[chosen_clients[i]] / np.sum(local_data_num)
+            d_is = dis_s[chosen_clients[i]]
             for key in global_keys:
                 global_weights_dict[key] -= d_is / p_list[i] * f_s * gradient_dict[key]*L / denominator
     else:

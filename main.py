@@ -191,6 +191,17 @@ if __name__=="__main__":
                     elif type_iid[task_idx] == 'noniid':
                         local_data_num.append(len(tasks_data_idx[task_idx][0][client_idx]))
                 all_data_num.append(local_data_num)
+            # compute dis
+            all_data_array = np.array(all_data_num)
+            # filter out the clients that can not handle the task
+            all_data_array = all_data_array * venn_matrix
+            # compute the sum of data num for each task
+            all_data_sum = np.sum(all_data_array, axis=1)
+            # compute data_num[i,s]/all_data_num[s]
+            dis = np.zeros((len(task_type), num_clients))
+            for task_idx in range(len(task_type)):
+                for client_idx in range(num_clients):
+                    dis[task_idx, client_idx] = all_data_array[task_idx, client_idx] / all_data_sum[task_idx]
 
             global_accs = []
             for task_idx in range(len(task_type)):
@@ -203,7 +214,10 @@ if __name__=="__main__":
                 #chosen_clients = random.sample(all_clients, int(numUsersSel))
                 # random selection
                 chosen_clients = random.sample(clients_process, int(allowed_communication))
-                clients_task = np.random.randint(0, len(task_type), len(chosen_clients), dtype=int)
+                # allocate task based on venn matrix
+                clients_task = []
+                for process in chosen_clients:
+                    clients_task.append(np.random.choice(np.where(venn_matrix[:, process] == 1)[0]))
                 # this will be used for random sampling
                 # training
                 if args.optimal_sampling is True:
@@ -222,10 +236,10 @@ if __name__=="__main__":
                                                                                         type_iid=type_iid, device=device, args=args)
                     # optimal sampling
                     if args.alpha_loss is True:
-                        all_weights_diff_power = optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args, all_data_num)
+                        all_weights_diff_power = optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args, dis)
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
-                                                                                                     all_data_num,
-                                                                                                     all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix)
+                                                                                                     dis,
+                                                                                                     all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix, save_path='./result/'+folder_name+'/')
                     else:
                         # compute P(s) and decide client num for each task
                         """P = np.zeros(len(task_type))
@@ -239,7 +253,7 @@ if __name__=="__main__":
                         # clients_task will be used to count the number of clients for each task
                         # power alpha based alpha
                         all_weights_diff_power = optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args,
-                                                                                      all_data_num)
+                                                                                      dis)
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
                                                                                                          clients_task,
                                                                                                          all_data_num,
@@ -257,15 +271,15 @@ if __name__=="__main__":
                         if args.alpha_loss is True:
                             all_weights_diff_power = optimal_sampling.power_gradient_norm(localLoss,
                                                                                   localLoss, args,
-                                                                                  all_data_num)
+                                                                                  dis)
                             clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
-                                                                                                     all_data_num,
-                                                                                                     all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix)
+                                                                                                     dis,
+                                                                                                     all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix, save_path='./result/'+folder_name+'/')
                         else:
                             # compute P(s) and decide client num for each task
                             all_weights_diff_power = optimal_sampling.power_gradient_norm(localLoss, localLoss,
                                                                                           args,
-                                                                                          all_data_num)
+                                                                                          dis)
                             # chosen_clients = np.arange(0, len(clients_task))
                             clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
                                                                                                          clients_task,
@@ -301,7 +315,7 @@ if __name__=="__main__":
                             if args.cpumodel is True:
                                 global_models[task_idx].to('cpu')
                             global_models[task_idx].load_state_dict(
-                                federated_prob(global_weights=global_models[task_idx], models_gradient_dict=this_task_gradients_list, local_data_num=all_data_num[task_idx],
+                                federated_prob(global_weights=global_models[task_idx], models_gradient_dict=this_task_gradients_list, local_data_num=dis[task_idx],
                                           p_list=p_dict[task_idx], args=args, chosen_clients=chosen_clients, tasks_local_training_loss=localLoss[task_idx]))
                             if args.cpumodel is True:
                                 global_models[task_idx].to(device)
@@ -358,7 +372,7 @@ if __name__=="__main__":
                             global_models[task_idx].load_state_dict(
                                 federated_prob(global_weights=global_models[task_idx],
                                                models_gradient_dict=temp_local_gradients,
-                                               local_data_num=all_data_num[task_idx],
+                                               local_data_num=dis[task_idx],
                                                p_list=temp_local_P, args=args, chosen_clients=chosen_clients, tasks_local_training_loss=localLoss[task_idx]))
                             print('p_list', temp_local_P, file=file)
                             if args.cpumodel is True:
@@ -439,6 +453,19 @@ if __name__=="__main__":
             filename = 'allocation_dict_list_{}.pkl'.format(algo)
             with open('./result/'+folder_name+'/'+filename, 'wb') as f:
                 pickle.dump(allocation_dict_list, f)
+
+            # save venn_matrix
+            filename = 'venn_matrix.pkl'
+            with open('./result/'+folder_name+'/'+filename, 'wb') as f:
+                pickle.dump(venn_matrix, f)
+            # save client_task_ability
+            filename = 'client_task_ability.pkl'
+            with open('./result/'+folder_name+'/'+filename, 'wb') as f:
+                pickle.dump(client_task_ability, f)
+            # save dis
+            filename = 'dis.pkl'
+            with open('./result/'+folder_name+'/'+filename, 'wb') as f:
+                pickle.dump(dis, f)
 
             print(f'Finished Training, lr:{args.lr}, Global acc:{globalAccResults[:, -1]}')
             print(f'Finished Training, lr:{args.lr}, Global acc:{globalAccResults[:, -1]}', file=file)
