@@ -400,26 +400,29 @@ d_value = 0.3
 c = 0.1  # active rate
 a = 1 # alpha
 #ms_a = 4
-tasknum=5 # task number
+tasknum= 3 # task number
 client_num=120 # client number
 # task=3 ,client_num=80
 extra_folder = {
 #f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_msAS_a{ms_a}_": f"msAS_a{ms_a}",
 #f"3task_nnn_u{u_value}d{d_value}_AS_clientfair_a{a}_": f"AS_CF_a{a}",
-f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_a{a}_": f"OS-gn",
+#f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_a{a}_": f"OS-gn",
 ####f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS-sub_a{a}_": "OS-gn-sub",
 #f"3task_nnn_u{u_value}d{d_value}_OS_clientfair_a{a}_": f"OS_CF_a{a}",
 ##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_OS_taskfair_a{a}_": f"OS_TF_a{a}",
 #f"3task_nnn_u{u_value}d{d_value}_qFel_a{a}_": f"qFel_a{a}",
-f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_AS_a{a}_": "OS-loss",
+#f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_AS_a{a}_": "OS-loss",
 ####f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_AS-sub_a{a}_": "OS-loss-sub",
 ##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_test2_a2_": "test2_a2",
 #f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{a}_": "tradeoff_a2",
-f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_": "random-active0.1",
-f"{tasknum}task_nnnnn_c{0.2}u{u_value}d{d_value}_random_": "random-active0.2",
-f"{tasknum}task_nnnnn_c{0.3}u{u_value}d{d_value}_random_": "random-active0.3",
-f"{tasknum}task_nnnnn_c{0.4}u{u_value}d{d_value}_random_": "random-active0.4",
-f"{tasknum}task_nnnnn_c{0.5}u{u_value}d{d_value}_random_": "random-active0.5",
+#f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_": "random-active0.1",
+#f"{tasknum}task_nnnnn_c{0.2}u{u_value}d{d_value}_random_": "random-active0.2",
+#f"{tasknum}task_nnnnn_c{0.3}u{u_value}d{d_value}_random_": "random-active0.3",
+#f"{tasknum}task_nnnnn_c{0.4}u{u_value}d{d_value}_random_": "random-active0.4",
+#f"{tasknum}task_nnnnn_c{0.5}u{u_value}d{d_value}_random_": "random-active0.5",
+f"{tasknum}task_nnnnn_distribution_AS_a1_": "AS",
+f"{tasknum}task_nnnnn_distribution_OS_a1_": "OS",
+f"{tasknum}task_nnnnn_distribution_random_": "random"
 ######f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_a1_": "a1",
 ######f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_a2_": "a2",
 ##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_GSo_a{a}_": "Group sample",
@@ -427,11 +430,12 @@ f"{tasknum}task_nnnnn_c{0.5}u{u_value}d{d_value}_random_": "random-active0.5",
 ##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{ms_a}_": "tradeoff_notfair",
 }
 all_rounds=150
-seed_list = [14, 15,16,17,18,19]
+seed_list = [14,15,16,17,18,19]
+# 15
 line_list = ['-', '-', '-', '-', '-', '-', '-']
 # sd 21 is good,
 # sd 19, 20 is bad,
-finalPath = f'./result/{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_random_14'
+finalPath = f'./result/{tasknum}task_nnnnn_distribution_random_17'
 
 # make figure wide=8, height=5
 
@@ -563,13 +567,13 @@ ax_avg.legend(fontsize=14)
 # make label size larger
 ax_avg.set_xlabel('Num. Global Iterations', fontsize=14)
 ax_avg.set_ylabel('Accuracy', fontsize=14)
-ax_avg.set_title('Average Accuracy over 5 Models', fontsize=14)
+ax_avg.set_title(f'Average Accuracy over {tasknum} Models', fontsize=14)
 # make the figure is tight
 
 ax_min.legend()
 ax_min.set_xlabel('Num. Global Iterations')
 ax_min.set_ylabel('Accuracy')
-ax_min.set_title('Min Accuracy over 5 Models')
+ax_min.set_title(f'Min Accuracy over {tasknum} Models')
 
 fig = ax_avg.get_figure()
 # save to 3task_nnn_u{u_value}d{d_value}_random_11/global_avg_acc.png

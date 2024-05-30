@@ -374,7 +374,9 @@ def get_optimal_sampling(chosen_processes, dis, gradient_record, args, client_ta
             if p_s_i[task_index][process_index] == 0:
                 continue
             else:
-                punishment_each_task += dis[task_index][client_index] / client_task_ability[client_index] / p_s_i[task_index][process_index]
+                # if client_idx is active, then add it
+                if client_index in chosen_clients:
+                    punishment_each_task += dis[task_index][client_index] / client_task_ability[client_index] / p_s_i[task_index][process_index]
         punishment_each_task = (punishment_each_task - 1)**2
         punishment_list.append(punishment_each_task)
 

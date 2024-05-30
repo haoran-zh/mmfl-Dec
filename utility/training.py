@@ -67,7 +67,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         previous_local_state_dict = local_model_state_dict.copy()
 
         # Create a local optimizer
-        learning_rate = args.lr
+        learning_rate = optimizer_config(task_type[int(task_idx)])
         if task_idx in shakespeare_index:
             learning_rate = 1.4
         local_optimizer = torch.optim.SGD(local_model.parameters(), lr=learning_rate)
@@ -159,8 +159,8 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
             previous_local_state_dict = local_model_state_dict.copy()
 
             # Create a local optimizer
-            learning_rate, momentum, weight_decay, lr_step_size, gamma, milestones = optimizer_config(task_type[tasks_index])
-            learning_rate = args.lr
+            learning_rate = optimizer_config(task_type[tasks_index])
+            # learning_rate = args.lr
             local_optimizer = torch.optim.SGD(local_model.parameters(), lr=learning_rate)
             # learning rate scheduler
             # scheduler = lr_scheduler.StepLR(local_optimizer, step_size=lr_step_size, gamma=gamma)

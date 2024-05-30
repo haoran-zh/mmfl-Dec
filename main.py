@@ -90,6 +90,11 @@ if __name__=="__main__":
         if args.insist is True:
             # go ahead
             print('folder exists but still go on!')
+            # delete all files inside the folder
+            import shutil
+            shutil.rmtree('./result/'+folder_name)
+            os.makedirs('./result/'+folder_name)
+
         else:
             print('folder exists!')
             sys.exit()
