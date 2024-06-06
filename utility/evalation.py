@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import Subset
 import numpy as np
 from collections import defaultdict
-
+import random
 def evaluation(model, data, batch_size, device, args):
     model.eval()
     # split data into validation set (first 30%) and test set (last 70%)
@@ -49,22 +49,85 @@ def evaluation(model, data, batch_size, device, args):
     return accuracy, loss
 
 
-def get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info, tasks_data_idx, global_models, device, batch_size, venn_matrix):
-    localLoss = np.zeros((task_number, num_clients))
-    for cl in range(num_clients):
-        for task in range(task_number):
-            if type_iid[task] == 'iid' or task_type[task] == 'shakespeare':
-                client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
-                    cl])  # or iid_partition depending on your choice
-            elif type_iid[task] == 'noniid':
-                client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
-                    cl])  # or iid_partition depending on your choice
-            accu, loss = evaluation(model=global_models[task], data=client_data,
-                                    batch_size=batch_size, device=device, args=None)  # use all data
-            # accu = localAccResults[task, cl, round-1]
-            # localLossResults[task, cl, round] = loss
-            # localAcc[task, cl] = accu
-            localLoss[task, cl] = loss * venn_matrix[task, cl] # if venn_matrix[task, cl] == 0, then the loss is also 0
+def get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info, tasks_data_idx, global_models, device, batch_size, venn_matrix, freshness, localLoss, fresh_ratio):
+
+    if freshness is False:
+        localLoss = np.zeros((task_number, num_clients))
+        for cl in range(num_clients):
+            for task in range(task_number):
+                if type_iid[task] == 'iid' or task_type[task] == 'shakespeare':
+                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
+                        cl])  # or iid_partition depending on your choice
+                elif type_iid[task] == 'noniid':
+                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
+                        cl])  # or iid_partition depending on your choice
+                accu, loss = evaluation(model=global_models[task], data=client_data,
+                                        batch_size=batch_size, device=device, args=None)  # use all data
+                # accu = localAccResults[task, cl, round-1]
+                # localLossResults[task, cl, round] = loss
+                # localAcc[task, cl] = accu
+                localLoss[task, cl] = loss * venn_matrix[task, cl] # if venn_matrix[task, cl] == 0, then the loss is also 0
+    elif freshness is True:
+        subset_ratio = fresh_ratio
+        fresh_factor = 1 # np.e**(-0.1)
+        # sample some task to update loss
+        for cl in range(num_clients):
+            for task in range(task_number):
+                # if random value is larger than subset_ratio, then skip this task
+                if venn_matrix[task, cl] == 0 or random.random() > subset_ratio:
+                    localLoss[task, cl] = localLoss[task, cl] / fresh_factor * venn_matrix[task, cl]
+                    continue
+                # else update the loss and some matrix
+                if type_iid[task] == 'iid' or task_type[task] == 'shakespeare':
+                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
+                        cl])  # or iid_partition depending on your choice
+                elif type_iid[task] == 'noniid':
+                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
+                        cl])  # or iid_partition depending on your choice
+                accu, loss = evaluation(model=global_models[task], data=client_data,
+                                        batch_size=batch_size, device=device, args=None)  # use all data
+                # update the loss
+                localLoss[task, cl] = loss
+    return localLoss
+
+def get_local_acc(task_number, num_clients, task_type, type_iid, tasks_data_info, tasks_data_idx, global_models, device, batch_size, venn_matrix, freshness, localLoss, fresh_ratio):
+    if freshness is False:
+        localLoss = np.zeros((task_number, num_clients))
+        for cl in range(num_clients):
+            for task in range(task_number):
+                if type_iid[task] == 'iid' or task_type[task] == 'shakespeare':
+                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
+                        cl])  # or iid_partition depending on your choice
+                elif type_iid[task] == 'noniid':
+                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
+                        cl])  # or iid_partition depending on your choice
+                accu, loss = evaluation(model=global_models[task], data=client_data,
+                                        batch_size=batch_size, device=device, args=None)  # use all data
+                # accu = localAccResults[task, cl, round-1]
+                # localLossResults[task, cl, round] = loss
+                # localAcc[task, cl] = accu
+                localLoss[task, cl] = loss * venn_matrix[task, cl] # if venn_matrix[task, cl] == 0, then the loss is also 0
+    elif freshness is True:
+        subset_ratio = fresh_ratio
+        fresh_factor = 1 # np.e**(-0.1)
+        # sample some task to update loss
+        for cl in range(num_clients):
+            for task in range(task_number):
+                # if random value is larger than subset_ratio, then skip this task
+                if venn_matrix[task, cl] == 0 or random.random() > subset_ratio:
+                    localLoss[task, cl] = localLoss[task, cl] / fresh_factor * venn_matrix[task, cl]
+                    continue
+                # else update the loss and some matrix
+                if type_iid[task] == 'iid' or task_type[task] == 'shakespeare':
+                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][
+                        cl])  # or iid_partition depending on your choice
+                elif type_iid[task] == 'noniid':
+                    client_data = Subset(tasks_data_info[task][0], tasks_data_idx[task][0][
+                        cl])  # or iid_partition depending on your choice
+                accu, loss = evaluation(model=global_models[task], data=client_data,
+                                        batch_size=batch_size, device=device, args=None)  # use all data
+                # update the loss
+                localLoss[task, cl] = 1-accu
     return localLoss
 
 

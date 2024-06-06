@@ -52,6 +52,9 @@ class ParserArgs(object):
         self.parser.add_argument("--venn_list", nargs='*', type=float, default=[0.6, 0.3, 0.1],
                                  help="clients can handle different tasks")
         self.parser.add_argument("--suboptimal", action="store_true", help="sub optimal")
+        self.parser.add_argument("--freshness", action="store_true", help="freshness")
+        self.parser.add_argument("--fresh_ratio", type=float, default=0.2, help="subset ratio")
+        self.parser.add_argument("--acc", action="store_true", help="use accuracy")
 
 
     def get_args(self):

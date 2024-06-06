@@ -4,7 +4,7 @@ import utility.dataset as dataset
 from utility.preprocessing import preprocessing
 from utility.load_model import load_model
 from utility.training import training, training_all
-from utility.evalation import evaluation, get_local_loss, group_fairness_evaluation
+from utility.evalation import evaluation, get_local_loss, group_fairness_evaluation, get_local_acc
 from utility.aggregation import federated, federated_prob
 from utility.taskallocation import get_task_idx, get_task_id_RR
 import random
@@ -212,6 +212,12 @@ if __name__=="__main__":
             for task_idx in range(len(task_type)):
                 global_accs.append(0.1)
 
+            localLoss = np.zeros((task_number, num_clients))
+            localLoss = get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info,
+                                       tasks_data_idx, global_models, device, batch_size, venn_matrix,
+                                       False, localLoss, args.fresh_ratio)
+            # initialize the localLoss matrix
+
             for round in tqdm(range(num_round)):
                 print(f"Round[ {round+1}/{num_round} ]",file=file)
                 # random sampling
@@ -230,7 +236,7 @@ if __name__=="__main__":
                     if args.alpha_loss is True:
                         # need to record local loss before the training
                         localLoss = get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info,
-                                                   tasks_data_idx, global_models, device, batch_size, venn_matrix)
+                                                   tasks_data_idx, global_models, device, batch_size, venn_matrix, args.freshness, localLoss, args.fresh_ratio)
                         localLossResults[:, :, round] = localLoss
 
                     all_tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training_all(
@@ -270,7 +276,10 @@ if __name__=="__main__":
                     if args.approx_optimal is True:
                         # 1 get all local loss
                         localLoss = get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info,
-                                                   tasks_data_idx, global_models, device, batch_size, venn_matrix)
+                                                   tasks_data_idx, global_models, device, batch_size, venn_matrix, args.freshness, localLoss, args.fresh_ratio)
+                        if args.acc is True:
+                            localLoss = get_local_acc(task_number, num_clients, task_type, type_iid, tasks_data_info,
+                                                   tasks_data_idx, global_models, device, batch_size, venn_matrix, args.freshness, localLoss, args.fresh_ratio)
                         localLossResults[:, :, round] = localLoss
                         # use loss to replace gradient norm
                         if args.alpha_loss is True:

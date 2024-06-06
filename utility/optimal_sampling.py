@@ -365,6 +365,10 @@ def get_optimal_sampling(chosen_processes, dis, gradient_record, args, client_ta
     file_path = save_path + 'k_' + type + '.pkl'
     append_to_pickle(file_path, l)
 
+    # record gradient_record
+    file_path = save_path + 'gradient_record_' + type + '.pkl'
+    append_to_pickle(file_path, gradient_record)
+
     # compute the punishment
     punishment_list = []
     for task_index in range(tasks_num):
