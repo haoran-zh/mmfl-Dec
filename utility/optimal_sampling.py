@@ -4,11 +4,11 @@ import random
 import pickle
 
 
-def get_gradient_norm(weights_this_round, weights_next_round, args):
+def get_gradient_norm(weights_this_round, weights_next_round, lr):
     # get gradient by subtracting weights_next_round from weights_this_round
     weight_diff = {name: (weights_this_round[name] - weights_next_round[name]).cpu() for name in weights_this_round}
     # Calculate the L2 norm of the weight differences
-    norm = sum(torch.norm(diff, p=2) ** 2 for diff in weight_diff.values()) ** 0.5 / args.lr
+    norm = sum(torch.norm(diff, p=2) ** 2 for diff in weight_diff.values()) ** 0.5 / lr
     norm.item()
     return norm.item(), weight_diff
 
