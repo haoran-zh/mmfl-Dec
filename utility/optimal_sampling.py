@@ -525,51 +525,88 @@ def communication_solver(client_num, task_num, all_gradients, active_num, ki):
     return p_optimal
 
 
-def get_optimal_sampling_cvx(chosen_clients, clients_task, all_data_num, gradient_record, client_task_ability, args):
+def get_optimal_sampling_cvx(clients_process, tasks_count, dis, gradient_record, client_task_ability, args, venn_matrix, save_path):
     # gradient_record: the shape is [task_index][client_index]
     # chosen_clients provide the index of the chosen clients in a random order
     # clients_task has the same order as chosen_clients
     # multiple tasks sampling will degenerate to single task sampling when task=1
     # therefore we can use the same function.
-    if type(clients_task) == list:
-        clients_task = np.array(clients_task)
-    sample_num = len(chosen_clients)  # m in the paper
+    sample_num = np.sum(tasks_count)
     tasks_num = len(gradient_record)
-    # random.shuffle(task_indices) # make task order random
-    all_clients_num = len(gradient_record[0])
+    processes_num = len(gradient_record[0])
 
-    # ms_list = get_clients_num_per_task(clients_task, tasks_num)
-
+    ms_list = tasks_count
     all_gradients = gradient_record.copy()
-    d_is = np.zeros((tasks_num, all_clients_num))
 
     for task_index in range(tasks_num):
-        for client_index in range(all_clients_num):
+        for process_index in range(processes_num):
         # from U to U~ in the paper
-            all_gradients[task_index][client_index] *= all_data_num[task_index][client_index] / np.sum(
-            all_data_num[task_index])
-            d_is[task_index][client_index] = all_data_num[task_index][client_index] / np.sum(all_data_num[task_index])
+            client_index = clients_process[process_index]
+            all_gradients[task_index][process_index] = gradient_record[task_index][client_index] * dis[task_index][client_index] / client_task_ability[client_index] * venn_matrix[task_index][client_index]
 
-    # p_optimal = optimal_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, ms_list=ms_list)
-    #p_optimal = tradeoff_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, active_num=sample_num, dis=d_is)
-    if args.suboptimal:
-        p_optimal = optimal_sampling2(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients,
-                                      active_num=sample_num, ki=client_task_ability)
-    else:
-        p_optimal = communication_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients,
-                                active_num=sample_num, ki=client_task_ability)
+
+    p_optimal = optimal_solver(client_num=processes_num, task_num=tasks_num, all_gradients=all_gradients, ms_list=ms_list)
+    # p_optimal = tradeoff_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, active_num=sample_num, dis=d_is)
+
     p_s_i = p_optimal
+    allocation_result = np.zeros(processes_num, dtype=int)
+    for process_idx in range(processes_num):
+        if abs(1 - np.sum(p_s_i[:, process_idx])) < 1e-6:
+            p_not_choose = 0
+        else:
+            p_not_choose = 1 - np.sum(p_s_i[:, process_idx])
+        # append p_not_choose to the head of p_s_i
+        p_client = np.zeros(tasks_num + 1)
+        p_client[0] = p_not_choose
+        p_client[1:] = p_s_i[:, process_idx]
+        allocation_result[process_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
+    allocation_result = allocation_result.tolist()
+    clients_task = [s for s in allocation_result if s != -1]
+    chosen_process_order = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
+    chosen_clients = [clients_process[i] for i in chosen_process_order]
+    # get p_dict
     p_dict = []
-    for s in range(tasks_num):
-        p_dict.append([])
-    clients_task = []
-    chosen_clients = []
-    for s in range(tasks_num):
-        for i in range(all_clients_num):
-            if p_s_i[s][i] > random.random():
-                clients_task.append(s)
-                chosen_clients.append(i)
-                p_dict[s].append(p_s_i[s][i])
+    active_rate = len(chosen_clients) / processes_num
+
+    for task_index in range(tasks_num):
+        p_dict.append(
+            [p_s_i[task_index][i] * client_task_ability[clients_process[i]] for i in range(processes_num) if
+             allocation_result[i] == task_index])
+
+    # store p_s_i, process_gradients_sumTasks
+    if args.optimal_sampling is True:
+        type = 'OS'
+    elif args.approx_optimal is True:
+        type = 'AS'
+    else:
+        type = 'none'
+    file_path = save_path + 'psi_' + type + '.pkl'
+    append_to_pickle(file_path, p_s_i)
+
+    # record gradient_record
+    file_path = save_path + 'gradient_record_' + type + '.pkl'
+    append_to_pickle(file_path, gradient_record)
+
+    # compute the punishment
+    punishment_list = []
+    for task_index in range(tasks_num):
+        punishment_each_task = 0
+        for process_index in range(processes_num):
+            client_index = clients_process[process_index]
+            if p_s_i[task_index][process_index] == 0:
+                continue
+            else:
+                # if client_idx is active, then add it
+                if client_index in chosen_clients:
+                    punishment_each_task += dis[task_index][client_index] / client_task_ability[client_index] / \
+                                            p_s_i[task_index][process_index]
+        punishment_each_task = (punishment_each_task - 1) ** 2
+        punishment_list.append(punishment_each_task)
+
+    # save the punishment
+    file_path = save_path + 'punishment_' + type + '.pkl'
+    append_to_pickle(file_path, punishment_list)
+
     return clients_task, p_dict, chosen_clients
 
 

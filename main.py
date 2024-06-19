@@ -7,6 +7,7 @@ from utility.training import training, training_all
 from utility.evalation import evaluation, get_local_loss, group_fairness_evaluation, get_local_acc
 from utility.aggregation import federated, federated_prob
 from utility.taskallocation import get_task_idx, get_task_id_RR
+from utility.config import optimizer_config
 import random
 import pickle
 import time
@@ -224,12 +225,19 @@ if __name__=="__main__":
                 # all_clients = list(range(0, num_clients))
                 #chosen_clients = random.sample(all_clients, int(numUsersSel))
                 # random selection
-                chosen_clients = random.sample(clients_process, int(allowed_communication))
-                # allocate task based on venn matrix
-                clients_task = []
-                for process in chosen_clients:
-                    clients_task.append(np.random.choice(np.where(venn_matrix[:, process] == 1)[0]))
-                # this will be used for random sampling
+                if args.fullparticipation is True:
+                    chosen_clients = []
+                    clients_task = []
+                    for task in range(len(task_type)):
+                        chosen_clients.extend(clients_process)
+                        clients_task.extend([task] * len(clients_process))
+                else:
+                    chosen_clients = random.sample(clients_process, int(allowed_communication))
+                    # allocate task based on venn matrix
+                    clients_task = []
+                    for process in chosen_clients:
+                        clients_task.append(np.random.choice(np.where(venn_matrix[:, process] == 1)[0]))
+                    # this will be used for random sampling
                 # training
                 if args.optimal_sampling is True:
                     # train everything to get every gradient
@@ -253,22 +261,29 @@ if __name__=="__main__":
                                                                                                      all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix, save_path='./result/'+folder_name+'/')
                     else:
                         # compute P(s) and decide client num for each task
-                        """P = np.zeros(len(task_type))
-                        for t_idx in range(len(task_type)):
-                            # compute P(s)
-                            P[t_idx] = global_results[t_idx][0] ** (beta-1)
-                        P = P / np.sum(P)"""
-                        # choose tasks num
-                        """clients_task = list(np.random.choice(np.arange(0, len(task_type)), len(chosen_clients), p=P))"""
-                        # chosen_clients = np.arange(0, len(clients_task))
-                        # clients_task will be used to count the number of clients for each task
-                        # power alpha based alpha
-                        all_weights_diff_power = optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args,
-                                                                                      dis)
-                        clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
-                                                                                                         clients_task,
-                                                                                                         all_data_num,
-                                                                                                         all_weights_diff_power, client_task_ability, args)
+                        tasks_count = np.zeros(len(task_type))
+                        clients_task = []
+                        chosen_clients = []
+                        p_dict = []
+                        for process_index in clients_process:
+                            P = np.zeros(len(task_type))
+                            for t_idx in range(len(task_type)):
+                                P[t_idx] = global_results[t_idx][0] ** (beta-1) * venn_matrix[t_idx, process_index]
+                            P = P / np.sum(P)
+                            Pextend = np.zeros(len(task_type)+1)
+                            Pextend[0] = 1 - C
+                            Pextend[1:] = P * C
+                            # sample one task
+                            task_idx = np.random.choice(np.arange(-1, len(task_type)), p=Pextend)
+                            if task_idx != -1:
+                                tasks_count[task_idx] += 1
+                                clients_task.append(task_idx)
+                                chosen_clients.append(process_index)
+                                p_dict.append(P[task_idx] * client_task_ability[process_index])
+                        clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(clients_process,
+                                                                                                         tasks_count,
+                                                                                                         dis,
+                                                                                                         all_weights_diff, client_task_ability, args, venn_matrix, save_path='./result/'+folder_name+'/')
 
                     # optimal sampling needs to be moved after we get local_data_nums
                 else:
@@ -291,15 +306,36 @@ if __name__=="__main__":
                                                                                                      all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix, save_path='./result/'+folder_name+'/')
                         else:
                             # compute P(s) and decide client num for each task
-                            all_weights_diff_power = optimal_sampling.power_gradient_norm(localLoss, localLoss,
-                                                                                          args,
-                                                                                          dis)
-                            # chosen_clients = np.arange(0, len(clients_task))
-                            clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(chosen_clients,
-                                                                                                         clients_task,
-                                                                                                         all_data_num,
-                                                                                                         all_weights_diff_power,
-                                                                                                        client_task_ability, args)
+                            tasks_count = np.zeros(len(task_type))
+                            clients_task = []
+                            chosen_clients = []
+                            p_dict = []
+                            for process_index in clients_process:
+                                P = np.zeros(len(task_type))
+                                for t_idx in range(len(task_type)):
+                                    P[t_idx] = global_results[t_idx][0] ** (beta - 1) * venn_matrix[
+                                        t_idx, process_index]
+                                P = P / np.sum(P)
+                                Pextend = np.zeros(len(task_type) + 1)
+                                Pextend[0] = 1 - C
+                                Pextend[1:] = P * C
+                                # sample one task
+                                task_idx = np.random.choice(np.arange(-1, len(task_type)), p=Pextend)
+                                if task_idx != -1:
+                                    tasks_count[task_idx] += 1
+                                    clients_task.append(task_idx)
+                                    chosen_clients.append(process_index)
+                                    p_dict.append(P[task_idx] * client_task_ability[process_index])
+                            if args.multiM is True:
+                                all_weights_diff = localLoss
+                                clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(
+                                    clients_process,
+                                    tasks_count,
+                                    dis,
+                                    all_weights_diff, client_task_ability, args, venn_matrix,
+                                    save_path='./result/' + folder_name + '/')
+                            else:
+                                pass
 
                     tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                                    global_models=global_models, chosen_clients=chosen_clients,
@@ -325,12 +361,14 @@ if __name__=="__main__":
                                 this_task_gradients_list.append(all_tasks_gradients_list[task_idx][chosen_clients[client_idx]])
                         assert len(this_task_gradients_list) == len(p_dict[task_idx])
                         # aggregation
+                        LR = optimizer_config(task_type[task_idx])
+
                         if (len(this_task_gradients_list) != 0):
                             if args.cpumodel is True:
                                 global_models[task_idx].to('cpu')
                             global_models[task_idx].load_state_dict(
                                 federated_prob(global_weights=global_models[task_idx], models_gradient_dict=this_task_gradients_list, local_data_num=dis[task_idx],
-                                          p_list=p_dict[task_idx], args=args, chosen_clients=chosen_clients, tasks_local_training_loss=localLoss[task_idx]))
+                                          p_list=p_dict[task_idx], args=args, chosen_clients=chosen_clients, tasks_local_training_loss=localLoss[task_idx], lr=LR))
                             if args.cpumodel is True:
                                 global_models[task_idx].to(device)
                             temp_global_results.append(
@@ -367,19 +405,16 @@ if __name__=="__main__":
                                 if args.approx_optimal is True:
                                     temp_local_P = p_dict[task_idx]
                                 else:
-                                    # print('uniform distribution')
-                                    if args.group_num > 1:
-                                        if args.group_optimal is True:
-                                            temp_local_P = p_dict[task_idx]
-                                        else:
-                                            p= C
-                                            temp_local_P.append(p)
+                                    if args.fullparticipation is True:
+                                        p = 1.0
+                                        temp_local_P.append(p)
                                     else:
                                         p = C/task_number
                                         temp_local_P.append(p)
                                 # do not need to collect local_data num, just use all_local_data_num
 
                         # aggregation
+                        LR = optimizer_config(task_type[task_idx])
                         if (len(temp_local_gradients) != 0):
                             if args.cpumodel is True:
                                 global_models[task_idx].to('cpu')
@@ -387,7 +422,7 @@ if __name__=="__main__":
                                 federated_prob(global_weights=global_models[task_idx],
                                                models_gradient_dict=temp_local_gradients,
                                                local_data_num=dis[task_idx],
-                                               p_list=temp_local_P, args=args, chosen_clients=chosen_clients, tasks_local_training_loss=localLoss[task_idx]))
+                                               p_list=temp_local_P, args=args, chosen_clients=chosen_clients, tasks_local_training_loss=localLoss[task_idx], lr=LR))
                             print('p_list', temp_local_P, file=file)
                             if args.cpumodel is True:
                                 global_models[task_idx].to(device)

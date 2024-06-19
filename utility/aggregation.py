@@ -22,7 +22,7 @@ def federated(models_state_dict, local_data_nums, aggregation_mtd, numUsersSel):
 
     return global_state_dict
 
-def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list, args, chosen_clients, tasks_local_training_loss):
+def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list, args, chosen_clients, tasks_local_training_loss, lr):
 
     global_weights_dict = global_weights.state_dict()
     global_keys = list(global_weights_dict.keys())
@@ -30,12 +30,12 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
     # sum loss power a-1
     alpha = args.alpha
     N = args.num_clients
-    L = args.L
+    L = 1
     dis_s = local_data_num
     denominator = 0
     # aggregate
     if (args.fairness == 'notfair'):
-        denominator = L
+        denominator = 1
 
         for i, gradient_dict in enumerate(models_gradient_dict):
             d_i = dis_s[chosen_clients[i]]
@@ -53,7 +53,7 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
             f_s += tasks_local_training_loss[i] * d_is
         for i, gradient_dict in enumerate(models_gradient_dict):
             d_is = dis_s[chosen_clients[i]]
-            norm = sum(torch.norm(diff, p=2) ** 2 for diff in gradient_dict.values()) ** 0.5 * L
+            norm = sum(torch.norm(diff, p=2) ** 2 for diff in gradient_dict.values()) ** 0.5 / lr
             if H_s < norm*d_is:
                 H_s = norm*d_is
         denominator = (alpha-1) * (N * H_s)**2 + f_s * L

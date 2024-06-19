@@ -71,8 +71,8 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         if task_idx in shakespeare_index:
             learning_rate = 1.4
         local_optimizer = torch.optim.SGD(local_model.parameters(), lr=learning_rate)
-        if args.group_fairness is True:
-            local_criterion = AlphaFairnessLoss(alpha=args.alpha2)
+        if args.mse is True:
+            local_criterion = nn.MSELoss()
         else:
             local_criterion = nn.CrossEntropyLoss()
 
@@ -116,7 +116,7 @@ def training(tasks_data_info, tasks_data_idx, global_models, chosen_clients, tas
         tasks_local_training_acc.append(local_train_accuracy)
         tasks_local_training_loss.append(local_train_loss)
         norm, lr_gradients = optimal_sampling.get_gradient_norm(previous_local_state_dict, local_model.state_dict(),
-                                                                args)
+                                                                learning_rate)
         # Append local model weights to list
         if args.cpumodel is True:
             local_model.to('cpu')
@@ -165,7 +165,10 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
             # learning rate scheduler
             # scheduler = lr_scheduler.StepLR(local_optimizer, step_size=lr_step_size, gamma=gamma)
             # scheduler = lr_scheduler.MultiStepLR(local_optimizer, milestones=milestones, gamma=gamma)
-            local_criterion = nn.CrossEntropyLoss()
+            if args.mse is True:
+                local_criterion = nn.MSELoss()
+            else:
+                local_criterion = nn.CrossEntropyLoss()
 
                 # Get client's data
             if type_iid[tasks_index] == 'iid' or tasks_index in shakespeare_index:
@@ -206,7 +209,7 @@ def training_all(tasks_data_info, tasks_data_idx, global_models, chosen_clients,
             tasks_local_training_acc.append(local_train_accuracy) # only save the last epoch's accuracy
             tasks_local_training_loss.append(local_train_loss)
             # Append local model weights to list
-            norm, lr_gradients = optimal_sampling.get_gradient_norm(previous_local_state_dict, local_model.state_dict(), args)
+            norm, lr_gradients = optimal_sampling.get_gradient_norm(previous_local_state_dict, local_model.state_dict(), learning_rate)
             # new lr = original_lr * sum(f^alpha-1(w_t))
             weights_diff.append(norm) # the norm without learning rate
 

@@ -46,7 +46,7 @@ class ParserArgs(object):
         self.parser.add_argument("--equalP2", action="store_true", help="make P equal, and use optimal Prob")
         self.parser.add_argument("--test", action="store_true", help="test new things")
         self.parser.add_argument("--group_num", type=int, default=1, help="group number")
-        self.parser.add_argument("--group_fairness", action="store_true", help="group optimal")
+        self.parser.add_argument("--mse", action="store_true", help="use mse loss function")
         self.parser.add_argument("--client_cpu", nargs='*', type=float, default=[0.25, 0.5, 0.25], help="clients are separated into serveral groups with different "
                                                                                                  "cpu power. straggler, common, expert")
         self.parser.add_argument("--venn_list", nargs='*', type=float, default=[0.6, 0.3, 0.1],
@@ -55,6 +55,10 @@ class ParserArgs(object):
         self.parser.add_argument("--freshness", action="store_true", help="freshness")
         self.parser.add_argument("--fresh_ratio", type=float, default=0.2, help="subset ratio")
         self.parser.add_argument("--acc", action="store_true", help="use accuracy")
+        # fullparticipation
+        self.parser.add_argument("--fullparticipation", action="store_true", help="use full participation")
+        self.parser.add_argument("--multiM", action="store_true", help="use multiM")
+
 
 
     def get_args(self):
