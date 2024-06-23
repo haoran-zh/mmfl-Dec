@@ -207,27 +207,27 @@ d_value = 0.3
 c = 0.1  # active rate
 a = 1 # alpha
 #ms_a = 4
-tasknum= 6 # task number
+tasknum= 10 # task number
 client_num=20 # client number
 # task=3 ,client_num=80
 # result_old folder name
 inside_folder = {
 #f"{tasknum}task_iiiii_exp1C1c20-cpu-emnist-seed"
-f"3task_iii_exp1C1c20-cpu-emnist-seed"
+f"10task_iiiiiiiiii_exp1C1c20-cpu-seed"
 }
-inside_algo = ["alpha-fairness", "random", "round_robin"]
+inside_algo = ['bayes', "alpha-fairness", "random", "round_robin"]
 extra_folder = {
 #f"{tasknum}task_nnnnnnnnnn_mariepaper_qFel_a3_": "q-Fel"
-f"{3}task_nnn_mariepaper_qFel_a3_": "q-Fel"
+f"{10}task_nnnnnnnnnn_mariepaper_qFel_a3_": "q-Fel"
 }
-all_rounds=120
+all_rounds = 120
 seed_list1 = [10,11,12,13,14,15,16,17,18]
 # 17 16 15
 line_list = ['-', '-', '-', '-', '-', '-', '-', '-']
 # sd 21 is good,
 # sd 19, 20 is bad,
 #finalPath = f'./result/{tasknum}task_nnnnnnnnnn_mariepaper_qFel_a3_14'
-finalPath = f'./result/{3}task_nnn_mariepaper_qFel_a3_14'
+finalPath = f'./result/{10}task_nnnnnnnnnn_mariepaper_qFel_a3_14'
 
 
 # make figure wide=8, height=5
@@ -243,7 +243,7 @@ cnt=0
 
 # local inside folder
 inside_array_seeds = []
-seed_list2 = [10,11,12,15,16]
+seed_list2 = [10,11,12]
 for seed in seed_list2:
     inside_array = load_inside_folder(inside_folder, seed=seed, header='mcf_i_globalAcc_')
     inside_array_seeds.append(inside_array)
@@ -261,10 +261,12 @@ for i in range(algo_num):
         color1 = 'blue'
         color2 = 'darkblue'
     elif algo_name == 'round_robin':
+        continue
         algo_name = "Round Robin Client-Task Allocation"
         color1 = 'green'
         color2 = 'darkgreen'
     elif algo_name == 'random':
+        continue
         algo_name = "Random Client-Task Allocation"
         color1 = 'orange'
         color2 = 'darkorange'
@@ -378,7 +380,7 @@ for key in extra_folder:
     print(f"{algoName: <10}: \t Global avg acc: {global_avg_acc:.3f}, max: {global_max_acc:.3f}, min: {global_min_acc:.3f}, gap: {global_max_acc-global_min_acc:.3f}, client_var: {client_var_avg:.3f}, allocation_var: {allocation_var:.3f}")
     #print(f"{algoName: <10}: \t worst20% {worst10_avg:.3f}, best20% {best10_avg:.3f}; Global acc: {global_avg_acc:.3f} entropy: {exp_array_entropy:.3f}, KL{kl:.4f} client_var: {client_var_avg:.3f}")
     #averge the curve
-    curve = np.array(curve) # shape: seed tasknum numRounds
+    curve = np.array(curve)  # shape: seed tasknum numRounds
     x = np.arange(curve.shape[-1])
     # get the upper and lower bound of the curve
     aver_each_seed_curve = np.mean(curve, axis=1)
