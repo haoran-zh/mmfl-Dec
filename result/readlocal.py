@@ -400,7 +400,7 @@ d_value = 0.3
 c = 0.1  # active rate
 a = 1 # alpha
 #ms_a = 4
-tasknum= 5 # task number
+tasknum= 3 # task number
 client_num=120 # client number
 # task=3 ,client_num=80
 extra_folder = {
@@ -420,31 +420,46 @@ extra_folder = {
 #f"{tasknum}task_nnnnn_c{0.3}u{u_value}d{d_value}_random_": "random-active0.3",
 #f"{tasknum}task_nnnnn_c{0.4}u{u_value}d{d_value}_random_": "random-active0.4",
 #f"{tasknum}task_nnnnn_c{0.5}u{u_value}d{d_value}_random_": "random-active0.5",
-f"{tasknum}task_nnnnn_distribution_lessVenn_AS_a1_": "AS",
 #f"{tasknum}task_nnnnn_fffse_lessVenn_AS_a1_": "AS",
 #f"{tasknum}task_nnnnn_fffse_lessVenn_OS_a1_": "OS",
+#f"{tasknum}task_nnnnn_fffse_lessVenn_random_": "random",
 #f"{tasknum}task_nnnnn_distribution_lessVennr300_AS_a1_": "AS",
-f"{tasknum}task_nnnnn_distribution_f1lessVenn_ASF0.2_a1_": "ASF0.2",
-f"{tasknum}task_nnnnn_distribution_f1lessVenn_ASF0.1_a1_": "ASF0.1",
+#f"{tasknum}task_nnnnn_distribution_lessVennc0.1_ASF0.2_a1_": "ASF0.2",
+##f"{tasknum}task_nnnnn_distribution_lessVennc0.1_ASF0.1_a1_": "ASF0.1",
+#f"{tasknum}task_nnnnn_distribution_lessVennc0.1_ASF0.05_a1_": "ASF0.05",
+#f"{tasknum}task_nnnnn_distribution_lessVennc0.1_ASF0.01_a1_": "ASF0.01",
 #f"{tasknum}task_nnnnn_distribution_lessVenn_ASF0.05_a1_": "ASF0.05",
 #f"{tasknum}task_nnnnn_distribution_lessVenn_ASF0.01_a1_": "ASF0.01",
-f"{tasknum}task_nnnnn_distribution_lessVenn_OS_a1_": "OS",
+#f"{tasknum}task_nnnnn_distribution_lessVenn_OS_a1_": "OS",
 #f"{tasknum}task_nnnnn_distribution_lessVennr300_accAS_a1_": "AS-acc",
-#f"{tasknum}task_nnnnn_fffse_lessVenn_random_": "random",
-f"{tasknum}task_nnnnn_distribution_lessVenn_random_": "random"
+#f"{tasknum}task_nnnnn_distribution_lessVenn_AS_a1_": "AS",
+#f"{tasknum}task_nnnnn_distribution_lessVennc0.1_full_": "full-participation",
+#f"{tasknum}task_nnnnn_distribution_lessVenn_random_": "random"
 ######f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_a1_": "a1",
 ######f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_a2_": "a2",
 ##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_GSo_a{a}_": "Group sample",
 ###f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{a}_": "tradeoff_a2",
 ##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{ms_a}_": "tradeoff_notfair",
+#"5task_nnnnn_fairness_ms_a2_": "ms_a2_data0.5",
+#"5task_nnnnn_fairness_alphafair_a2_": "alphafair_a2_data0.5",
+#"5task_nnnnn_fairness_random_": "random_data0.5",
+"3task_nnnnn_fairness_ms_a3_": "ms_a3_data1.0",
+"3task_nnnnn_fairness_alphafair_a3_": "alphafair_a3_data1.0",
+"3task_nnnnn_fairness_random_": "random_data1.0",
+"3task_nnnnn_fairness_AS_a3_": "AS_data1.0",
+#"5task_nnnnn_fairness_ms_a3_": "ms_a3_data1.0",
+#"5task_nnnnn_fairness_alphafair_a3_": "alphafair_a3_data1.0",
+#"5task_nnnnn_fairness_random_": "random_data1.0",
+#"5task_nnnnn_fairness_AS_a3_": "AS_data1.0",
 }
 all_rounds=150
-seed_list = [14,15,16,17,18,19]
+seed_list_ms = [14]
+seed_list_alpha = [14,15,16,17,18]
 # 17 16 15
 line_list = ['-', '-', '-', '-', '-', '-', '-', '-']
 # sd 21 is good,
 # sd 19, 20 is bad,
-finalPath = f'./result/{tasknum}task_nnnnn_distribution_lessVenn_random_16'
+finalPath = f'./result/{tasknum}task_nnnnn_fairness_random_14'
 
 # make figure wide=8, height=5
 
@@ -469,6 +484,11 @@ for key in extra_folder:
     client_var_avg = 0
     allocation_var = 0
     curve = []
+    # if ms, use seed_list_ms
+    if 'ms' in key:
+        seed_list = seed_list_ms.copy()
+    else:
+        seed_list = seed_list_alpha.copy()
     algor_seed = seed_list.copy()
     count_list = []
 

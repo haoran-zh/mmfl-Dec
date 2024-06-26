@@ -520,7 +520,7 @@ def communication_solver(client_num, task_num, all_gradients, active_num, ki):
         problem.solve(max_iters=1600000)
         p_optimal = p.value
     except:
-        p_optimal = np.ones((S, N)) / S
+        p_optimal = np.ones((S, N)) / (S + 1)
 
     return p_optimal
 
@@ -559,6 +559,8 @@ def get_optimal_sampling_cvx(clients_process, tasks_count, dis, gradient_record,
         p_client = np.zeros(tasks_num + 1)
         p_client[0] = p_not_choose
         p_client[1:] = p_s_i[:, process_idx]
+        # ensure p_client sum to 1
+        p_client = p_client / np.sum(p_client)
         allocation_result[process_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
     allocation_result = allocation_result.tolist()
     clients_task = [s for s in allocation_result if s != -1]

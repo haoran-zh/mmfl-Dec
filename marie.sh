@@ -2,7 +2,7 @@
 # run experiment q-Fel
 
 # settings list
-task_list0="mnist cifar10 emnist"
+task_list0="mnist cifar10 fashion_mnist"
 task_list1="mnist cifar10 fashion_mnist emnist cifar10"
 task_list2="mnist cifar10 fashion_mnist emnist cifar10 mnist cifar10 fashion_mnist emnist cifar10"
 seedlist=(11 12 13 14 15)
@@ -11,7 +11,11 @@ r=120
 clientnum=20
 for sd in "${seedlist[@]}"; do
 python main.py --L 1 --unbalance 0.0 0.1 --venn_list 1.0 0.0 0.0 --client_cpu 1.0 0 0 --fairness taskfair --alpha 3 --notes mariepaper_qFel_a3_$sd --C $active --num_clients $clientnum --class_ratio 0.8 0.8 0.8 --iid_type noniid noniid noniid --task_type $task_list0 --algo_type proposed --seed $sd --cpumodel --local_epochs 5 5 5 5 5 --round_num $r --insist
+# python main.py --L 1 --unbalance 0.0 0.1 --venn_list 1.0 0.0 0.0 --client_cpu 1.0 0 0 --fairness notfair --alpha 3 --notes mariepaper_alphafair_a3_$sd --approx_optimal --C $active --num_clients $clientnum --class_ratio 0.8 0.8 0.8 --iid_type noniid noniid noniid --task_type $task_list0 --algo_type proposed --seed $sd --cpumodel --local_epochs 5 5 5 5 5 --round_num $r --insist
 done
+# stop here
+exit
+
 
 for sd in "${seedlist[@]}"; do
 python main.py --L 1 --unbalance 0.0 0.1 --venn_list 1.0 0.0 0.0 --client_cpu 1.0 0 0 --fairness taskfair --alpha 3 --notes mariepaper_qFel_a3_$sd --C $active --num_clients $clientnum --class_ratio 0.8 0.8 0.8 0.8 0.8 --iid_type noniid noniid noniid noniid noniid --task_type $task_list1 --algo_type proposed --seed $sd --cpumodel --local_epochs 5 5 5 5 5 --round_num $r --insist

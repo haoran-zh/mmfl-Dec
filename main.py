@@ -264,7 +264,7 @@ if __name__=="__main__":
                         tasks_count = np.zeros(len(task_type))
                         clients_task = []
                         chosen_clients = []
-                        p_dict = []
+                        p_dict = [[] for _ in range(task_number)]
                         for process_index in clients_process:
                             P = np.zeros(len(task_type))
                             for t_idx in range(len(task_type)):
@@ -279,7 +279,7 @@ if __name__=="__main__":
                                 tasks_count[task_idx] += 1
                                 clients_task.append(task_idx)
                                 chosen_clients.append(process_index)
-                                p_dict.append(P[task_idx] * client_task_ability[process_index])
+                                p_dict[task_idx].append(P[task_idx])
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(clients_process,
                                                                                                          tasks_count,
                                                                                                          dis,
@@ -309,7 +309,7 @@ if __name__=="__main__":
                             tasks_count = np.zeros(len(task_type))
                             clients_task = []
                             chosen_clients = []
-                            p_dict = []
+                            p_dict = [[] for _ in range(task_number)]
                             for process_index in clients_process:
                                 P = np.zeros(len(task_type))
                                 for t_idx in range(len(task_type)):
@@ -325,7 +325,8 @@ if __name__=="__main__":
                                     tasks_count[task_idx] += 1
                                     clients_task.append(task_idx)
                                     chosen_clients.append(process_index)
-                                    p_dict.append(P[task_idx] * client_task_ability[process_index])
+                                    # probability Pextend[task_idx+1]
+                                    p_dict[task_idx].append(C/task_number) # delete * client_task_ability[process_index]
                             if args.multiM is True:
                                 all_weights_diff = localLoss
                                 clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(
@@ -336,6 +337,8 @@ if __name__=="__main__":
                                     save_path='./result/' + folder_name + '/')
                             else:
                                 pass
+
+
 
                     tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                                    global_models=global_models, chosen_clients=chosen_clients,
@@ -380,7 +383,7 @@ if __name__=="__main__":
                             print(
                                 f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",
                                 file=file)
-                            #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            # print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             # print(f"Task[{task_idx}]: Global not changed")
@@ -427,9 +430,8 @@ if __name__=="__main__":
                             if args.cpumodel is True:
                                 global_models[task_idx].to(device)
                             temp_global_results.append(evaluation(model = global_models[task_idx], data = tasks_data_info[task_idx][1], batch_size = batch_size, device = device, args=args))
-                            #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                             print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",file=file)
-                            #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            # print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             #print(f"Task[{task_idx}]: Global not changed")

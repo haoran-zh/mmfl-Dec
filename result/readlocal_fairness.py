@@ -207,18 +207,18 @@ d_value = 0.3
 c = 0.1  # active rate
 a = 1 # alpha
 #ms_a = 4
-tasknum= 10 # task number
+tasknum= 6 # task number
 client_num=20 # client number
 # task=3 ,client_num=80
 # result_old folder name
 inside_folder = {
 #f"{tasknum}task_iiiii_exp1C1c20-cpu-emnist-seed"
-f"10task_iiiiiiiiii_exp1C1c20-cpu-seed"
+f"6task_iiiiii_exp1C1c20-cpu-seed"
 }
-inside_algo = ['bayes', "alpha-fairness", "random", "round_robin"]
+inside_algo = ["alpha-fairness", "random", "round_robin"]
 extra_folder = {
 #f"{tasknum}task_nnnnnnnnnn_mariepaper_qFel_a3_": "q-Fel"
-f"{10}task_nnnnnnnnnn_mariepaper_qFel_a3_": "q-Fel"
+f"{5}task_nnnnn_mariepaper_qFel_a3_": "q-Fel"
 }
 all_rounds = 120
 seed_list1 = [10,11,12,13,14,15,16,17,18]
@@ -227,7 +227,7 @@ line_list = ['-', '-', '-', '-', '-', '-', '-', '-']
 # sd 21 is good,
 # sd 19, 20 is bad,
 #finalPath = f'./result/{tasknum}task_nnnnnnnnnn_mariepaper_qFel_a3_14'
-finalPath = f'./result/{10}task_nnnnnnnnnn_mariepaper_qFel_a3_14'
+finalPath = f'./result/{5}task_nnnnn_mariepaper_qFel_a3_14'
 
 
 # make figure wide=8, height=5
@@ -236,6 +236,12 @@ fig_avg = plt.figure(figsize=(5, 4))
 fig_min = plt.figure(figsize=(5, 4))
 ax_avg = fig_avg.add_subplot(1, 1, 1)
 ax_min = fig_min.add_subplot(1, 1, 1)
+
+fig_each = plt.figure(figsize=(5, 4))
+ax_each = fig_each.add_subplot(1, 1, 1)
+
+fig_each2 = plt.figure(figsize=(5, 4))
+ax_each2 = fig_each2.add_subplot(1, 1, 1)
 all_algorithm_curve = []
 keys_list = []
 all_count_list = []
@@ -243,7 +249,7 @@ cnt=0
 
 # local inside folder
 inside_array_seeds = []
-seed_list2 = [10,11,12]
+seed_list2 = [10,12,15]
 for seed in seed_list2:
     inside_array = load_inside_folder(inside_folder, seed=seed, header='mcf_i_globalAcc_')
     inside_array_seeds.append(inside_array)
@@ -271,6 +277,10 @@ for i in range(algo_num):
         color1 = 'orange'
         color2 = 'darkorange'
     curve = inside_array_seeds[:, i, :, :]  # curve shape: seed, task, numRounds
+    x = np.arange(curve.shape[-1])
+    for task in range(curve.shape[1]):
+        ax_each.plot(x, np.mean(curve[:, task, :], axis=0))
+
     curve_avg = np.mean(curve, axis=(0, 1))
     curve_min = np.mean(np.min(curve, axis=1), axis=0)
 
@@ -280,14 +290,12 @@ for i in range(algo_num):
     curve_upper_min = np.max(np.min(curve, axis=1), axis=0)
     curve_lower_min = np.min(np.min(curve, axis=1), axis=0)
 
-    x = np.arange(curve_avg.shape[0])
+
     ax_avg.plot(x, curve_avg, color=color2, linestyle='--')
     ax_min.plot(x, curve_min, color=color2, linestyle='--')
 
     ax_avg.fill_between(x, curve_lower_avg, curve_upper_avg, alpha=0.5, color=color1, label=algo_name)
     ax_min.fill_between(x, curve_lower_min, curve_upper_min, alpha=0.5, color=color1, label=algo_name)
-
-
 
 for key in extra_folder:
     current_folder = {}
@@ -382,6 +390,8 @@ for key in extra_folder:
     #averge the curve
     curve = np.array(curve)  # shape: seed tasknum numRounds
     x = np.arange(curve.shape[-1])
+    for task in range(curve.shape[1]):
+        ax_each2.plot(x, np.mean(curve[:, task, :], axis=0))
     # get the upper and lower bound of the curve
     aver_each_seed_curve = np.mean(curve, axis=1)
     min_each_seed_curve = np.min(curve, axis=1)
@@ -435,6 +445,19 @@ ax_min.set_xlabel('Num. Global Iterations')
 ax_min.set_ylabel('Accuracy')
 ax_min.set_title(f'Minimum Accuracy over {tasknum} Tasks')
 
+
+#ax_each.legend(fontsize=14)
+ax_each.grid(True, linestyle='--', alpha=0.7)
+ax_each.set_xlabel('Num. Global Iterations')
+ax_each.set_ylabel('Accuracy')
+ax_each.set_title(f'Average Accuracy of each task')
+
+#ax_each2.legend(fontsize=14)
+ax_each2.grid(True, linestyle='--', alpha=0.7)
+ax_each2.set_xlabel('Num. Global Iterations')
+ax_each2.set_ylabel('Accuracy')
+ax_each2.set_title(f'Average Accuracy of each task')
+
 fig = ax_avg.get_figure()
 # save to 3task_nnn_u{u_value}d{d_value}_random_11/global_avg_acc.png
 fig.tight_layout()
@@ -442,3 +465,11 @@ fig.savefig(finalPath+'/global_avg_acc.png')
 fig = ax_min.get_figure()
 fig.tight_layout()
 fig.savefig(finalPath+'/global_min_acc.png')
+
+fig = ax_each.get_figure()
+fig.tight_layout()
+fig.savefig(finalPath+'/global_each1.png')
+
+fig = ax_each2.get_figure()
+fig.tight_layout()
+fig.savefig(finalPath+'/global_each2.png')
