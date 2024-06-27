@@ -6,7 +6,7 @@ dlist=(0.5) # data ratio
 C=(0.1) # active rate
 task_idx="shakespeare shakespeare shakespeare shakespeare shakespeare"
 iid="noniid noniid noniid noniid noniid"
-client_n=200
+client_n=120
 # 最开始subset是0.5
 # experiment goal: figure out if loss is better when active rate is lower
 for uv in "${unbalance_value[@]}"; do
