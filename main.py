@@ -326,7 +326,7 @@ if __name__=="__main__":
                                     clients_task.append(task_idx)
                                     chosen_clients.append(process_index)
                                     # probability Pextend[task_idx+1]
-                                    p_dict[task_idx].append(C/task_number) # delete * client_task_ability[process_index]
+                                    p_dict[task_idx].append(Pextend[task_idx+1])  # delete * client_task_ability[process_index]
                             if args.multiM is True:
                                 all_weights_diff = localLoss
                                 clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(
@@ -339,7 +339,8 @@ if __name__=="__main__":
                                 pass
 
 
-
+                    print('chosen_clients', chosen_clients)
+                    print('clients_task', clients_task)
                     tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                                    global_models=global_models, chosen_clients=chosen_clients,
                                                                                                    task_type=task_type, clients_task=clients_task,
