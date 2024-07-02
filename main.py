@@ -308,25 +308,22 @@ if __name__=="__main__":
                             # compute P(s) and decide client num for each task
                             tasks_count = np.zeros(len(task_type))
                             clients_task = []
-                            chosen_clients = []
+                            # chosen_clients = [] # directly use chosen_clients from above (random)
                             p_dict = [[] for _ in range(task_number)]
-                            for process_index in clients_process:
-                                P = np.zeros(len(task_type))
-                                for t_idx in range(len(task_type)):
-                                    P[t_idx] = global_results[t_idx][0] ** (beta - 1) * venn_matrix[
-                                        t_idx, process_index]
-                                P = P / np.sum(P)
-                                Pextend = np.zeros(len(task_type) + 1)
-                                Pextend[0] = 1 - C
-                                Pextend[1:] = P * C
-                                # sample one task
-                                task_idx = np.random.choice(np.arange(-1, len(task_type)), p=Pextend)
-                                if task_idx != -1:
-                                    tasks_count[task_idx] += 1
-                                    clients_task.append(task_idx)
-                                    chosen_clients.append(process_index)
-                                    # probability Pextend[task_idx+1]
-                                    p_dict[task_idx].append(Pextend[task_idx+1])  # delete * client_task_ability[process_index]
+                            P = np.zeros(len(task_type))
+                            for t_idx in range(len(task_type)):
+                                P[t_idx] = global_results[t_idx][0] ** (beta - 1)
+                            P = P / np.sum(P)
+                            # based on P, decide the number of clients for each task
+                            clients_task = np.random.choice(np.arange(0, len(task_type)), len(chosen_clients), p=P)
+                            for t_idx in range(len(task_type)):
+                                # count the number of clients for each task
+                                tasks_count[t_idx] = np.sum(clients_task == t_idx)
+                                # if count is 0, let it be 1
+                                p_dict[t_idx] = [P[t_idx]] * int(tasks_count[t_idx])
+                                if tasks_count[t_idx] == 0:
+                                    tasks_count[t_idx] = 1
+
                             if args.multiM is True:
                                 all_weights_diff = localLoss
                                 clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling_cvx(
@@ -339,8 +336,6 @@ if __name__=="__main__":
                                 pass
 
 
-                    print('chosen_clients', chosen_clients)
-                    print('clients_task', clients_task)
                     tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                                    global_models=global_models, chosen_clients=chosen_clients,
                                                                                                    task_type=task_type, clients_task=clients_task,
@@ -350,7 +345,11 @@ if __name__=="__main__":
 
                 allocation_dict = {}
                 for i in range(len(chosen_clients)):
-                    allocation_dict[chosen_clients[i]] = clients_task[i]
+                    # if clients_task[i] is not a key in allocation_dict, then add it
+                    if chosen_clients[i] in allocation_dict:
+                        allocation_dict[chosen_clients[i]].append(clients_task[i])
+                    else:
+                        allocation_dict[chosen_clients[i]] = [clients_task[i]]
                 allocation_dict_list.append(allocation_dict)
 
 
