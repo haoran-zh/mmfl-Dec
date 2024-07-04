@@ -39,8 +39,6 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
 
         for i, gradient_dict in enumerate(models_gradient_dict):
             d_i = dis_s[chosen_clients[i]]
-            if args.equalP2 is True:
-                d_i = 1
             for key in global_keys:
                 global_weights_dict[key] -= (d_i / p_list[i]) * gradient_dict[key] / denominator
     elif args.fairness == 'taskfair':

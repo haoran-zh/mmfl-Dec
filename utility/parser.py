@@ -58,6 +58,8 @@ class ParserArgs(object):
         # fullparticipation
         self.parser.add_argument("--fullparticipation", action="store_true", help="use full participation")
         self.parser.add_argument("--multiM", action="store_true", help="use multiM")
+        # slowstart
+        self.parser.add_argument("--slowstart", action="store_true", help="use slow start")
 
 
 

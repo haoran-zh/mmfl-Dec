@@ -213,11 +213,15 @@ if __name__=="__main__":
             for task_idx in range(len(task_type)):
                 global_accs.append(0.1)
 
-            localLoss = np.zeros((task_number, num_clients))
-            localLoss = get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info,
-                                       tasks_data_idx, global_models, device, batch_size, venn_matrix,
-                                       False, localLoss, args.fresh_ratio)
+            if args.slowstart is True:
+                localLoss = np.ones((task_number, num_clients))
+            else:
+                localLoss = np.zeros((task_number, num_clients))
+                localLoss = get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info,
+                                           tasks_data_idx, global_models, device, batch_size, venn_matrix,
+                                           False, localLoss, args.fresh_ratio)
             # initialize the localLoss matrix
+            stored_wdiff_list = np.ones((task_number, num_clients)) * 10
 
             for round in tqdm(range(num_round)):
                 print(f"Round[ {round+1}/{num_round} ]",file=file)
@@ -231,6 +235,10 @@ if __name__=="__main__":
                     for task in range(len(task_type)):
                         chosen_clients.extend(clients_process)
                         clients_task.extend([task] * len(clients_process))
+                    localLoss = get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info,
+                                               tasks_data_idx, global_models, device, batch_size, venn_matrix,
+                                               args.freshness, localLoss, args.fresh_ratio)
+                    localLossResults[:, :, round] = localLoss
                 else:
                     chosen_clients = random.sample(clients_process, int(allowed_communication))
                     # allocate task based on venn matrix
@@ -253,6 +261,19 @@ if __name__=="__main__":
                                                                                         task_type=task_type, clients_task=None,
                                                                                         local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
                                                                                         type_iid=type_iid, device=device, args=args)
+                    if round == 0:
+                        if args.slowstart is False:
+                            stored_wdiff_list = all_weights_diff
+                    if args.freshness is True:
+                        for cl in range(num_clients):
+                            for task in range(task_number):
+                                # if random value is larger than subset_ratio, then skip this task
+                                if venn_matrix[task, cl] == 0 or random.random() > args.fresh_ratio:
+                                    stored_wdiff_list[task][cl] = stored_wdiff_list[task][cl] * venn_matrix[task, cl]
+                                    continue
+                                # update the loss
+                                stored_wdiff_list[task][cl] = all_weights_diff[task][cl]
+                        all_weights_diff = stored_wdiff_list
                     # optimal sampling
                     if args.alpha_loss is True:
                         all_weights_diff_power = optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args, dis)
