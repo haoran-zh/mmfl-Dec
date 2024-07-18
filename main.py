@@ -3,11 +3,12 @@ import torch
 import utility.dataset as dataset
 from utility.preprocessing import preprocessing
 from utility.load_model import load_model
-from utility.training import training, training_all
+from utility.training import training, training_all, training_scaffold
 from utility.evalation import evaluation, get_local_loss, group_fairness_evaluation, get_local_acc
 from utility.aggregation import federated, federated_prob, federated_stale
 from utility.taskallocation import get_task_idx, get_task_id_RR
 from utility.config import optimizer_config
+import copy
 import random
 import pickle
 import time
@@ -224,6 +225,19 @@ if __name__=="__main__":
             # initialize the localLoss matrix
             stored_wdiff_list = np.ones((task_number, num_clients)) * 10
 
+            if args.scaffold is True:
+                control_variate = [[] for _ in range(task_number)]
+                for task_idx in range(len(task_type)):
+                    for client_idx in range(num_clients):
+                        control_variate[task_idx].append(optimal_sampling.zero_shapelike(global_models[task_idx].state_dict()))
+
+            if args.stale is True:
+                old_local_updates = [[] for _ in range(task_number)]
+                for task_idx in range(len(task_type)):
+                    for client_idx in range(num_clients):
+                        old_local_updates[task_idx].append(optimal_sampling.zero_shapelike(global_models[task_idx].state_dict()))
+
+
             for round in tqdm(range(num_round)):
                 print(f"Round[ {round+1}/{num_round} ]",file=file)
                 # random sampling
@@ -264,8 +278,12 @@ if __name__=="__main__":
                                                                                         type_iid=type_iid, device=device, args=args)
                     if args.stale is True:
                         if round == 0:
-                            old_local_updates = all_tasks_gradients_list
-                            # first round, still use all_weights_diff (norm of new updates)
+                            old_local_updates = copy.deepcopy(all_tasks_gradients_list)
+                            # initialize old_local_updates, pure 0 for all
+                            for task in range(task_number):
+                                for cl in range(num_clients):
+                                    old_local_updates[task][cl] = optimal_sampling.zero_shapelike(all_tasks_gradients_list[task][cl])
+
                         else: # other round, use norm difference
                             for task in range(task_number):
                                 # the function is this-next.
@@ -328,11 +346,6 @@ if __name__=="__main__":
                                                                                                          tasks_count,
                                                                                                          dis,
                                                                                                          all_weights_diff, client_task_ability, args, venn_matrix, save_path='./result/'+folder_name+'/')
-                    # now have clients_task and chosen_clients, we update old_local_updates
-                    if args.stale is True:
-                        # only update old_local_updates for chosen_clients and tasks
-                        for i in range(len(chosen_clients)):
-                            old_local_updates[clients_task[i]][chosen_clients[i]] = all_tasks_gradients_list[clients_task[i]][chosen_clients[i]]
 
 
 
@@ -386,8 +399,15 @@ if __name__=="__main__":
                             else:
                                 pass
 
-
-                    tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
+                    if args.scaffold is True:
+                        tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff, control_variate = training_scaffold(
+                            tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
+                            global_models=global_models, chosen_clients=chosen_clients,
+                            task_type=task_type, clients_task=clients_task,
+                            local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
+                            type_iid=type_iid, device=device, args=args, control_variate=control_variate, dis=dis)
+                    else:
+                        tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training(tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
                                                                                                    global_models=global_models, chosen_clients=chosen_clients,
                                                                                                    task_type=task_type, clients_task=clients_task,
                                                                                                    local_epochs=local_epochs, batch_size = batch_size, classes_size = tasks_data_info,
@@ -409,10 +429,12 @@ if __name__=="__main__":
                     temp_global_results = []
                     for task_idx in range(len(task_type)):
                         this_task_gradients_list = []
+                        this_task_chosen_clients = []
                         # get local_weights for this task
                         for client_idx in range(len(chosen_clients)):
                             if clients_task[client_idx] == task_idx:
                                 this_task_gradients_list.append(all_tasks_gradients_list[task_idx][chosen_clients[client_idx]])
+                                this_task_chosen_clients.append(chosen_clients[client_idx])
                         assert len(this_task_gradients_list) == len(p_dict[task_idx])
                         # aggregation
                         LR = optimizer_config(task_type[task_idx])
@@ -421,12 +443,12 @@ if __name__=="__main__":
                             if args.cpumodel is True:
                                 global_models[task_idx].to('cpu')
 
-                            if (args.stale is True) and (round != 0):
+                            if args.stale is True:
                                 global_models[task_idx].load_state_dict(
                                     federated_stale(global_weights=global_models[task_idx],
                                                    models_gradient_dict=this_task_gradients_list,
                                                    local_data_num=dis[task_idx],
-                                                   p_list=p_dict[task_idx], args=args, chosen_clients=chosen_clients,
+                                                   p_list=p_dict[task_idx], args=args, chosen_clients=this_task_chosen_clients,
                                                    old_global_weights=old_local_updates[task_idx]))
                             else:
                                 global_models[task_idx].load_state_dict(
@@ -443,7 +465,7 @@ if __name__=="__main__":
                             print(
                                 f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",
                                 file=file)
-                            print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            # print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             # print(f"Task[{task_idx}]: Global not changed")
@@ -459,12 +481,12 @@ if __name__=="__main__":
                     for task_idx in range(len(task_type)):
                         temp_local_gradients = []
                         temp_local_P = []
-                        temp_local_data_num = []
-                        local_data_nums = []
+                        this_task_chosen_clients = []
 
                         for clients_idx, local_gradients in enumerate(tasks_gradients_list):
                             if clients_task[clients_idx] == task_idx:
                                 temp_local_gradients.append(local_gradients)
+                                this_task_chosen_clients.append(chosen_clients[clients_idx])
                                 if args.approx_optimal is True:
                                     temp_local_P = p_dict[task_idx]
                                 else:
@@ -481,11 +503,19 @@ if __name__=="__main__":
                         if (len(temp_local_gradients) != 0):
                             if args.cpumodel is True:
                                 global_models[task_idx].to('cpu')
-                            global_models[task_idx].load_state_dict(
+                            if args.stale is True:
+                                global_models[task_idx].load_state_dict(
+                                    federated_stale(global_weights=global_models[task_idx],
+                                                   models_gradient_dict=temp_local_gradients,
+                                                   local_data_num=dis[task_idx],
+                                                   p_list=temp_local_P, args=args, chosen_clients=this_task_chosen_clients,
+                                                   old_global_weights=old_local_updates[task_idx]))
+                            else:
+                                global_models[task_idx].load_state_dict(
                                 federated_prob(global_weights=global_models[task_idx],
                                                models_gradient_dict=temp_local_gradients,
                                                local_data_num=dis[task_idx],
-                                               p_list=temp_local_P, args=args, chosen_clients=chosen_clients, tasks_local_training_loss=localLoss[task_idx], lr=LR))
+                                               p_list=temp_local_P, args=args, chosen_clients=this_task_chosen_clients, tasks_local_training_loss=localLoss[task_idx], lr=LR))
                             print('p_list', temp_local_P, file=file)
                             if args.cpumodel is True:
                                 global_models[task_idx].to(device)
@@ -500,7 +530,17 @@ if __name__=="__main__":
                     global_accs = []
                     for task_idx in range(len(task_type)):
                         global_accs.append(temp_global_results[task_idx][0])
-                # NEW: dec 6 2023
+                # update stale after aggregation
+                if args.stale is True:
+                    # only update old_local_updates for chosen_clients and tasks
+                    if args.optimal_sampling is True:
+                        for i in range(len(chosen_clients)):
+                            old_local_updates[clients_task[i]][chosen_clients[i]] = copy.deepcopy(
+                                all_tasks_gradients_list[clients_task[i]][chosen_clients[i]])
+                    else:
+                        for i in range(len(chosen_clients)):
+                            old_local_updates[clients_task[i]][chosen_clients[i]] = copy.deepcopy(
+                                tasks_gradients_list[i])
 
 
                 TaskAllocCounter[:, round] = np.bincount(np.array(clients_task).astype(np.int64), minlength=len(task_type))

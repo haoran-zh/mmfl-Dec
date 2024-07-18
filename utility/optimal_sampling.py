@@ -12,6 +12,20 @@ def get_gradient_norm(weights_this_round, weights_next_round, lr):
     norm.item()
     return norm.item(), weight_diff
 
+
+def weight_minus(weights_A, weights_B):
+    # get gradient by subtracting weights_next_round from weights_this_round
+    weight_diff = {name: (weights_A[name] - weights_B[name]).cpu() for name in weights_A}
+    # Calculate the L2 norm of the weight differences
+    return weight_diff
+
+
+
+def zero_shapelike(weights):
+    # get gradient by subtracting weights_next_round from weights_this_round
+    zero_weights = {name: torch.zeros_like(tensor).cpu() for name, tensor in weights.items()}
+    return zero_weights
+
 def append_to_pickle(file_path, new_data):
     # Step 1: Load existing data from the pickle file
     try:

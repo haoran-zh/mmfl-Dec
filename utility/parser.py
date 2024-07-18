@@ -62,6 +62,8 @@ class ParserArgs(object):
         self.parser.add_argument("--slowstart", action="store_true", help="use slow start")
         self.parser.add_argument("--delta", type=float, default=0.0, help="delta: minimum value for probability")
         self.parser.add_argument("--stale", action="store_true", help="use stale updates")
+        self.parser.add_argument("--MILA", action="store_true", help="use MILA aggregation")
+        self.parser.add_argument("--scaffold", action="store_true", help="use scaffold")
 
 
 

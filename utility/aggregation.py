@@ -79,20 +79,30 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
     L = 1
     dis_s = local_data_num
 
-
-    for i, gradient_dict in enumerate(models_gradient_dict):
-        d_i = dis_s[chosen_clients[i]]
-        h_i = old_global_weights[chosen_clients[i]]
-        for key in global_keys:
-            global_weights_dict[key] -= (d_i / p_list[i]) * (gradient_dict[key] - h_i[key])
-        # sum all old
-        # for all clients
+    if args.MILA is True:
         clients_num = len(dis_s)
         for i in range(clients_num):
-            d_i = dis_s[i]
-            h_i = old_global_weights[i]
+            if i not in chosen_clients:
+                for key in global_keys:
+                    global_weights_dict[key] -= dis_s[i] * old_global_weights[i][key]
+            else:
+                for key in global_keys:
+                    global_weights_dict[key] -= dis_s[i] * models_gradient_dict[chosen_clients.index(i)][key]
+
+    else: # other method
+        for i, gradient_dict in enumerate(models_gradient_dict):
+            d_i = dis_s[chosen_clients[i]]
+            h_i = old_global_weights[chosen_clients[i]]
             for key in global_keys:
-                global_weights_dict[key] -= d_i * h_i[key]
+                global_weights_dict[key] -= (d_i / p_list[i]) * (gradient_dict[key] - h_i[key])
+            # sum all old
+            # for all clients
+            clients_num = len(dis_s)
+            for i in range(clients_num):
+                d_i = dis_s[i]
+                h_i = old_global_weights[i]
+                for key in global_keys:
+                    global_weights_dict[key] -= d_i * h_i[key]
 
 
     return global_weights_dict
