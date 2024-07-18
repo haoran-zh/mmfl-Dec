@@ -273,8 +273,9 @@ if __name__=="__main__":
                                 # get learning rate for this task
                                 # clients send norm(new-old) for sampling distribution
                                 LR = optimizer_config(task_type[task])
-                                all_weights_diff = optimal_sampling.get_gradient_norm(weights_this_round=all_tasks_gradients_list[task],
-                                                                                  weights_next_round=old_local_updates[task],
+                                for cl in range(num_clients):
+                                    all_weights_diff[task][cl], _ = optimal_sampling.get_gradient_norm(weights_this_round=all_tasks_gradients_list[task][cl],
+                                                                                  weights_next_round=old_local_updates[task][cl],
                                                                                   lr=LR)
                     if round == 0:
                         if args.slowstart is False:
@@ -420,7 +421,7 @@ if __name__=="__main__":
                             if args.cpumodel is True:
                                 global_models[task_idx].to('cpu')
 
-                            if args.stale is True:
+                            if (args.stale is True) and (round != 0):
                                 global_models[task_idx].load_state_dict(
                                     federated_stale(global_weights=global_models[task_idx],
                                                    models_gradient_dict=this_task_gradients_list,
@@ -442,7 +443,7 @@ if __name__=="__main__":
                             print(
                                 f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",
                                 file=file)
-                            # print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             # print(f"Task[{task_idx}]: Global not changed")

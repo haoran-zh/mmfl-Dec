@@ -92,7 +92,7 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
             d_i = dis_s[i]
             h_i = old_global_weights[i]
             for key in global_keys:
-                global_weights_dict[key] += d_i * h_i[key]
+                global_weights_dict[key] -= d_i * h_i[key]
 
 
     return global_weights_dict
