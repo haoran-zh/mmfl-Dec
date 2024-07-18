@@ -442,6 +442,43 @@ def optimal_solver(client_num, task_num, all_gradients, ms_list):
 
     return p_optimal
 
+
+def optimal_solver_delta(client_num, task_num, all_gradients, m, delta):
+    N = client_num  # Number of clients
+    S = task_num    # Number of tasks
+    U = np.array(all_gradients).reshape(task_num, client_num)  # Gradient record reshaped
+    # Define the variable to solve for
+    p = cp.Variable((S, N), nonneg=True)
+    # print("curvature of p", p.curvature)
+
+    # Objective function
+    # print("curvature of U", U.curvature)
+    U2 = cp.square(U)
+    objective = cp.Minimize(cp.sum(cp.multiply(U2, cp.power(p, -1))))
+
+    # Constraints
+    constraints = []
+    # Sum of p for each client across tasks <= 1
+    constraints += [cp.sum(p, axis=0) <= 1]
+    # Sum of p for all clients all task, sum(p)<m
+    constraints += [cp.sum(p) <= m]
+    # p >= 0 (implicitly satisfies p <= 1 due to the constraints above)
+    constraints += [p >= delta]
+    constraints += [p <= 1]
+
+    # Problem definition
+    problem = cp.Problem(objective, constraints)
+
+    # Solve the problem
+    try:
+        problem.solve(max_iters=1600000)
+        p_optimal = p.value
+    except:
+        print('optimize failed')
+        p_optimal = np.ones((S, N)) / S
+
+    return p_optimal
+
 def tradeoff_solver(client_num, task_num, all_gradients, active_num, dis):
     N = client_num  # Number of clients
     S = task_num    # Number of tasks
@@ -481,7 +518,7 @@ def tradeoff_solver(client_num, task_num, all_gradients, active_num, dis):
         p_optimal = p.value
     except:
         p_optimal = np.ones((S, N)) / S
-
+        print('solver failed')
     return p_optimal
 
 
@@ -574,6 +611,97 @@ def get_optimal_sampling_cvx(clients_process, tasks_count, dis, gradient_record,
         p_dict.append(
             [p_s_i[task_index][i] * client_task_ability[clients_process[i]] for i in range(processes_num) if
              allocation_result[i] == task_index])
+
+    # store p_s_i, process_gradients_sumTasks
+    if args.optimal_sampling is True:
+        type = 'OS'
+    elif args.approx_optimal is True:
+        type = 'AS'
+    else:
+        type = 'none'
+    file_path = save_path + 'psi_' + type + '.pkl'
+    append_to_pickle(file_path, p_s_i)
+
+    # record gradient_record
+    file_path = save_path + 'gradient_record_' + type + '.pkl'
+    append_to_pickle(file_path, gradient_record)
+
+    # compute the punishment
+    punishment_list = []
+    for task_index in range(tasks_num):
+        punishment_each_task = 0
+        for process_index in range(processes_num):
+            client_index = clients_process[process_index]
+            if p_s_i[task_index][process_index] == 0:
+                continue
+            else:
+                # if client_idx is active, then add it
+                if client_index in chosen_clients:
+                    punishment_each_task += dis[task_index][client_index] / client_task_ability[client_index] / \
+                                            p_s_i[task_index][process_index]
+        punishment_each_task = (punishment_each_task - 1) ** 2
+        punishment_list.append(punishment_each_task)
+
+    # save the punishment
+    file_path = save_path + 'punishment_' + type + '.pkl'
+    append_to_pickle(file_path, punishment_list)
+
+    return clients_task, p_dict, chosen_clients
+
+
+
+def get_delta_sampling(clients_process, dis, gradient_record, client_task_ability, args, venn_matrix, save_path):
+    # gradient_record: the shape is [task_index][client_index]
+    # chosen_clients provide the index of the chosen clients in a random order
+    # clients_task has the same order as chosen_clients
+    # multiple tasks sampling will degenerate to single task sampling when task=1
+    # therefore we can use the same function.
+    delta = args.delta
+    tasks_num = len(gradient_record)
+    processes_num = len(gradient_record[0])
+    active_rate = args.C
+    sample_num = int(processes_num * active_rate)
+
+    all_gradients = gradient_record.copy()
+
+    for task_index in range(tasks_num):
+        for process_index in range(processes_num):
+        # from U to U~ in the paper
+            client_index = clients_process[process_index]
+            all_gradients[task_index][process_index] = gradient_record[task_index][client_index] * dis[task_index][client_index] / client_task_ability[client_index] * venn_matrix[task_index][client_index]
+
+
+    p_optimal = optimal_solver_delta(client_num=processes_num, task_num=tasks_num, all_gradients=all_gradients, m=sample_num, delta=delta)
+    # p_optimal = tradeoff_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, active_num=sample_num, dis=d_is)
+
+    p_s_i = p_optimal
+    allocation_result = np.zeros(processes_num, dtype=int)
+    for process_idx in range(processes_num):
+        if abs(1 - np.sum(p_s_i[:, process_idx])) < 1e-6:
+            p_not_choose = 0
+        else:
+            p_not_choose = 1 - np.sum(p_s_i[:, process_idx])
+        # append p_not_choose to the head of p_s_i
+        p_client = np.zeros(tasks_num + 1)
+        p_client[0] = p_not_choose
+        p_client[1:] = p_s_i[:, process_idx]
+        # ensure p_client sum to 1
+        p_client = p_client / np.sum(p_client)
+        allocation_result[process_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
+    allocation_result = allocation_result.tolist()
+    clients_task = [s for s in allocation_result if s != -1]
+    chosen_process_order = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
+    chosen_clients = [clients_process[i] for i in chosen_process_order]
+    # get p_dict
+    p_dict = []
+    active_rate = len(chosen_clients) / processes_num
+
+    for task_index in range(tasks_num):
+        p_dict.append(
+            [p_s_i[task_index][i] * client_task_ability[clients_process[i]] for i in range(processes_num) if
+             allocation_result[i] == task_index])
+
+    # print(p_dict)
 
     # store p_s_i, process_gradients_sumTasks
     if args.optimal_sampling is True:

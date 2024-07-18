@@ -66,3 +66,33 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
         exit(1)
 
     return global_weights_dict
+
+
+
+def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list, args, chosen_clients, old_global_weights):
+    global_weights_dict = global_weights.state_dict()
+    global_keys = list(global_weights_dict.keys())
+    # Sum the state_dicts of all client models
+    # sum loss power a-1
+    alpha = args.alpha
+    N = args.num_clients
+    L = 1
+    dis_s = local_data_num
+
+
+    for i, gradient_dict in enumerate(models_gradient_dict):
+        d_i = dis_s[chosen_clients[i]]
+        h_i = old_global_weights[chosen_clients[i]]
+        for key in global_keys:
+            global_weights_dict[key] -= (d_i / p_list[i]) * (gradient_dict[key] - h_i[key])
+        # sum all old
+        # for all clients
+        clients_num = len(dis_s)
+        for i in range(clients_num):
+            d_i = dis_s[i]
+            h_i = old_global_weights[i]
+            for key in global_keys:
+                global_weights_dict[key] += d_i * h_i[key]
+
+
+    return global_weights_dict

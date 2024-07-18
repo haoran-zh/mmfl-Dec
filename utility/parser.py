@@ -60,6 +60,8 @@ class ParserArgs(object):
         self.parser.add_argument("--multiM", action="store_true", help="use multiM")
         # slowstart
         self.parser.add_argument("--slowstart", action="store_true", help="use slow start")
+        self.parser.add_argument("--delta", type=float, default=0.0, help="delta: minimum value for probability")
+        self.parser.add_argument("--stale", action="store_true", help="use stale updates")
 
 
 

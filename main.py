@@ -5,7 +5,7 @@ from utility.preprocessing import preprocessing
 from utility.load_model import load_model
 from utility.training import training, training_all
 from utility.evalation import evaluation, get_local_loss, group_fairness_evaluation, get_local_acc
-from utility.aggregation import federated, federated_prob
+from utility.aggregation import federated, federated_prob, federated_stale
 from utility.taskallocation import get_task_idx, get_task_id_RR
 from utility.config import optimizer_config
 import random
@@ -150,6 +150,7 @@ if __name__=="__main__":
             localAccResults= np.zeros((len(task_type),num_clients, num_round))
             localLossResults= np.zeros((len(task_type),num_clients, num_round))
             allocation_dict_list = []
+            old_local_updates = []
 
             TaskAllocCounter=np.zeros((len(task_type),num_round))
 
@@ -261,6 +262,20 @@ if __name__=="__main__":
                                                                                         task_type=task_type, clients_task=None,
                                                                                         local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
                                                                                         type_iid=type_iid, device=device, args=args)
+                    if args.stale is True:
+                        if round == 0:
+                            old_local_updates = all_tasks_gradients_list
+                            # first round, still use all_weights_diff (norm of new updates)
+                        else: # other round, use norm difference
+                            for task in range(task_number):
+                                # the function is this-next.
+                                # for us, new-old
+                                # get learning rate for this task
+                                # clients send norm(new-old) for sampling distribution
+                                LR = optimizer_config(task_type[task])
+                                all_weights_diff = optimal_sampling.get_gradient_norm(weights_this_round=all_tasks_gradients_list[task],
+                                                                                  weights_next_round=old_local_updates[task],
+                                                                                  lr=LR)
                     if round == 0:
                         if args.slowstart is False:
                             stored_wdiff_list = all_weights_diff
@@ -277,9 +292,16 @@ if __name__=="__main__":
                     # optimal sampling
                     if args.alpha_loss is True:
                         all_weights_diff_power = optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args, dis)
-                        clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
+                        if args.delta == 0:
+                            clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                                      dis,
                                                                                                      all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix, save_path='./result/'+folder_name+'/')
+                        else:
+                            clients_task, p_dict, chosen_clients = optimal_sampling.get_delta_sampling(
+                                clients_process,
+                                dis,
+                                all_weights_diff, client_task_ability, args, venn_matrix,
+                                save_path='./result/' + folder_name + '/')
                     else:
                         # compute P(s) and decide client num for each task
                         tasks_count = np.zeros(len(task_type))
@@ -305,6 +327,13 @@ if __name__=="__main__":
                                                                                                          tasks_count,
                                                                                                          dis,
                                                                                                          all_weights_diff, client_task_ability, args, venn_matrix, save_path='./result/'+folder_name+'/')
+                    # now have clients_task and chosen_clients, we update old_local_updates
+                    if args.stale is True:
+                        # only update old_local_updates for chosen_clients and tasks
+                        for i in range(len(chosen_clients)):
+                            old_local_updates[clients_task[i]][chosen_clients[i]] = all_tasks_gradients_list[clients_task[i]][chosen_clients[i]]
+
+
 
                     # optimal sampling needs to be moved after we get local_data_nums
                 else:
@@ -390,7 +419,16 @@ if __name__=="__main__":
                         if (len(this_task_gradients_list) != 0):
                             if args.cpumodel is True:
                                 global_models[task_idx].to('cpu')
-                            global_models[task_idx].load_state_dict(
+
+                            if args.stale is True:
+                                global_models[task_idx].load_state_dict(
+                                    federated_stale(global_weights=global_models[task_idx],
+                                                   models_gradient_dict=this_task_gradients_list,
+                                                   local_data_num=dis[task_idx],
+                                                   p_list=p_dict[task_idx], args=args, chosen_clients=chosen_clients,
+                                                   old_global_weights=old_local_updates[task_idx]))
+                            else:
+                                global_models[task_idx].load_state_dict(
                                 federated_prob(global_weights=global_models[task_idx], models_gradient_dict=this_task_gradients_list, local_data_num=dis[task_idx],
                                           p_list=p_dict[task_idx], args=args, chosen_clients=chosen_clients, tasks_local_training_loss=localLoss[task_idx], lr=LR))
                             if args.cpumodel is True:
