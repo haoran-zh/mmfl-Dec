@@ -14,7 +14,10 @@ def load_model(name_data, num_classes, args):
         return model
     
     elif name_data=='fashion_mnist':
-        model = model_list.mnistCNN(num_classes=num_classes)#.to(device)
+        model = model_list.mnistCNN(num_classes=num_classes)
+        return model
+    elif name_data=="fashion_mnist2":
+        model = model_list.mnistCNN2(num_classes=num_classes)
         return model
     elif name_data=='emnist':
         model = model_list.emnistCNN(num_classes=num_classes, args=args)

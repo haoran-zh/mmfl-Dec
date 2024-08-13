@@ -64,6 +64,10 @@ class ParserArgs(object):
         self.parser.add_argument("--stale", action="store_true", help="use stale updates")
         self.parser.add_argument("--MILA", action="store_true", help="use MILA aggregation")
         self.parser.add_argument("--scaffold", action="store_true", help="use scaffold")
+        self.parser.add_argument("--chosenall", action="store_true", help="chosen all")
+        self.parser.add_argument("--stale_b0", type=float, default=1.0, help="initial b0")
+        self.parser.add_argument("--stale_b", type=float, default=1.0, help="decay b")
+        self.parser.add_argument("--use_h0", action="store_true", help="use h0 to approximate new update matrix")
 
 
 

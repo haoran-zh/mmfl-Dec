@@ -237,6 +237,12 @@ if __name__=="__main__":
                     for client_idx in range(num_clients):
                         old_local_updates[task_idx].append(optimal_sampling.zero_shapelike(global_models[task_idx].state_dict()))
 
+            if args.use_h0 is True:
+                h0_matrix = [[] for _ in range(task_number)]
+                for task_idx in range(len(task_type)):
+                    for client_idx in range(num_clients):
+                        h0_matrix[task_idx].append(optimal_sampling.zero_shapelike(global_models[task_idx].state_dict()))
+
 
             for round in tqdm(range(num_round)):
                 print(f"Round[ {round+1}/{num_round} ]",file=file)
@@ -277,24 +283,29 @@ if __name__=="__main__":
                                                                                         local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
                                                                                         type_iid=type_iid, device=device, args=args)
                     if args.stale is True:
-                        if round == 0:
+                        if round == 0 and args.use_h0 is True:
                             old_local_updates = copy.deepcopy(all_tasks_gradients_list)
-                            # initialize old_local_updates, pure 0 for all
-                            for task in range(task_number):
-                                for cl in range(num_clients):
-                                    old_local_updates[task][cl] = optimal_sampling.zero_shapelike(all_tasks_gradients_list[task][cl])
-
-                        else: # other round, use norm difference
+                            h0_matrix = copy.deepcopy(all_tasks_gradients_list)
+                        else:
                             for task in range(task_number):
                                 # the function is this-next.
                                 # for us, new-old
                                 # get learning rate for this task
                                 # clients send norm(new-old) for sampling distribution
                                 LR = optimizer_config(task_type[task])
-                                for cl in range(num_clients):
-                                    all_weights_diff[task][cl], _ = optimal_sampling.get_gradient_norm(weights_this_round=all_tasks_gradients_list[task][cl],
-                                                                                  weights_next_round=old_local_updates[task][cl],
-                                                                                  lr=LR)
+                                if args.use_h0 is True:
+                                    for cl in range(num_clients):
+                                        all_weights_diff[task][cl], _ = optimal_sampling.get_gradient_norm(
+                                            weights_this_round=h0_matrix[task][cl],
+                                            weights_next_round=old_local_updates[task][cl],
+                                            lr=LR)
+                                else:
+                                    for cl in range(num_clients):
+                                        all_weights_diff[task][cl], _ = optimal_sampling.get_gradient_norm(
+                                            weights_this_round=all_tasks_gradients_list[task][cl],
+                                            weights_next_round=old_local_updates[task][cl],
+                                            lr=LR)
+
                     if round == 0:
                         if args.slowstart is False:
                             stored_wdiff_list = all_weights_diff
@@ -435,6 +446,8 @@ if __name__=="__main__":
                             if clients_task[client_idx] == task_idx:
                                 this_task_gradients_list.append(all_tasks_gradients_list[task_idx][chosen_clients[client_idx]])
                                 this_task_chosen_clients.append(chosen_clients[client_idx])
+                        if args.chosenall is True:
+                            this_task_chosen_clients = chosen_clients
                         assert len(this_task_gradients_list) == len(p_dict[task_idx])
                         # aggregation
                         LR = optimizer_config(task_type[task_idx])
@@ -497,6 +510,8 @@ if __name__=="__main__":
                                         p = C/task_number
                                         temp_local_P.append(p)
                                 # do not need to collect local_data num, just use all_local_data_num
+                        if args.chosenall is True:
+                            this_task_chosen_clients = chosen_clients
 
                         # aggregation
                         LR = optimizer_config(task_type[task_idx])
@@ -534,9 +549,23 @@ if __name__=="__main__":
                 if args.stale is True:
                     # only update old_local_updates for chosen_clients and tasks
                     if args.optimal_sampling is True:
-                        for i in range(len(chosen_clients)):
-                            old_local_updates[clients_task[i]][chosen_clients[i]] = copy.deepcopy(
-                                all_tasks_gradients_list[clients_task[i]][chosen_clients[i]])
+                        if args.use_h0 is True:
+                            for task in range(task_number):
+                                for cl in range(num_clients):
+                                    if cl in chosen_clients:
+                                        old_local_updates[task][cl] = copy.deepcopy(optimal_sampling.newupdate(h0_matrix[task][cl], args.stale_b0))
+                                        h0_matrix[task][cl] = copy.deepcopy(all_tasks_gradients_list[task][cl])
+                                    else:
+                                        old_local_updates[task][cl] = copy.deepcopy(optimal_sampling.stale_decay(old_local_updates[task][cl], args.stale_b))
+                        # for all clients, if chosen, update new, if not, decay old
+                        else:
+                            for task in range(task_number):
+                                for cl in range(num_clients):
+                                    if cl in chosen_clients:
+                                        old_local_updates[task][cl] = copy.deepcopy(optimal_sampling.newupdate(all_tasks_gradients_list[task][cl], args.stale_b0))
+                                    else:
+                                        old_local_updates[task][cl] = copy.deepcopy(optimal_sampling.stale_decay(old_local_updates[task][cl], args.stale_b))
+
                     else:
                         for i in range(len(chosen_clients)):
                             old_local_updates[clients_task[i]][chosen_clients[i]] = copy.deepcopy(

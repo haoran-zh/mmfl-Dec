@@ -166,6 +166,41 @@ class MnistCNN(nn.Module):
         out1 = self.conv(batch.view(-1, 1, 28, 28)).view(-1, self.conv_out_size)
         return self.fc(out1)
 
+class MnistCNN2(nn.Module):
+    def __init__(self,num_classes=10):
+        #torch.manual_seed(5)
+        super(MnistCNN2, self).__init__()
+        self.kernel_conv = (3,3)#(5, 5)
+        self.kernel_pool = (2, 2)
+        self.channel1 = 64
+        self.channel2 = 128
+        self.conv_out_size = self.channel2*7*7
+        self.fc_size = 512
+        self.out_size = num_classes
+
+        self.conv = nn.Sequential(
+            nn.Conv2d(in_channels=1, out_channels=self.channel1, kernel_size=self.kernel_conv, stride=1, padding=1),
+            nn.MaxPool2d(kernel_size=self.kernel_pool),
+            nn.Conv2d(in_channels=self.channel1, out_channels=self.channel2, kernel_size=self.kernel_conv, stride=1, padding=1),
+            nn.MaxPool2d(kernel_size=self.kernel_pool)
+        )
+        self.fc = nn.Sequential(
+            nn.Linear(in_features=self.conv_out_size, out_features=self.fc_size),
+            nn.Linear(in_features=self.fc_size, out_features=self.out_size),
+            nn.ReLU(),
+            nn.Softmax(dim=1)
+        )
+
+        for m in self.modules():
+            if type(m) == nn.Conv2d:
+                nn.init.kaiming_uniform_(m.weight)
+            elif type(m) == nn.Linear:
+                nn.init.xavier_normal_(m.weight)
+
+    def forward(self, batch):
+        out1 = self.conv(batch.view(-1, 1, 28, 28)).view(-1, self.conv_out_size)
+        return self.fc(out1)
+
 def resnet(num_classes):
     model = PreActResNet(PreActBlock, num_blocks=[2,2,2,2], num_classes=num_classes).to(device)
     model.apply(init_param)
@@ -188,6 +223,10 @@ def mnistCNN(num_classes):
     model.apply(init_param)
     return model
 
+def mnistCNN2(num_classes):
+    model=MnistCNN2(num_classes=num_classes).to(device)
+    model.apply(init_param)
+    return model
 
 
 class EMnistCNN(nn.Module):

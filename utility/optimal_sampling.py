@@ -26,6 +26,17 @@ def zero_shapelike(weights):
     zero_weights = {name: torch.zeros_like(tensor).cpu() for name, tensor in weights.items()}
     return zero_weights
 
+
+def newupdate(weights, b0):
+    weight_new = {name: (weights[name]*b0).cpu() for name in weights}
+    return weight_new
+
+
+def stale_decay(weights, b):
+    weight_decay = {name: (weights[name]*b).cpu() for name in weights}
+    return weight_decay
+
+
 def append_to_pickle(file_path, new_data):
     # Step 1: Load existing data from the pickle file
     try:

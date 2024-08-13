@@ -7,7 +7,8 @@ def optimizer_config(name_data):
         
     if name_data=='fashion_mnist':
         learning_rate= 0.01 #0.002 # 2e-6
-
+    if name_data=='fashion_mnist2':
+        learning_rate= 0.01 #0.002 # 2e-6
     if name_data == 'emnist':
         learning_rate = 0.5 # 2e-6
         # in distribution experiment, need to use 0.5

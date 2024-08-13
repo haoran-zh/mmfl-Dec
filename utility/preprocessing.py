@@ -56,8 +56,26 @@ def preprocessing(name_data, data_ratio, args):
         
         input_size=28
         classes_size = 10
-        min_data_num = int(data_ratio*400)
+        min_data_num = int(data_ratio*300)
         max_data_num = int(data_ratio*500)
+
+    elif name_data == 'fashion_mnist2':
+        transform_train = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))])
+        transform_test = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))])
+
+        trainset = torchvision.datasets.FashionMNIST('./utility/dataset', train=True, download=True,
+                                                     transform=transform_train)
+        testset = torchvision.datasets.FashionMNIST('./utility/dataset', train=False, download=True,
+                                                    transform=transform_test)
+
+        input_size = 28
+        classes_size = 10
+        min_data_num = int(data_ratio * 300)
+        max_data_num = int(data_ratio * 500)
 
     elif name_data == 'emnist':
         transform_train = transforms.Compose([
@@ -73,7 +91,7 @@ def preprocessing(name_data, data_ratio, args):
 
         input_size = 28
         classes_size = 47 # excluding capital letters that look similar to their lowercase counterparts
-        min_data_num = int(data_ratio*400)
+        min_data_num = int(data_ratio*300)
         max_data_num = int(data_ratio*500)
 
     max_data_list = []
