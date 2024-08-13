@@ -19,6 +19,18 @@ def weight_minus(weights_A, weights_B):
     # Calculate the L2 norm of the weight differences
     return weight_diff
 
+def weight_product(weights_A, weights_B):
+    # get gradient by subtracting weights_next_round from weights_this_round
+    # Calculate weight_A * weight_B (inner product, return a scalar)
+    weight_prod = sum(torch.sum(weights_A[name] * weights_B[name]) for name in weights_A)
+    return weight_prod
+
+def weight_norm(weights_A):
+    # get gradient by subtracting weights_next_round from weights_this_round
+    # Calculate weight_A * weight_B (inner product, return a scalar)
+    weight_norm = sum(torch.sum(weights_A[name]) for name in weights_A)
+    return weight_norm
+
 
 
 def zero_shapelike(weights):
@@ -772,3 +784,16 @@ def aggregation_fair(loss_af_aggregation, loss_bf_aggregation):
     loss_diff = np.maximum(loss_diff, 1e-6)
     return loss_diff
 
+
+
+def get_optimal_b(new_updates, old_updates, tasknum, clientnum):
+    optimal_b_array = np.zeros((tasknum, clientnum))
+    for task_index in range(tasknum):
+        for client_index in range(clientnum):
+            # get the optimal b, b = weight_product(new,old)/weight_product(old,old)
+            if weight_norm(old_updates[task_index][client_index]) < 1e-5:
+                optimal_b = 0
+            else:
+                optimal_b = weight_product(new_updates[task_index][client_index], old_updates[task_index][client_index]) / weight_product(old_updates[task_index][client_index], old_updates[task_index][client_index])
+                optimal_b_array[task_index][client_index] = optimal_b
+    return optimal_b_array

@@ -243,6 +243,10 @@ if __name__=="__main__":
                     for client_idx in range(num_clients):
                         h0_matrix[task_idx].append(optimal_sampling.zero_shapelike(global_models[task_idx].state_dict()))
 
+            if args.optimal_b is True:
+                optimal_b_array = np.zeros((len(task_type), num_clients))
+                adjusted_old_local_updates = copy.deepcopy(old_local_updates)
+
 
             for round in tqdm(range(num_round)):
                 print(f"Round[ {round+1}/{num_round} ]",file=file)
@@ -282,6 +286,16 @@ if __name__=="__main__":
                                                                                         task_type=task_type, clients_task=None,
                                                                                         local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
                                                                                         type_iid=type_iid, device=device, args=args)
+                    if args.optimal_b is True:
+                        optimal_b_array = optimal_sampling.get_optimal_b(all_tasks_gradients_list, old_local_updates,
+                                                                         task_number, num_clients)
+                        # adjust the scale of each old_local_updates using optimal_b
+                        for task_idx in range(len(task_type)):
+                            for client_idx in range(num_clients):
+                                adjusted_old_local_updates[task_idx][client_idx] = copy.deepcopy(
+                                    optimal_sampling.newupdate(old_local_updates[task_idx][client_idx],
+                                                               optimal_b_array[task_idx][client_idx]))
+
                     if args.stale is True:
                         if round == 0 and args.use_h0 is True:
                             old_local_updates = copy.deepcopy(all_tasks_gradients_list)
@@ -303,7 +317,7 @@ if __name__=="__main__":
                                     for cl in range(num_clients):
                                         all_weights_diff[task][cl], _ = optimal_sampling.get_gradient_norm(
                                             weights_this_round=all_tasks_gradients_list[task][cl],
-                                            weights_next_round=old_local_updates[task][cl],
+                                            weights_next_round=adjusted_old_local_updates[task][cl] if args.optimal_b else old_local_updates[task][cl],
                                             lr=LR)
 
                     if round == 0:
@@ -462,7 +476,7 @@ if __name__=="__main__":
                                                    models_gradient_dict=this_task_gradients_list,
                                                    local_data_num=dis[task_idx],
                                                    p_list=p_dict[task_idx], args=args, chosen_clients=this_task_chosen_clients,
-                                                   old_global_weights=old_local_updates[task_idx]))
+                                                   old_global_weights=adjusted_old_local_updates[task_idx] if args.optimal_b else old_local_updates[task_idx]))
                             else:
                                 global_models[task_idx].load_state_dict(
                                 federated_prob(global_weights=global_models[task_idx], models_gradient_dict=this_task_gradients_list, local_data_num=dis[task_idx],
@@ -558,6 +572,13 @@ if __name__=="__main__":
                                     else:
                                         old_local_updates[task][cl] = copy.deepcopy(optimal_sampling.stale_decay(old_local_updates[task][cl], args.stale_b))
                         # for all clients, if chosen, update new, if not, decay old
+                        elif args.optimal_b is True:
+                            for task in range(task_number):
+                                for cl in range(num_clients):
+                                    if cl in chosen_clients:
+                                        old_local_updates[task][cl] = copy.deepcopy(all_tasks_gradients_list[task][cl])
+                                        # optimal b should be computed before aggregation
+                                        # if optimal_b, then do not need to update b here. should update b before aggregation
                         else:
                             for task in range(task_number):
                                 for cl in range(num_clients):
