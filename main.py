@@ -287,9 +287,14 @@ if __name__=="__main__":
                                                                                         local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
                                                                                         type_iid=type_iid, device=device, args=args)
                     if args.optimal_b is True:
-                        optimal_b_array = optimal_sampling.get_optimal_b(all_tasks_gradients_list, old_local_updates,
-                                                                         task_number, num_clients)
-                        # adjust the scale of each old_local_updates using optimal_b
+                        if args.use_h0 is True:
+                            optimal_b_array = optimal_sampling.get_optimal_b(h0_matrix,
+                                                                             old_local_updates,
+                                                                             task_number, num_clients)
+                        else:
+                            optimal_b_array = optimal_sampling.get_optimal_b(all_tasks_gradients_list, old_local_updates,
+                                                                             task_number, num_clients)
+                            # adjust the scale of each old_local_updates using optimal_b
                         for task_idx in range(len(task_type)):
                             for client_idx in range(num_clients):
                                 adjusted_old_local_updates[task_idx][client_idx] = copy.deepcopy(
@@ -299,7 +304,8 @@ if __name__=="__main__":
                     if args.stale is True:
                         if round == 0 and args.use_h0 is True:
                             old_local_updates = copy.deepcopy(all_tasks_gradients_list)
-                            h0_matrix = copy.deepcopy(all_tasks_gradients_list)
+                            if args.optimal_b is False:
+                                h0_matrix = copy.deepcopy(all_tasks_gradients_list)
                         else:
                             for task in range(task_number):
                                 # the function is this-next.
@@ -311,7 +317,7 @@ if __name__=="__main__":
                                     for cl in range(num_clients):
                                         all_weights_diff[task][cl], _ = optimal_sampling.get_gradient_norm(
                                             weights_this_round=h0_matrix[task][cl],
-                                            weights_next_round=old_local_updates[task][cl],
+                                            weights_next_round=adjusted_old_local_updates[task][cl] if args.optimal_b else old_local_updates[task][cl],
                                             lr=LR)
                                 else:
                                     for cl in range(num_clients):
@@ -563,7 +569,7 @@ if __name__=="__main__":
                 if args.stale is True:
                     # only update old_local_updates for chosen_clients and tasks
                     if args.optimal_sampling is True:
-                        if args.use_h0 is True:
+                        if (args.use_h0 is True) and (args.optimal_b is False):
                             for task in range(task_number):
                                 for cl in range(num_clients):
                                     if cl in chosen_clients:
@@ -572,7 +578,13 @@ if __name__=="__main__":
                                     else:
                                         old_local_updates[task][cl] = copy.deepcopy(optimal_sampling.stale_decay(old_local_updates[task][cl], args.stale_b))
                         # for all clients, if chosen, update new, if not, decay old
-                        elif args.optimal_b is True:
+                        elif (args.use_h0 is True) and (args.optimal_b is True):
+                            for task in range(task_number):
+                                for cl in range(num_clients):
+                                    if cl in chosen_clients:
+                                        old_local_updates[task][cl] = copy.deepcopy(optimal_sampling.newupdate(h0_matrix[task][cl], 1.0))
+                                        h0_matrix[task][cl] = copy.deepcopy(all_tasks_gradients_list[task][cl])
+                        elif (args.use_h0 is False) and (args.optimal_b is True):
                             for task in range(task_number):
                                 for cl in range(num_clients):
                                     if cl in chosen_clients:
