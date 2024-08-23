@@ -400,7 +400,7 @@ d_value = 0.3
 c = 0.1  # active rate
 a = 1 # alpha
 #ms_a = 4
-tasknum= 3 # task number
+tasknum= 5 # task number
 client_num=120 # client number
 # task=3 ,client_num=80
 extra_folder = {
@@ -430,47 +430,163 @@ extra_folder = {
 #f"{tasknum}task_nnnnn_distribution_lessVennc0.1_ASF0.01_a1_": "ASF0.01",
 #f"{tasknum}task_nnnnn_distribution_lessVenn_ASF0.05_a1_": "ASF0.05",
 #f"{tasknum}task_nnnnn_distribution_lessVenn_ASF0.01_a1_": "ASF0.01",
-#f"{tasknum}task_nnnnn_distribution_lessVenn_OS_a1_": "OS",
-#f"{tasknum}task_nnnnn_distribution_lessVennr300_accAS_a1_": "AS-acc",
-#f"{tasknum}task_nnnnn_distribution_lessVenn_AS_a1_": "AS",
-#f"{tasknum}task_nnnnn_distribution_lessVennc0.1_full_": "full-participation",
-#f"{tasknum}task_nnnnn_distribution_lessVenn_random_": "random"
+# f"{tasknum}task_nnnnn_distribution_lessVenn_OS_a1_": "OS",
+# #f"{tasknum}task_nnnnn_distribution_lessVennr300_accAS_a1_": "AS-acc",
+# f"{tasknum}task_nnnnn_distribution_lessVenn_AS_a1_": "AS",
+# f"{tasknum}task_nnnnn_distribution_lessVennc0.1_full_": "full-participation",
+# f"{tasknum}task_nnnnn_distribution_lessVenn_random_": "random"
 ######f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_a1_": "a1",
 ######f"{tasknum}task_nnnnn_icdcs_c{c}u{u_value}d{d_value}_a2_": "a2",
-##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_GSo_a{a}_": "Group sample",
-###f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{a}_": "tradeoff_a2",
-##f"{tasknum}task_nnnnn_c{c}u{u_value}d{d_value}_tradeoff_a{ms_a}_": "tradeoff_notfair",
-#"5task_nnnnn_fairness_ms_a2_": "ms_a2_data0.5",
+ #"5task_nnnnn_fairness_ms_a2_": "ms_a2_data0.5",
 #"5task_nnnnn_fairness_alphafair_a2_": "alphafair_a2_data0.5",
 #"5task_nnnnn_fairness_random_": "random_data0.5",
-"3task_nnnnn_fairness_ms_a3_": "ms_a3_data1.0",
-"3task_nnnnn_fairness_alphafair_a3_": "alphafair_a3_data1.0",
-"3task_nnnnn_fairness_random_": "random_data1.0",
-"3task_nnnnn_fairness_AS_a3_": "AS_data1.0",
+# "3task_nnnnn_fairnessfff_ms_a1_": "ms_a1_data1.0",
+# "3task_nnnnn_fairnessfff_alphafair_a1_": "alphafair_a1_data1.0",
+# "3task_nnnnn_fairnessfff_random_": "random_data1.0",
+# "3task_nnnnn_fairnessfff_AS_a1_": "AS_data1.0",
+
+# "3task_nnnnn_fairnessfff_ms_a2c120_": "ms_a1_data1.0",
+# "3task_nnnnn_fairnessfff_alphafair_a2c120_": "alphafair_a2_c120",
+# "3task_nnnnn_fairnessfff_randomc120_": "random_data1.0",
+# "3task_nnnnn_fairnessfff_AS_a1_": "AS_data1.0",
+
+ #"3task_nnnnn_fairness_AS_a3_": "AS_data1.0",
 #"5task_nnnnn_fairness_ms_a3_": "ms_a3_data1.0",
 #"5task_nnnnn_fairness_alphafair_a3_": "alphafair_a3_data1.0",
 #"5task_nnnnn_fairness_random_": "random_data1.0",
 #"5task_nnnnn_fairness_AS_a3_": "AS_data1.0",
+
+# f"{tasknum}task_nnnnn_fffse_lessVenn_OS_a1_": "OS",
+# #f"{tasknum}task_nnnnn_distribution_lessVennr300_accAS_a1_": "AS-acc",
+# f"{tasknum}task_nnnnn_fffse_lessVenn_AS_a1_": "AS",
+# f"{tasknum}task_nnnnn_fffse_lessVenn_full_": "full-participation",
+# f"{tasknum}task_nnnnn_fffse_lessVenn_random_": "random"
+
+# f"{tasknum}task_nnnnn_mse_lessVennc0.1uv0.90.05_OS_a1_": "OS", # not use mse, just forget to change the name
+# f"{tasknum}task_nnnnn_mse_lessVennc0.1uv0.90.05_AS_a1_": "AS", # more unbalanced case
+# f"{tasknum}task_nnnnn_mse_lessVennc0.1uv0.90.05_full_": "full-participation",
+# f"{tasknum}task_nnnnn_mse_lessVennc0.1uv0.90.05_random_": "random"
+
+
+# f"{tasknum}task_nnnnn_distribution_lessVennssp_ASF0.1_a1_": "ASF0.1", # not use mse, just forget to change the name
+# f"{tasknum}task_nnnnn_distribution_lessVennssp_ASF0.01_a1_": "ASF0.01",
+# f"{tasknum}task_nnnnn_distribution_lessVennssp_ASF0.05_a1_": "ASF0.05",
+# f"{tasknum}task_nnnnn_distribution_lessVennssp_AS_a1_": "AS"
+
+# "1task_nnnnn_lessVennc0.1uv0.9_AS_a1_": "AS",
+# "1task_nnnnn_lessVennc0.1uv0.9_OS_a1_": "OS",
+# "1task_nnnnn_lessVennc0.1uv0.9_full_": "full participation",
+# "1task_nnnnn_lessVennc0.1uv0.9_random_": "random",
+
+# "5task_nnnnn_distribution_lessVenn_AS_a1c1.0u0.3_": "AS",
+# "5task_nnnnn_distribution_lessVenn_ASF0.1_a1c1.0u0.3_": "ASF0.1",
+# "5task_nnnnn_distribution_lessVenn_ASF0.05_a1c1.0u0.3_": "ASF0.05",
+# "5task_nnnnn_distribution_lessVenn_ASF0.01_a1c1.0u0.3_": "ASF0.01",
+
+# "5task_nnnnn_fairnessfff_ms_a2c120_": "MMFL-FairVR", # data ratio=0.3
+# "5task_nnnnn_fairnessfff_alphafair_a2c120_": "FedFairMMFL",
+# "5task_nnnnn_fairnessfff_randomc120_": "Random",
+
+# "1task_nnnnn_lessVennc0.05uv0.9_AS_a1_": "AS", # active rate-0.05, uv 0.9 0.1, data ratio 1.0
+# "1task_nnnnn_lessVennc0.05uv0.9_ASF0.0_": "ASF0.0",
+# "1task_nnnnn_lessVennc0.05uv0.9_ASF0.01_": "ASF0.01",
+# "1task_nnnnn_lessVennc0.05uv0.9_ASF0.05_": "ASF0.05",
+# "1task_nnnnn_lessVennc0.05uv0.9_ASFslow0.01_": "ASFslow0.01",
+# "1task_nnnnn_lessVennc0.05uv0.9_ASFslow0.05_": "ASFslow0.05",
+# "1task_nnnnn_lessVennc0.05uv0.9_OS_a1_": "OS",
+# "1task_nnnnn_lessVennc0.05uv0.9_OSF0.0_": "OSF0.0",
+# "1task_nnnnn_lessVennc0.05uv0.9_OSF0.01_": "OSF0.01",
+# "1task_nnnnn_lessVennc0.05uv0.9_OSF0.05_": "OSF0.05",
+# "1task_nnnnn_lessVennc0.05uv0.9_OSFslow0.01_": "OSFslow0.01",
+# "1task_nnnnn_lessVennc0.05uv0.9_OSFslow0.05_": "OSFslow0.05",
+# "1task_nnnnn_lessVennc0.05uv0.9_full_": "full participation",
+# "1task_nnnnn_lessVennc0.05uv0.9_random_": "random",
+
+
+ # active rate-0.05, uv 0.9 0.1, data ratio 1.0
+# "1task_nnnnn_lessVennc0.05uv0.90.01_ASF0.0_": "ASF0.0",
+# "1task_nnnnn_lessVennc0.05uv0.90.01_ASF0.01_": "ASF0.01",
+# "1task_nnnnn_lessVennc0.05uv0.90.01_ASF0.05_": "ASF0.05",
+# "1task_nnnnn_lessVennc0.05uv0.90.01_AS_a1_": "AS",
+# # "1task_nnnnn_lessVennc0.05uv0.90.01_ASFslow0.01_": "ASFslow0.01",
+# # "1task_nnnnn_lessVennc0.05uv0.90.01_ASFslow0.05_": "ASFslow0.05",
+# # "1task_nnnnn_lessVennc0.05uv0.90.01_OSF0.0_": "OSF0.0",
+# # "1task_nnnnn_lessVennc0.05uv0.90.01_OSF0.01_": "OSF0.01",
+# # "1task_nnnnn_lessVennc0.05uv0.90.01_OSF0.05_": "OSF0.05",
+# "1task_nnnnn_lessVennc0.05uv0.90.01_OS_a1_": "OS",
+# "1task_nnnnn_lessVennc0.05uv0.90.01_OSdelta0.001_": "OSdelta0.001",
+# "1task_nnnnn_lessVennc0.05uv0.90.01_OSdelta0.005_": "OSdelta0.005",
+# "1task_nnnnn_lessVennc0.05uv0.90.01_OSdelta0.01_": "OSdelta0.01",
+# "1task_nnnnn_lessVennc0.05uv0.90.01_OSdelta0.02_": "OSdelta0.02",
+# "1task_nnnnn_lessVennc0.05uv0.90.01_OSdelta0.03_": "OSdelta0.03",
+# # "1task_nnnnn_lessVennc0.05uv0.90.01_OSFslow0.01_": "OSFslow0.01",
+# # "1task_nnnnn_lessVennc0.05uv0.90.01_OSFslow0.05_": "OSFslow0.05",
+# "1task_nnnnn_lessVennc0.05uv0.90.01_full_": "full participation",
+# "1task_nnnnn_lessVennc0.05uv0.90.01_random_": "random",
+
+# "5task_nnnnn_lessVennc0.1uv0.90.05_AS_": "AS", # active rate-0.1, uv 0.9 0.05, data ratio 0.5
+# "5task_nnnnn_lessVennc0.1uv0.90.05_OS_": "OS",
+# "5task_nnnnn_lessVennc0.1uv0.90.05_random_": "random",
+# "5task_nnnnn_lessVennc0.1uv0.90.05_full_": "full participation",
+
+ # active rate-0.05, uv 0.9 0.1, data ratio 1.0
+"3task_nnnnn_lessVennc0.1uv0.90.1_OS_": "MMFL-GVR",
+"3task_nnnnn_lessVennc0.1uv0.90.1_AS_": "MMFL-LVR",
+"3task_nnnnn_lessVennc0.1uv0.90.1_OSstale_f2_": "MMFL-GVR*",
+#"3task_nnnnn_lessVennc0.1uv0.90.1_OSstale_decay1.00.9_f2_": "OS-stale decay0.8",
+"3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_decay1.00.9_f2_": "VR+decay_b decay0.9",
+"3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_decay1.00.8_f2_": "VR+decay_b decay0.8",
+#"3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_h0_decay1.00.9_f2_": "VR+decay_b+h_new decay0.9",
+"3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_h0_decay1.00.8_f2_": "VR+decay_b+h_new decay0.8",
+"3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_Ob_f2_": "VR+optimal_b",
+"3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_Obh0_f2_": "VR+optimal_b+h_new",
+"3task_nnnnn_lessVennc0.1uv0.90.1_FedVARP_a1_": "FedVARP",
+"3task_nnnnn_lessVennc0.1uv0.90.1_MILA_a1_": "MIFA",
+"3task_nnnnn_lessVennc0.1uv0.90.1_SCAFFOLD_a1_": "SCAFFOLD",
+"3task_nnnnn_lessVennc0.1uv0.90.1_full_": "Full participation",
+#"3task_nnnnn_lessVennc0.1uv0.90.1_full_ca_": "Full participationca",
+#"3task_nnnnn_lessVennc0.1uv0.90.1_random_": "Random",
+"3task_nnnnn_lessVennc0.1uv0.90.1_random_ca_": "Random",
+
+# "5task_nnnnn_lessVennc0.1uv0.60.1_OS_f2ca_": "MMFL-GVR",
+# "5task_nnnnn_lessVennc0.1uv0.60.1_AS_f2ca_": "MMFL-LVR",
+# "5task_nnnnn_lessVennc0.1uv0.60.1_OSstale_f2_": "MMFL-GVR*",
+# #"3task_nnnnn_lessVennc0.1uv0.90.1_OSstale_a1_": "OS-stale a1",
+# "5task_nnnnn_lessVennc0.1uv0.60.1_FedVARP_f2_": "FedVARP",
+# "5task_nnnnn_lessVennc0.1uv0.60.1_MILA_f2_": "MIFA",
+# "5task_nnnnn_lessVennc0.1uv0.60.1_SCAFFOLD_f2_": "SCAFFOLD",
+# "5task_nnnnn_lessVennc0.1uv0.60.1_full_f2ca_": "Full participation",
+# #"3task_nnnnn_lessVennc0.1uv0.90.1_full_ca_": "Full participationca",
+# #"3task_nnnnn_lessVennc0.1uv0.90.1_random_": "Random",
+# "5task_nnnnn_lessVennc0.1uv0.60.1_random_f2ca_": "Random",
+
+# "5task_nnnnn_fffse_lessVenn_AS_a1_": "Loss-based sampling",
+# "5task_nnnnn_fffse_lessVenn_OS_a1_": "Norm-based sampling",
+# "5task_nnnnn_fffse_lessVenn_full_": "Full participation",
+# "5task_nnnnn_fffse_lessVenn_random_": "Random",
 }
 all_rounds=150
-seed_list_ms = [14]
-seed_list_alpha = [14,15,16,17,18]
+# 15 is fine
+seed_list = [11,12,13,14,15,16,17,18,19]
+# no 12
+tasknum= 3
 # 17 16 15
-line_list = ['-', '-', '-', '-', '-', '-', '-', '-']
+line_list = ['-', '-', '-', '-', '-','-','--','-','-','-','-', '--','-','-','-','-','--','-','-','-','-']
+marker_list =['o', 's', 'v','^', 'p','D','X', 'P','^', 'p','D','X', 'P','p','D','X', 'P']
 # sd 21 is good,
-# sd 19, 20 is bad,
-finalPath = f'./result/{tasknum}task_nnnnn_fairness_random_14'
+# sd 19, 20 is bad
+finalPath = f'./result/3task_nnnnn_lessVennc0.1uv0.90.1_OSstale_a1_19'
 
 # make figure wide=8, height=5
 
-fig_avg = plt.figure(figsize=(6, 4))
-fig_min = plt.figure(figsize=(6, 4))
+fig_avg = plt.figure()
+fig_min = plt.figure()
 ax_avg = fig_avg.add_subplot(1, 1, 1)
 ax_min = fig_min.add_subplot(1, 1, 1)
 all_algorithm_curve = []
 keys_list = []
 all_count_list = []
-cnt=0
+cnt = 0
 for key in extra_folder:
     current_folder = {}
     current_folder[key] = extra_folder[key]
@@ -485,23 +601,25 @@ for key in extra_folder:
     allocation_var = 0
     curve = []
     # if ms, use seed_list_ms
-    if 'ms' in key:
-        seed_list = seed_list_ms.copy()
-    else:
-        seed_list = seed_list_alpha.copy()
+    # if 'ms' in key:
+    #     seed_list = seed_list_ms.copy()
+    # elif 'alpha' in key:
+    #     seed_list = seed_list_alpha.copy()
+    # elif 'AS' in key:
+    #     seed_list = seed_list_AS.copy()
     algor_seed = seed_list.copy()
     count_list = []
 
     for seed in seed_list:
         #seed = list(current_folder.keys())[0][-2:]
         # plot allocation
-        if tasknum > 1:
-            allo_var, client_count_all = allocation(current_folder, seed)
-            if type(client_count_all) is not int:
-                count_list.append(client_count_all)
-                allocation_var += allo_var
-        else:
-            allocation_var = 0
+        # if tasknum > 1:
+        #     allo_var, client_count_all = allocation(current_folder, seed)
+        #     if type(client_count_all) is not int:
+        #         count_list.append(client_count_all)
+        #         allocation_var += allo_var
+        # else:
+        #     allocation_var = 0
 
 
         exp_array = load_extra_folder(current_folder, seed, header='localAcc_')
@@ -564,7 +682,7 @@ for key in extra_folder:
     client_var_avg /= len(algor_seed)
     allocation_var /= len(algor_seed)
     algoName = next(iter(algo_name))
-    print(f"{algoName: <10}: \t Global avg acc: {global_avg_acc:.3f}, max: {global_max_acc:.3f}, min: {global_min_acc:.3f}, gap: {global_max_acc-global_min_acc:.3f}, client_var: {client_var_avg:.3f}, allocation_var: {allocation_var:.3f}")
+    print(f"{algoName: <25}: \t Global avg acc: {global_avg_acc:.3f}, max: {global_max_acc:.3f}, min: {global_min_acc:.3f}, var_avg: {np.sqrt(var_avg):.3f}")
     #print(f"{algoName: <10}: \t worst20% {worst10_avg:.3f}, best20% {best10_avg:.3f}; Global acc: {global_avg_acc:.3f} entropy: {exp_array_entropy:.3f}, KL{kl:.4f} client_var: {client_var_avg:.3f}")
     #averge the curve
     curve = np.array(curve) # shape: seed tasknum numRounds
@@ -580,34 +698,37 @@ for key in extra_folder:
     curve_upper = curve_avg + aver_each_seed_curve.std(axis=0)
     curve_lower = curve_avg - aver_each_seed_curve.std(axis=0)
 
-    ax_avg.plot(x, curve_avg, label=next(iter(algo_name)), linestyle=line_list[cnt])
+    ax_avg.plot(x, curve_avg, label=next(iter(algo_name)), linestyle=line_list[cnt], marker=marker_list[cnt], markevery=20, linewidth=2.5)
     cnt+=1
     # ax_avg.fill_between(x, curve_lower, curve_upper, alpha=0.2)
 
 
-    ax_min.plot(x, curve_min, label=next(iter(algo_name)))
+    ax_min.plot(x, curve_min, label=next(iter(algo_name)), linestyle=line_list[cnt], marker=marker_list[cnt], markevery=20, linewidth=2.5)
 
 # plot each task
-if tasknum > 1:
-    plot_each_task(all_algorithm_curve, keys_list)
-    plot_allocation_count(all_count_list, keys_list)
+# if tasknum > 1:
+#     plot_each_task(all_algorithm_curve, keys_list)
+#     plot_allocation_count(all_count_list, keys_list)
 
-ax_avg.legend(fontsize=14)
+ax_avg.legend(fontsize=20, frameon=False)
 # make label size larger
-ax_avg.set_xlabel('Num. Global Iterations', fontsize=14)
-ax_avg.set_ylabel('Accuracy', fontsize=14)
-ax_avg.set_title(f'Average Accuracy over {tasknum} Models', fontsize=14)
+ax_avg.set_xlabel('Num. Global Iterations', fontsize=20)
+ax_avg.set_ylabel('Accuracy', fontsize=20)
+ax_avg.set_title(f'Avg Accuracy over {tasknum} Models', fontsize=20)
+ax_avg.tick_params(axis='both', which='major', labelsize=20)
 # make the figure is tight
 
-ax_min.legend()
-ax_min.set_xlabel('Num. Global Iterations')
-ax_min.set_ylabel('Accuracy')
-ax_min.set_title(f'Min Accuracy over {tasknum} Models')
+ax_min.legend(fontsize=20, frameon=False)
+ax_min.set_xlabel('Num. Global Iterations', fontsize=20)
+ax_min.set_ylabel('Accuracy', fontsize=20)
+ax_min.set_title(f'Min Accuracy over {tasknum} Models', fontsize=20)
+ax_min.tick_params(axis='both', which='major', labelsize=20)
+
 
 fig = ax_avg.get_figure()
 # save to 3task_nnn_u{u_value}d{d_value}_random_11/global_avg_acc.png
 fig.tight_layout()
-fig.savefig(finalPath+'/global_avg_acc.png')
+fig.savefig(finalPath+'/global_avg_acc.pdf', format="pdf", bbox_inches="tight")
 fig = ax_min.get_figure()
 fig.tight_layout()
-fig.savefig(finalPath+'/global_min_acc.png')
+fig.savefig(finalPath+'/global_min_acc.pdf', format="pdf", bbox_inches="tight")

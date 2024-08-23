@@ -791,9 +791,30 @@ def get_optimal_b(new_updates, old_updates, tasknum, clientnum):
     for task_index in range(tasknum):
         for client_index in range(clientnum):
             # get the optimal b, b = weight_product(new,old)/weight_product(old,old)
-            if weight_norm(old_updates[task_index][client_index]) < 1e-5:
+            if weight_norm(old_updates[task_index][client_index]) == 0:
                 optimal_b = 0
+                optimal_b_array[task_index][client_index] = optimal_b
             else:
                 optimal_b = weight_product(new_updates[task_index][client_index], old_updates[task_index][client_index]) / weight_product(old_updates[task_index][client_index], old_updates[task_index][client_index])
                 optimal_b_array[task_index][client_index] = optimal_b
     return optimal_b_array
+
+def fixed_distribution(round, round_scale):
+    # notice here we assume each client can only do one task.
+    # the first 20 clients use round_robin in a manner.
+    # the last 100 clients randomly choose a task to do
+    order = round % round_scale # can be 0,1,2,3,4
+    chosen_clients = []
+    steps = int(20 // round_scale)
+    for i in range(steps):
+        chosen_clients.append(int(i*round_scale + order))
+    p_dict = []
+    p_dict.append([1/round_scale for i in range(steps)])
+    # for clients beyond 20, randomly choose
+    active_rate = 0.1
+    active_num = int(100 * active_rate)
+    chosen_clients += random.sample(range(20, 100), active_num)
+    p_dict[0].extend([0.1 for i in range(active_num)])
+    # only train the first task
+    clients_task = [0] * len(chosen_clients)
+    return clients_task, p_dict, chosen_clients

@@ -69,6 +69,7 @@ class ParserArgs(object):
         self.parser.add_argument("--stale_b", type=float, default=1.0, help="decay b")
         self.parser.add_argument("--use_h0", action="store_true", help="use h0 to approximate new update matrix")
         self.parser.add_argument("--optimal_b", action="store_true", help="decide optimal b")
+        self.parser.add_argument("--fix_robin", type=float, default=0.0,  help="round scale, if 0, ignore, if not 0, go robin")
 
 
 
