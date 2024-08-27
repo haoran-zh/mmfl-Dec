@@ -153,6 +153,7 @@ if __name__=="__main__":
             allocation_dict_list = []
             old_local_updates = []
             optimal_b_list = []
+            decay_tasks_list = []
 
             TaskAllocCounter=np.zeros((len(task_type),num_round))
 
@@ -605,12 +606,18 @@ if __name__=="__main__":
                             # record optimal b matrix
 
                         else:
+                            b0 = optimal_sampling.gompertz_function(t=round, a=1.0, b=0.8, c=0.4)
+                            b_tasks = optimal_sampling.approximate_decayb(new_updates=all_tasks_gradients_list, old_updates=old_local_updates,
+                                                               tasknum=task_number, clientnum=num_clients,
+                                                               allocation_record=allocation_dict_list, chosen_clients=chosen_clients,
+                                                               client_task=clients_task, dis=dis, prob=p_dict, b0=b0)
+                            decay_tasks_list.append(b_tasks)
                             for task in range(task_number):
                                 for cl in range(num_clients):
                                     if cl in chosen_clients:
-                                        old_local_updates[task][cl] = copy.deepcopy(optimal_sampling.newupdate(all_tasks_gradients_list[task][cl], args.stale_b0))
+                                        old_local_updates[task][cl] = copy.deepcopy(optimal_sampling.newupdate(all_tasks_gradients_list[task][cl], b0))
                                     else:
-                                        old_local_updates[task][cl] = copy.deepcopy(optimal_sampling.stale_decay(old_local_updates[task][cl], args.stale_b))
+                                        old_local_updates[task][cl] = copy.deepcopy(optimal_sampling.stale_decay(old_local_updates[task][cl], b_tasks[task]))
 
                     else:
                         for i in range(len(chosen_clients)):
@@ -697,6 +704,11 @@ if __name__=="__main__":
             filename = 'dis.pkl'
             with open('./result/'+folder_name+'/'+filename, 'wb') as f:
                 pickle.dump(dis, f)
+
+            # save decay_tasks_list
+            filename = 'decay_tasks_list.pkl'
+            with open('./result/' + folder_name + '/' + filename, 'wb') as f:
+                pickle.dump(decay_tasks_list, f)
 
             print(f'Finished Training, lr:{args.lr}, Global acc:{globalAccResults[:, -1]}')
             print(f'Finished Training, lr:{args.lr}, Global acc:{globalAccResults[:, -1]}', file=file)

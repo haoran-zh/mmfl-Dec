@@ -818,3 +818,57 @@ def fixed_distribution(round, round_scale):
     # only train the first task
     clients_task = [0] * len(chosen_clients)
     return clients_task, p_dict, chosen_clients
+
+
+import math
+def gompertz_function(t, a, b, c):
+    """
+    Computes the Gompertz function value at time t.
+
+    Parameters:
+    t : int or float : Time period at which to calculate the function value
+    a : float : The upper asymptote (maximum value the function approaches as t increases)
+    b : float : The displacement factor (related to the initial value of the function)
+    c : float : The growth rate (controls the steepness of the curve)
+
+    Returns:
+    f(t) : float : Gompertz function value at time t
+    """
+
+    # Calculate the Gompertz function value using the formula
+    f_t = a * math.exp(-b * math.exp(-c * t))
+
+    return f_t
+
+
+def find_recent_allocation(allocation_record, task_index, client_index):
+    current_total_round = len(allocation_record)
+    for i in range(current_total_round-2, -1, -1): # reverse order
+        if client_index in allocation_record[i].keys():
+            if allocation_record[i][client_index] == task_index:
+                return current_total_round - i - 1
+    return -1 # the first time allocation
+
+
+def approximate_decayb(new_updates, old_updates, tasknum, clientnum, allocation_record, chosen_clients, client_task, dis, prob, b0):
+    # allocation_record include the current round allocation
+    if len(allocation_record) == 1:
+        return [1.0 for _ in range(tasknum)] # no decay
+    decay_avg = [0 for _ in range(tasknum)]
+    p_index = [0 for _ in range(tasknum)]
+
+    for i in range(len(chosen_clients)):
+        task_index = client_task[i]
+        client_index = chosen_clients[i]
+        optimal_b = weight_product(new_updates[task_index][client_index],
+                                   old_updates[task_index][client_index]) / weight_product(
+            old_updates[task_index][client_index], old_updates[task_index][client_index])
+        delta_t = find_recent_allocation(allocation_record, task_index, client_index)
+        if delta_t == -1:
+            # cannot use this client, skip
+            p_index[task_index] += 1
+            continue
+        decay = (optimal_b / b0) ** (1/delta_t)
+        decay_avg[task_index] += min(dis[task_index][client_index] * decay / prob[task_index][p_index[task_index]], 1)
+        p_index[task_index] += 1
+    return decay_avg
