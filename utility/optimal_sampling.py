@@ -72,27 +72,7 @@ def append_to_pickle(file_path, new_data):
 
 
 def power_gradient_norm(gradient_norm, tasks_local_training_loss, args, dis):
-    alpha = args.alpha
-    task_num = len(args.task_type)
-    gradient_norm = np.array(gradient_norm)
-    tasks_local_training_loss = np.array(tasks_local_training_loss)
-    if args.fairness == 'clientfair':
-        gradient_norm_power = gradient_norm * np.power(tasks_local_training_loss, (alpha - 1)) * alpha
-    elif args.fairness == 'taskfair':
-        # compute f_s
-        gradient_norm_power = np.zeros_like(gradient_norm)
-        for s in range(task_num):
-            f_s = 0
-            for i in range(gradient_norm.shape[1]):
-                d_is = dis
-                f_s += tasks_local_training_loss[s][i] * d_is
-            gradient_norm_power[s] = gradient_norm[s] * f_s ** (alpha - 1) * alpha
-    elif args.fairness == 'notfair':
-        gradient_norm_power = gradient_norm
-    else:
-        print("power gradient wrong!")
-        exit(1)
-
+    gradient_norm_power = gradient_norm
     return gradient_norm_power
 
 
@@ -324,7 +304,6 @@ def get_optimal_sampling(chosen_processes, dis, gradient_record, args, client_ta
         # from U to U~ in the paper
             client_index = clients_process[process_index]
             all_gradients[task_index][process_index] = gradient_record[task_index][client_index] * dis[task_index][client_index] / client_task_ability[client_index] * venn_matrix[task_index][client_index]
-
     process_gradients_sumTasks = np.zeros(processes_num) # this is M_i in the proof
     for process_index in range(processes_num):
         for task_index in range(tasks_num):
@@ -373,7 +352,7 @@ def get_optimal_sampling(chosen_processes, dis, gradient_record, args, client_ta
         p_client = np.zeros(tasks_num+1)
         p_client[0] = p_not_choose
         p_client[1:] = p_s_i[:, process_idx]
-        allocation_result[process_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
+        allocation_result[process_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client) # appear NaN
     allocation_result = allocation_result.tolist()
     clients_task = [s for s in allocation_result if s != -1]
     chosen_process_order = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
@@ -845,7 +824,7 @@ def find_recent_allocation(allocation_record, task_index, client_index):
     current_total_round = len(allocation_record)
     for i in range(current_total_round-2, -1, -1): # reverse order
         if client_index in allocation_record[i].keys():
-            if allocation_record[i][client_index] == task_index:
+            if task_index in allocation_record[i][client_index]:
                 return current_total_round - i - 1
     return -1 # the first time allocation
 
@@ -869,6 +848,23 @@ def approximate_decayb(new_updates, old_updates, tasknum, clientnum, allocation_
             p_index[task_index] += 1
             continue
         decay = (optimal_b / b0) ** (1/delta_t)
-        decay_avg[task_index] += min(dis[task_index][client_index] * decay / prob[task_index][p_index[task_index]], 1)
+        decay_avg[task_index] += dis[task_index][client_index] * decay / prob[task_index][p_index[task_index]]
         p_index[task_index] += 1
+    # if any decay_avg is 0, set it to 1
+    # ensure decay_avg all smaller than 1
+    for task in range(tasknum):
+        decay_avg[task] = min(decay_avg[task], 1)
+        # if decay_avg[task] is in torch, change it to numpy
+        if isinstance(decay_avg[task], torch.Tensor):
+            decay_avg[task] = decay_avg[task].cpu().numpy()
+    for i in range(tasknum):
+        if decay_avg[i] == 0:
+            decay_avg[i] = 1
     return decay_avg
+
+def get_one_optimal_b(new_updates, old_updates):
+    if weight_norm(old_updates) == 0:
+        optimal_b = 0
+    else:
+        optimal_b = weight_product(new_updates, old_updates) / weight_product(old_updates, old_updates)
+    return optimal_b

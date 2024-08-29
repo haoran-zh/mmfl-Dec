@@ -1,5 +1,7 @@
 import torch
 import numpy as np
+import utility.optimal_sampling as optimal_sampling
+import copy
 
 def federated(models_state_dict, local_data_nums, aggregation_mtd, numUsersSel):
 
@@ -69,7 +71,7 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
 
 
 
-def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list, args, chosen_clients, old_global_weights):
+def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list, args, chosen_clients, old_global_weights, decay_beta):
     global_weights_dict = global_weights.state_dict()
     global_keys = list(global_weights_dict.keys())
     # Sum the state_dicts of all client models
@@ -89,20 +91,29 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
                 for key in global_keys:
                     global_weights_dict[key] -= dis_s[i] * models_gradient_dict[chosen_clients.index(i)][key]
 
-    else: # other method
-        for i, gradient_dict in enumerate(models_gradient_dict):
+    else:  # other method
+        for i, gradient_dict in enumerate(models_gradient_dict):  # active clients
             d_i = dis_s[chosen_clients[i]]
             h_i = old_global_weights[chosen_clients[i]]
+            if args.optimal_b is False:
+                # adjust h_i to optimal scale
+                if decay_beta[chosen_clients[i]] == 0:
+                    h_i_original = copy.deepcopy(h_i)  # only for the first active I think
+                    # print('first time active')
+                else:
+                    h_i_original = copy.deepcopy(optimal_sampling.stale_decay(h_i, 1/decay_beta[chosen_clients[i]])) # recover back to original scale
+                # compute optimal beta
+                beta = optimal_sampling.get_one_optimal_b(gradient_dict, h_i_original)
+                # adjust h_i to new scale
+                h_i = copy.deepcopy(optimal_sampling.stale_decay(h_i_original, beta))
             for key in global_keys:
                 global_weights_dict[key] -= (d_i / p_list[i]) * (gradient_dict[key] - h_i[key])
             # sum all old
             # for all clients
-            clients_num = len(dis_s)
-            for i in range(clients_num):
-                d_i = dis_s[i]
-                h_i = old_global_weights[i]
-                for key in global_keys:
-                    global_weights_dict[key] -= d_i * h_i[key]
-
-
+        clients_num = len(dis_s)
+        for i in range(clients_num):
+            d_i = dis_s[i]
+            h_i = old_global_weights[i]
+            for key in global_keys:
+                global_weights_dict[key] -= d_i * h_i[key]
     return global_weights_dict

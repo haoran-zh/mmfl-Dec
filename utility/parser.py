@@ -24,8 +24,8 @@ class ParserArgs(object):
         self.parser.add_argument("--powerfulCNN", action="store_true", help="Decide if use powerful CNN for EMNIST")
         self.parser.add_argument("--iid_type", nargs='*', default=['noniid', 'noniid', 'noniid', 'iid', 'iid'], help="List of type_iid")
         self.parser.add_argument("--task_type", nargs='*', default=['mnist', 'cifar10', 'fashion_mnist', 'emnist', 'cifar10'], help="List of task types")
-        self.parser.add_argument("--alpha", type=float, default=3.0, help="alpha value, alpha-fairness")
-        self.parser.add_argument("--alpha2", type=float, default=2.0, help="alpha value, group fairness loss function")
+        self.parser.add_argument("--alpha", type=float, default=1.0, help="alpha value, alpha-fairness")
+        self.parser.add_argument("--alpha2", type=float, default=1.0, help="alpha value, group fairness loss function")
         self.parser.add_argument("--notes", type=str, default='', help="notes to add on the folder name")
         self.parser.add_argument("--bayes_decay", type=float, default=1.0, help="Decay factor for bayesian method")
         self.parser.add_argument("--algo_type", nargs='*', default=['bayesian', 'proposed','random','round_robin'], help="List of algorithms")
@@ -60,16 +60,18 @@ class ParserArgs(object):
         self.parser.add_argument("--multiM", action="store_true", help="use multiM")
         # slowstart
         self.parser.add_argument("--slowstart", action="store_true", help="use slow start")
-        self.parser.add_argument("--delta", type=float, default=0.0, help="delta: minimum value for probability")
+        # self.parser.add_argument("--delta", type=float, default=0.0, help="delta: minimum value for probability")
         self.parser.add_argument("--stale", action="store_true", help="use stale updates")
         self.parser.add_argument("--MILA", action="store_true", help="use MILA aggregation")
         self.parser.add_argument("--scaffold", action="store_true", help="use scaffold")
         self.parser.add_argument("--chosenall", action="store_true", help="chosen all")
         self.parser.add_argument("--stale_b0", type=float, default=1.0, help="initial b0")
         self.parser.add_argument("--stale_b", type=float, default=1.0, help="decay b")
-        self.parser.add_argument("--use_h0", action="store_true", help="use h0 to approximate new update matrix")
+        # self.parser.add_argument("--use_h0", action="store_true", help="use h0 to approximate new update matrix")
         self.parser.add_argument("--optimal_b", action="store_true", help="decide optimal b")
-        self.parser.add_argument("--fix_robin", type=float, default=0.0,  help="round scale, if 0, ignore, if not 0, go robin")
+        # self.parser.add_argument("--fix_robin", type=float, default=0.0,  help="round scale, if 0, ignore, if not 0, go robin")
+        # noextra_com
+        self.parser.add_argument("--noextra_com", action="store_true", help="no extra computation")
 
 
 
