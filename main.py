@@ -305,7 +305,6 @@ if __name__=="__main__":
                                 # get learning rate for this task
                                 # clients send norm(new-old) for sampling distribution
                                 LR = optimizer_config(task_type[task])
-                                print(old_local_updates[task][0])
                                 for cl in range(num_clients):
                                     all_weights_diff[task][cl], _ = optimal_sampling.get_gradient_norm(
                                         weights_this_round=all_tasks_gradients_list[task][cl],
@@ -492,13 +491,27 @@ if __name__=="__main__":
                         task = clients_task[i]
                         cl = chosen_clients[i]
                         old_local_updates[task][cl] = copy.deepcopy(all_tasks_gradients_list[task][cl])
-                    if args.optimal_b is False:
+                    if (args.optimal_b is False) and (args.stale_b0 == 0): # dynamic b0
                         # normal way, to approximate optimal lambda
                         b0 = optimal_sampling.gompertz_function(t=round, a=1.0, b=0.8, c=0.4)
                         b_tasks = optimal_sampling.approximate_decayb(new_updates=all_tasks_gradients_list, old_updates=old_local_updates,
                                                            tasknum=task_number, clientnum=num_clients,
                                                            allocation_record=allocation_dict_list, chosen_clients=chosen_clients,
                                                            client_task=clients_task, dis=dis, prob=p_dict, b0=b0)
+                        decay_tasks_list.append(b_tasks)
+                        # let everything decay in the next round
+                        for task in range(task_number):  # record decayed beta
+                            decay_beta_record[round + 1, task, :] = decay_beta_record[round, task, :] * b_tasks[task]
+                        # initialize new updates
+                        for i in range(len(chosen_clients)):
+                            task = clients_task[i]
+                            client = chosen_clients[i]
+                            # recover to the original scale
+                            # if decay_beta_record[round + 1, task, client] == 0, first time active, scale to b0 directly
+                            decay_beta_record[round + 1, task, client] = b0
+                    else:
+                        b0 = args.stale_b0
+                        b_tasks = [args.stale_b for _ in range(task_number)]
                         decay_tasks_list.append(b_tasks)
                         # let everything decay in the next round
                         for task in range(task_number):  # record decayed beta

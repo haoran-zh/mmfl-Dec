@@ -530,44 +530,38 @@ extra_folder = {
 # "5task_nnnnn_lessVennc0.1uv0.90.05_full_": "full participation",
 
  # active rate-0.05, uv 0.9 0.1, data ratio 1.0
-"3task_nnnnn_lessVennc0.1uv0.90.1_OS_": "MMFL-GVR",
-"3task_nnnnn_lessVennc0.1uv0.90.1_AS_": "MMFL-LVR",
-"3task_nnnnn_lessVennc0.1uv0.90.1_OSstale_f2_": "MMFL-GVR*",
-#"3task_nnnnn_lessVennc0.1uv0.90.1_OSstale_decay1.00.9_f2_": "OS-stale decay0.8",
-"3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_decay1.00.9_f2_": "VR+decay_b decay0.9",
-"3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_decay1.00.8_f2_": "VR+decay_b decay0.8",
-#"3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_h0_decay1.00.9_f2_": "VR+decay_b+h_new decay0.9",
-"3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_h0_decay1.00.8_f2_": "VR+decay_b+h_new decay0.8",
-"3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_Ob_f2_": "VR+optimal_b",
-"3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_Obh0_f2_": "VR+optimal_b+h_new",
-"3task_nnnnn_lessVennc0.1uv0.90.1_FedVARP_a1_": "FedVARP",
-"3task_nnnnn_lessVennc0.1uv0.90.1_MILA_a1_": "MIFA",
-"3task_nnnnn_lessVennc0.1uv0.90.1_SCAFFOLD_a1_": "SCAFFOLD",
-"3task_nnnnn_lessVennc0.1uv0.90.1_full_": "Full participation",
-#"3task_nnnnn_lessVennc0.1uv0.90.1_full_ca_": "Full participationca",
-#"3task_nnnnn_lessVennc0.1uv0.90.1_random_": "Random",
-"3task_nnnnn_lessVennc0.1uv0.90.1_random_ca_": "Random",
+# # "3task_nnnnn_lessVennc0.1uv0.90.1_OS_": "MMFL-GVR",
+# # "3task_nnnnn_lessVennc0.1uv0.90.1_AS_": "MMFL-LVR",
+# # "3task_nnnnn_lessVennc0.1uv0.90.1_OSstale_f2_": "MMFL-GVR*",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_Ob_f2ff2_": "VR+optimal_b",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decayop_f2ff2_": "VRApprox+decayApprox",
+# # "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleAll_decayop_": "VR+decayApprox",
+# # # "3task_nnnnn_lessVennc0.1uv0.90.1_FedVARP_a1_": "FedVARP",
+# # # "3task_nnnnn_lessVennc0.1uv0.90.1_MILA_a1_": "MIFA",
+# # # "3task_nnnnn_lessVennc0.1uv0.90.1_SCAFFOLD_a1_": "SCAFFOLD",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_full_f2ff2_": "Full participation",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_random_f2ff2_": "Random",
+# today I needs to run these three algorithms
+# optimal sampling with stale updates fixed beta: 0.5 0.6 0.7 0.8 0.9
+# optimal sampling (Approx) with stale updates fixed beta: 0.5 0.6 0.7 0.8 0.9
+# no optimal sampling with stale updates fixed beta: 0.5 0.6 0.7 0.8 0.9
 
-# "5task_nnnnn_lessVennc0.1uv0.60.1_OS_f2ca_": "MMFL-GVR",
-# "5task_nnnnn_lessVennc0.1uv0.60.1_AS_f2ca_": "MMFL-LVR",
-# "5task_nnnnn_lessVennc0.1uv0.60.1_OSstale_f2_": "MMFL-GVR*",
-# #"3task_nnnnn_lessVennc0.1uv0.90.1_OSstale_a1_": "OS-stale a1",
-# "5task_nnnnn_lessVennc0.1uv0.60.1_FedVARP_f2_": "FedVARP",
-# "5task_nnnnn_lessVennc0.1uv0.60.1_MILA_f2_": "MIFA",
-# "5task_nnnnn_lessVennc0.1uv0.60.1_SCAFFOLD_f2_": "SCAFFOLD",
-# "5task_nnnnn_lessVennc0.1uv0.60.1_full_f2ca_": "Full participation",
-# #"3task_nnnnn_lessVennc0.1uv0.90.1_full_ca_": "Full participationca",
-# #"3task_nnnnn_lessVennc0.1uv0.90.1_random_": "Random",
-# "5task_nnnnn_lessVennc0.1uv0.60.1_random_f2ca_": "Random",
-
-# "5task_nnnnn_fffse_lessVenn_AS_a1_": "Loss-based sampling",
-# "5task_nnnnn_fffse_lessVenn_OS_a1_": "Norm-based sampling",
-# "5task_nnnnn_fffse_lessVenn_full_": "Full participation",
-# "5task_nnnnn_fffse_lessVenn_random_": "Random",
+"1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_Ob_f_": "VR+optimal_b",
+"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decayop_f_": "VRApprox+decayApprox",
+"1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b0.7_f_": "VR+decay0.7",
+"1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b0.8_f_": "VR+decay0.8",
+"1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b0.9_f_": "VR+decay0.9",
+"1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b1.0_f_": "VR+decay1.0",
+"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.7_f_": "VRApprox+decay0.7",
+"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.8_f_": "VRApprox+decay0.8",
+"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.9_f_": "VRApprox+decay0.9",
+"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b1.0_f_": "VRApprox+decay1.0",
+"1task_nnnnn_lessVennc0.1uv0.90.1_full_f_": "full participation",
+"1task_nnnnn_lessVennc0.1uv0.90.1_random_f_": "random",
 }
 all_rounds=150
 # 15 is fine
-seed_list = [11,12,13,14,15,16,17,18,19]
+seed_list = [11,12,13,14,15,16]
 # no 12
 tasknum= 3
 # 17 16 15
