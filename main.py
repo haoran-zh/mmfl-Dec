@@ -157,6 +157,7 @@ if __name__=="__main__":
             optimal_b_list = []
             decay_tasks_list = []
             decay_beta_record = np.zeros((num_round+1, len(task_type), num_clients))
+            decay_rates = np.zeros((task_number, num_clients))
 
             TaskAllocCounter=np.zeros((len(task_type),num_round))
 
@@ -242,6 +243,7 @@ if __name__=="__main__":
 
             optimal_b_array = np.zeros((len(task_type), num_clients))
             adjusted_old_local_updates = copy.deepcopy(old_local_updates)
+            recent_G = copy.deepcopy(old_local_updates)
 
 
             for round in tqdm(range(num_round)):
@@ -288,11 +290,12 @@ if __name__=="__main__":
                         optimal_b_list.append(optimal_b_array)
                     else:
                         optimal_b_array = decay_beta_record[round]
-                    for task_idx in range(len(task_type)):
-                        for client_idx in range(num_clients):
-                            adjusted_old_local_updates[task_idx][client_idx] = copy.deepcopy(
-                                optimal_sampling.newupdate(old_local_updates[task_idx][client_idx],
-                                                           optimal_b_array[task_idx][client_idx]))
+                    if args.stale is True:
+                        for task_idx in range(len(task_type)):
+                            for client_idx in range(num_clients):
+                                adjusted_old_local_updates[task_idx][client_idx] = copy.deepcopy(
+                                    optimal_sampling.newupdate(old_local_updates[task_idx][client_idx],
+                                                               optimal_b_array[task_idx][client_idx]))
 
                     if args.stale is True:
                         if round == 0:
@@ -316,9 +319,29 @@ if __name__=="__main__":
                             stored_wdiff_list = all_weights_diff  # fast initialization
                         else:
                             if args.noextra_com is True:
-                                for i in range(len(chosen_clients)):
-                                    stored_wdiff_list[clients_task[i]][chosen_clients[i]] = all_weights_diff[clients_task[i]][chosen_clients[i]] \
-                                                                                            * venn_matrix[clients_task[i], chosen_clients[i]]
+                                # adjust old based on new beta
+                                if args.adjustoldVR is True:
+                                    # update recent_G
+                                    if round == 0:
+                                        recent_G = copy.deepcopy(all_tasks_gradients_list)
+                                    else:
+                                        for i in range(len(chosen_clients)):
+                                            task = clients_task[i]
+                                            client = chosen_clients[i]
+                                            recent_G[task][client] = copy.deepcopy(all_tasks_gradients_list[task][client])
+                                    # update based on recent_G
+                                    for task in range(task_number):
+                                        LR = optimizer_config(task_type[task])
+                                        for client in range(num_clients):
+                                            stored_wdiff_list[task][client], _ = optimal_sampling.get_gradient_norm(
+                                                weights_this_round=recent_G[task][client],
+                                                weights_next_round=adjusted_old_local_updates[task][client],
+                                                lr=LR)
+                                else:
+                                    # adjust new updates as the latest
+                                    for i in range(len(chosen_clients)):
+                                        stored_wdiff_list[clients_task[i]][chosen_clients[i]] = all_weights_diff[clients_task[i]][chosen_clients[i]] \
+                                                                                                * venn_matrix[clients_task[i], chosen_clients[i]]
                             else:
                                 for cl in range(num_clients):
                                     for task in range(task_number):
@@ -487,21 +510,19 @@ if __name__=="__main__":
                 # update stale after aggregation
                 if args.stale is True:
                     # only update old_local_updates for chosen_clients and tasks
-                    for i in range(len(chosen_clients)):
-                        task = clients_task[i]
-                        cl = chosen_clients[i]
-                        old_local_updates[task][cl] = copy.deepcopy(all_tasks_gradients_list[task][cl])
-                    if (args.optimal_b is False) and (args.stale_b0 == 0): # dynamic b0
+                    if (args.optimal_b is False) and (args.stale_b0 == 0):  # dynamic b0
                         # normal way, to approximate optimal lambda
-                        b0 = optimal_sampling.gompertz_function(t=round, a=1.0, b=0.8, c=0.4)
-                        b_tasks = optimal_sampling.approximate_decayb(new_updates=all_tasks_gradients_list, old_updates=old_local_updates,
+                        b0 = 1.0
+
+                        decay_rates = optimal_sampling.approximate_decayb(new_updates=all_tasks_gradients_list, old_updates=old_local_updates,
                                                            tasknum=task_number, clientnum=num_clients,
                                                            allocation_record=allocation_dict_list, chosen_clients=chosen_clients,
-                                                           client_task=clients_task, dis=dis, prob=p_dict, b0=b0)
-                        decay_tasks_list.append(b_tasks)
+                                                           client_task=clients_task, b0=b0, decay_rates=decay_rates)
+                        decay_tasks_list.append(decay_rates)
                         # let everything decay in the next round
                         for task in range(task_number):  # record decayed beta
-                            decay_beta_record[round + 1, task, :] = decay_beta_record[round, task, :] * b_tasks[task]
+                            for client in range(num_clients):
+                                decay_beta_record[round + 1, task, client] = max(0.0, decay_beta_record[round, task, client] - decay_rates[task, client])
                         # initialize new updates
                         for i in range(len(chosen_clients)):
                             task = clients_task[i]
@@ -515,7 +536,7 @@ if __name__=="__main__":
                         decay_tasks_list.append(b_tasks)
                         # let everything decay in the next round
                         for task in range(task_number):  # record decayed beta
-                            decay_beta_record[round + 1, task, :] = decay_beta_record[round, task, :] * b_tasks[task]
+                            decay_beta_record[round + 1, task, :] = decay_beta_record[round, task, :]
                         # initialize new updates
                         for i in range(len(chosen_clients)):
                             task = clients_task[i]
@@ -523,6 +544,11 @@ if __name__=="__main__":
                             # recover to the original scale
                             # if decay_beta_record[round + 1, task, client] == 0, first time active, scale to b0 directly
                             decay_beta_record[round + 1, task, client] = b0
+                    # update old_local_updates
+                    for i in range(len(chosen_clients)):
+                        task = clients_task[i]
+                        cl = chosen_clients[i]
+                        old_local_updates[task][cl] = copy.deepcopy(all_tasks_gradients_list[task][cl])
 
                 TaskAllocCounter[:, round] = np.bincount(np.array(clients_task).astype(np.int64), minlength=len(task_type))
                 #print("alloc", TaskAllocCounter[:, round])

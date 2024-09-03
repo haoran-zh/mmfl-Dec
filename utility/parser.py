@@ -72,6 +72,7 @@ class ParserArgs(object):
         # self.parser.add_argument("--fix_robin", type=float, default=0.0,  help="round scale, if 0, ignore, if not 0, go robin")
         # noextra_com
         self.parser.add_argument("--noextra_com", action="store_true", help="no extra computation")
+        self.parser.add_argument("--adjustoldVR", action="store_true", help="adjust norm based on different beta")
 
 
 
