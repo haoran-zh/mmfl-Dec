@@ -829,38 +829,59 @@ def find_recent_allocation(allocation_record, task_index, client_index):
     return -1 # the first time allocation
 
 
-def approximate_decayb(new_updates, old_updates, tasknum, clientnum, allocation_record, chosen_clients, client_task, dis, prob, b0):
+def approximate_decayb(new_updates, old_updates, tasknum, clientnum, allocation_record, chosen_clients, client_task, b0, decay_rates):
     # allocation_record include the current round allocation
     if len(allocation_record) == 1:
-        return [1.0 for _ in range(tasknum)] # no decay
-    decay_avg = [0 for _ in range(tasknum)]
-    p_index = [0 for _ in range(tasknum)]
+        return np.zeros((tasknum, clientnum))
 
     for i in range(len(chosen_clients)):
         task_index = client_task[i]
         client_index = chosen_clients[i]
-        optimal_b = weight_product(new_updates[task_index][client_index],
-                                   old_updates[task_index][client_index]) / weight_product(
-            old_updates[task_index][client_index], old_updates[task_index][client_index])
+        optimal_b_nom = weight_product(new_updates[task_index][client_index],
+                                   old_updates[task_index][client_index])
+        optimal_b_dom = weight_product(old_updates[task_index][client_index], old_updates[task_index][client_index])
+        if optimal_b_dom == 0:
+            optimal_b = b0
+        else:
+            optimal_b = optimal_b_nom / optimal_b_dom
         delta_t = find_recent_allocation(allocation_record, task_index, client_index)
         if delta_t == -1:
-            # cannot use this client, skip
-            p_index[task_index] += 1
-            continue
-        decay = (optimal_b / b0) ** (1/delta_t)
-        decay_avg[task_index] += dis[task_index][client_index] * decay / prob[task_index][p_index[task_index]]
-        p_index[task_index] += 1
-    # if any decay_avg is 0, set it to 1
-    # ensure decay_avg all smaller than 1
-    for task in range(tasknum):
-        decay_avg[task] = min(decay_avg[task], 1)
-        # if decay_avg[task] is in torch, change it to numpy
-        if isinstance(decay_avg[task], torch.Tensor):
-            decay_avg[task] = decay_avg[task].cpu().numpy()
+            decay = 0.0  # first time active
+            decay_rates[task_index][client_index] = decay
+        else:
+            # linear decay
+            decay = (b0 - optimal_b) / delta_t
+            decay_rates[task_index][client_index] = decay
+    return decay_rates
+
+
+def average_beta(new_updates, old_updates, tasknum, chosen_clients, client_task):
+    # allocation_record include the current round allocation
+    average_beta = [0.0 for _ in range(tasknum)]
+    task_count = [0 for _ in range(tasknum)]
+    optimal_betas = []
+
+    for i in range(len(chosen_clients)):
+        task_index = client_task[i]
+        client_index = chosen_clients[i]
+        optimal_b_nom = weight_product(new_updates[task_index][client_index],
+                                   old_updates[task_index][client_index])
+        optimal_b_dom = weight_product(
+            old_updates[task_index][client_index], old_updates[task_index][client_index])
+        if optimal_b_dom == 0:
+            optimal_b = 0
+        else:
+            optimal_b = optimal_b_nom / optimal_b_dom
+        optimal_betas.append(optimal_b)
+        average_beta[task_index] += optimal_b
+        task_count[task_index] += 1
     for i in range(tasknum):
-        if decay_avg[i] == 0:
-            decay_avg[i] = 1
-    return decay_avg
+        if task_count[i] == 0:
+            average_beta[i] = 0.8
+        else:
+            average_beta[i] = average_beta[i] / task_count[i]
+
+    return average_beta, optimal_betas
 
 def get_one_optimal_b(new_updates, old_updates):
     if weight_norm(old_updates) == 0:

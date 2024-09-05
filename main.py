@@ -427,7 +427,7 @@ if __name__=="__main__":
                                                    models_gradient_dict=this_task_gradients_list,
                                                    local_data_num=dis[task_idx],
                                                    p_list=p_dict[task_idx], args=args, decay_beta=decay_beta_record[round, task_idx], chosen_clients=this_task_chosen_clients,
-                                                   old_global_weights=adjusted_old_local_updates[task_idx]))
+                                                   old_global_weights=adjusted_old_local_updates[task_idx], allocation_result=allocation_dict_list, task_index=task_idx))
                             else:
                                 global_models[task_idx].load_state_dict(
                                 federated_prob(global_weights=global_models[task_idx], models_gradient_dict=this_task_gradients_list, local_data_num=dis[task_idx],
@@ -486,7 +486,7 @@ if __name__=="__main__":
                                                    models_gradient_dict=temp_local_gradients,
                                                    local_data_num=dis[task_idx],
                                                    p_list=temp_local_P, args=args, chosen_clients=this_task_chosen_clients,
-                                                   old_global_weights=old_local_updates[task_idx]))
+                                                   old_global_weights=old_local_updates[task_idx])) # not changed
                             else:
                                 global_models[task_idx].load_state_dict(
                                 federated_prob(global_weights=global_models[task_idx],

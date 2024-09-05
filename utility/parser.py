@@ -73,6 +73,8 @@ class ParserArgs(object):
         # noextra_com
         self.parser.add_argument("--noextra_com", action="store_true", help="no extra computation")
         self.parser.add_argument("--adjustoldVR", action="store_true", help="adjust norm based on different beta")
+        self.parser.add_argument("--window", action="store_true", help="use a window filter")
+        self.parser.add_argument("--window_size", type=int, default=10, help="window size")
 
 
 

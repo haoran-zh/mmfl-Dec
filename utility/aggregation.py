@@ -71,7 +71,7 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
 
 
 
-def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list, args, chosen_clients, old_global_weights, decay_beta):
+def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list, args, chosen_clients, old_global_weights, decay_beta, allocation_result, task_index):
     global_weights_dict = global_weights.state_dict()
     global_keys = list(global_weights_dict.keys())
     # Sum the state_dicts of all client models
@@ -110,10 +110,21 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
                 global_weights_dict[key] -= (d_i / p_list[i]) * (gradient_dict[key] - h_i[key])
             # sum all old
             # for all clients
-        clients_num = len(dis_s)
-        for i in range(clients_num):
-            d_i = dis_s[i]
-            h_i = old_global_weights[i]
-            for key in global_keys:
-                global_weights_dict[key] -= d_i * h_i[key]
+        if args.window is True:
+            # only include clients within the window
+            clients_num = len(dis_s)
+            for i in range(clients_num):
+                delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
+                if delta_t <= args.window_size:
+                    d_i = dis_s[i]
+                    h_i = old_global_weights[i]
+                    for key in global_keys:
+                        global_weights_dict[key] -= d_i * h_i[key]
+        else:
+            clients_num = len(dis_s)
+            for i in range(clients_num):
+                d_i = dis_s[i]
+                h_i = old_global_weights[i]
+                for key in global_keys:
+                    global_weights_dict[key] -= d_i * h_i[key]
     return global_weights_dict
