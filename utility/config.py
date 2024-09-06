@@ -1,6 +1,6 @@
 def optimizer_config(name_data):
     if name_data =='cifar10':
-        learning_rate = 0.01
+        learning_rate = 0.1
         
     if name_data =='mnist':
         learning_rate = 0.01#0.001
