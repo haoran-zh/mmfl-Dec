@@ -75,6 +75,7 @@ class ParserArgs(object):
         self.parser.add_argument("--adjustoldVR", action="store_true", help="adjust norm based on different beta")
         self.parser.add_argument("--window", action="store_true", help="use a window filter")
         self.parser.add_argument("--window_size", type=int, default=10, help="window size")
+        self.parser.add_argument("--approximation", action="store_true", help="reduce computation")
 
 
 
