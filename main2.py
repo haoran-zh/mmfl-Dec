@@ -43,7 +43,6 @@ if __name__=="__main__":
     task_type = args.task_type
     task_number = len(task_type)
     data_ratio = args.data_ratio
-    skip_random_initialization = 0
 
     # venn diagram conditions setting
     # total task number
@@ -263,7 +262,7 @@ if __name__=="__main__":
                                                tasks_data_idx, global_models, device, batch_size, venn_matrix,
                                                args.freshness, localLoss, args.fresh_ratio)
                     localLossResults[:, :, round] = localLoss
-                elif skip_random_initialization == 0:
+                else:
                     chosen_clients = random.sample(clients_process, int(allowed_communication))
                     # allocate task based on venn matrix
                     clients_task = []
@@ -271,19 +270,37 @@ if __name__=="__main__":
                         clients_task.append(np.random.choice(np.where(venn_matrix[:, process] == 1)[0]))
                     # this will be used for random sampling
                 # training
-                if (args.optimal_sampling is True) and (args.approximation is False):
+                if (args.optimal_sampling is True):
                     # train everything to get every gradient
                     # need to record local loss before the training
                     localLoss = get_local_loss(task_number, num_clients, task_type, type_iid, tasks_data_info,
                                                tasks_data_idx, global_models, device, batch_size, venn_matrix, args.freshness, localLoss, args.fresh_ratio)
                     localLossResults[:, :, round] = localLoss
 
-                    all_tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training_all(
-                                                                                        tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
-                                                                                        global_models=global_models, chosen_clients=None,
-                                                                                        task_type=task_type, clients_task=None,
-                                                                                        local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
-                                                                                        type_iid=type_iid, device=device, args=args)
+                    if (args.approximation is True) and (round > 0):
+                        # train randomly
+                        tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training(
+                            tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
+                            global_models=global_models, chosen_clients=chosen_clients,
+                            task_type=task_type, clients_task=clients_task,
+                            local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
+                            type_iid=type_iid, device=device, args=args)
+
+                        pseudo_all_tasks_gradients_list = copy.deepcopy(old_local_updates)
+                        # update new ones
+                        for i in range(len(chosen_clients)):
+                            task = clients_task[i]
+                            cl = chosen_clients[i]
+                            pseudo_all_tasks_gradients_list[task][cl] = copy.deepcopy(tasks_gradients_list[i])
+                            all_tasks_gradients_list = pseudo_all_tasks_gradients_list
+
+                    else:
+                        all_tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training_all(
+                                                                                            tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
+                                                                                            global_models=global_models, chosen_clients=None,
+                                                                                            task_type=task_type, clients_task=None,
+                                                                                            local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
+                                                                                            type_iid=type_iid, device=device, args=args)
 
                     if args.optimal_b is True:
                         optimal_b_array = optimal_sampling.get_optimal_b(all_tasks_gradients_list, old_local_updates,
@@ -300,7 +317,7 @@ if __name__=="__main__":
 
                     if args.stale is True:
                         if round == 0:
-                            pass
+                            pseudo_all_weights_diff = copy.deepcopy(all_weights_diff)  # fast initialization
                             # old_local_updates = copy.deepcopy(all_tasks_gradients_list)  # fast initialization
                         else:
                             for task in range(task_number):
@@ -308,6 +325,7 @@ if __name__=="__main__":
                                 # for us, new-old
                                 # get learning rate for this task
                                 # clients send norm(new-old) for sampling distribution
+                                all_weights_diff = pseudo_all_weights_diff
                                 LR = optimizer_config(task_type[task])
                                 for cl in range(num_clients):
                                     all_weights_diff[task][cl], _ = optimal_sampling.get_gradient_norm(
@@ -359,6 +377,24 @@ if __name__=="__main__":
                                                                                          dis,
                                                                                          all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix, save_path='./result/'+folder_name+'/')
                     # optimal sampling needs to be moved after we get local_data_nums
+                    # if approximation, train again
+                    if (args.approximation is True) and (round > 0):
+                        tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training(
+                            tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
+                            global_models=global_models, chosen_clients=chosen_clients,
+                            task_type=task_type, clients_task=clients_task,
+                            local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
+                            type_iid=type_iid, device=device, args=args)
+
+                        pseudo_all_tasks_gradients_list = copy.deepcopy(old_local_updates)
+                        # update new ones
+                        for i in range(len(chosen_clients)):
+                            task = clients_task[i]
+                            cl = chosen_clients[i]
+                            pseudo_all_tasks_gradients_list[task][cl] = copy.deepcopy(tasks_gradients_list[i])
+                            all_tasks_gradients_list = pseudo_all_tasks_gradients_list
+                        # change to pseudo_all_tasks_gradients_list
+
                 else:
                     # if args.approx_optimal, then get all local loss and acc, update chosen_clients and clients_task
                     if args.approx_optimal is True:
@@ -403,7 +439,8 @@ if __name__=="__main__":
                 allocation_dict_list.append(allocation_dict)
 
 
-                if (args.optimal_sampling is True) and (args.approximation is False):
+
+                if args.optimal_sampling is True:
                     # remember to process local_loss
                     temp_global_results = []
                     for task_idx in range(len(task_type)):
@@ -507,7 +544,7 @@ if __name__=="__main__":
                                 global_models[task_idx].to(device)
                             temp_global_results.append(evaluation(model = global_models[task_idx], data = tasks_data_info[task_idx][1], batch_size = batch_size, device = device, args=args))
                             print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",file=file)
-                            # print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             #print(f"Task[{task_idx}]: Global not changed")
@@ -518,19 +555,12 @@ if __name__=="__main__":
                         global_accs.append(temp_global_results[task_idx][0])
                 # update stale after aggregation
                 # define pseudo_all_tasks_gradients_list for format matching
-                if args.approximation is True:
-                    pseudo_all_tasks_gradients_list = copy.deepcopy(old_local_updates)
-                    # update new ones
-                    for i in range(len(chosen_clients)):
-                        task = clients_task[i]
-                        cl = chosen_clients[i]
-                        pseudo_all_tasks_gradients_list[task][cl] = copy.deepcopy(tasks_gradients_list[i])
-                        all_tasks_gradients_list = pseudo_all_tasks_gradients_list
+
                 if args.stale is True:
                     # only update old_local_updates for chosen_clients and tasks
                     if (args.optimal_b is False) and (args.stale_b0 == 0):  # dynamic b0
                         # normal way, to approximate optimal lambda
-                        b0 = 1.0
+                        b0 = 0.9
                         decay_rates = optimal_sampling.approximate_decayb(new_updates=all_tasks_gradients_list, old_updates=old_local_updates,
                                                            tasknum=task_number, clientnum=num_clients,
                                                            allocation_record=allocation_dict_list, chosen_clients=chosen_clients,
@@ -562,81 +592,12 @@ if __name__=="__main__":
                             # if decay_beta_record[round + 1, task, client] == 0, first time active, scale to b0 directly
                             decay_beta_record[round + 1, task, client] = b0
 
-
-
-                if args.approximation is True:
-                    # for the next round
-                    optimal_b_array = decay_beta_record[round]
-                    if args.stale is True:
-                        for task_idx in range(len(task_type)):
-                            for client_idx in range(num_clients):
-                                adjusted_old_local_updates[task_idx][client_idx] = copy.deepcopy(
-                                    optimal_sampling.newupdate(old_local_updates[task_idx][client_idx],
-                                                               optimal_b_array[task_idx][client_idx]))
-
-                    if args.stale is True:
-                        if round == 0: # initialization for all_weights_diff
-                            _, _, _, all_weights_diff_approx = training_all(
-                                tasks_data_info=tasks_data_info, tasks_data_idx=tasks_data_idx,
-                                global_models=global_models, chosen_clients=None,
-                                task_type=task_type, clients_task=None,
-                                local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
-                                type_iid=type_iid, device=device, args=args)
-                        else:
-                            for i in range(len(chosen_clients)):
-                                client = chosen_clients[i]
-                                task = clients_task[i]
-                                LR = optimizer_config(task_type[task])
-                                all_weights_diff_approx[task][client], _ = optimal_sampling.get_gradient_norm(
-                                    weights_this_round=all_tasks_gradients_list[task][client],  # pseudo actually
-                                    weights_next_round=adjusted_old_local_updates[task][client],
-                                    lr=LR)
-
-                    if args.freshness is True:
-                        if round == 0:
-                            stored_wdiff_list = all_weights_diff_approx  # fast initialization
-                        else:
-                            if args.noextra_com is True:
-                                # adjust old based on new beta
-                                if args.adjustoldVR is True:
-                                    # update recent_G
-                                    if round == 0:
-                                        recent_G = copy.deepcopy(all_tasks_gradients_list)
-                                    else:
-                                        for i in range(len(chosen_clients)):
-                                            task = clients_task[i]
-                                            client = chosen_clients[i]
-                                            recent_G[task][client] = copy.deepcopy(all_tasks_gradients_list[task][client])
-                                    # update based on recent_G
-                                    for task in range(task_number):
-                                        LR = optimizer_config(task_type[task])
-                                        for client in range(num_clients):
-                                            stored_wdiff_list[task][client], _ = optimal_sampling.get_gradient_norm(
-                                                weights_this_round=recent_G[task][client],
-                                                weights_next_round=adjusted_old_local_updates[task][client],
-                                                lr=LR)
-                                else:
-                                    # adjust new updates as the latest
-                                    for i in range(len(chosen_clients)):
-                                        stored_wdiff_list[clients_task[i]][chosen_clients[i]] = all_weights_diff_approx[clients_task[i]][chosen_clients[i]] \
-                                                                                                * venn_matrix[clients_task[i], chosen_clients[i]]
-
-                        all_weights_diff_approx = stored_wdiff_list
-                    # optimal sampling
-                    all_weights_diff_power = all_weights_diff_approx
-
-                        #optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args, dis)
-                    skip_random_initialization = 1
-                    clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
-                                                                                         dis,
-                                                                                         all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix, save_path='./result/'+folder_name+'/')
                 if args.stale is True:
                     # update old_local_updates
                     for i in range(len(chosen_clients)):
                         task = clients_task[i]
                         cl = chosen_clients[i]
                         old_local_updates[task][cl] = copy.deepcopy(all_tasks_gradients_list[task][cl])
-
 
 
                 TaskAllocCounter[:, round] = np.bincount(np.array(clients_task).astype(np.int64), minlength=len(task_type))
