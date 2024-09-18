@@ -325,7 +325,7 @@ if __name__=="__main__":
                                 # for us, new-old
                                 # get learning rate for this task
                                 # clients send norm(new-old) for sampling distribution
-                                all_weights_diff = pseudo_all_weights_diff
+                                all_weights_diff = pseudo_all_weights_diff  # will update to other values, just an initialization to avoid all_weights_diff not yet defined
                                 LR = optimizer_config(task_type[task])
                                 for cl in range(num_clients):
                                     all_weights_diff[task][cl], _ = optimal_sampling.get_gradient_norm(
@@ -339,7 +339,7 @@ if __name__=="__main__":
                         else:
                             if args.noextra_com is True:
                                 # adjust old based on new beta
-                                if args.adjustoldVR is True:
+                                if args.adjustoldVR is True:  # GVR no need to adjust old
                                     # update recent_G
                                     if round == 0:
                                         recent_G = copy.deepcopy(all_tasks_gradients_list)
@@ -361,14 +361,6 @@ if __name__=="__main__":
                                     for i in range(len(chosen_clients)):
                                         stored_wdiff_list[clients_task[i]][chosen_clients[i]] = all_weights_diff[clients_task[i]][chosen_clients[i]] \
                                                                                                 * venn_matrix[clients_task[i], chosen_clients[i]]
-                            else:
-                                for cl in range(num_clients):
-                                    for task in range(task_number):
-                                        # if random value is larger than subset_ratio, then skip this task
-                                        if venn_matrix[task, cl] == 0 or random.random() > args.fresh_ratio:
-                                            stored_wdiff_list[task][cl] = stored_wdiff_list[task][cl] * venn_matrix[task, cl]
-                                        else:
-                                            stored_wdiff_list[task][cl] = all_weights_diff[task][cl]
                         all_weights_diff = stored_wdiff_list
                     # optimal sampling
                     all_weights_diff_power = all_weights_diff
@@ -465,7 +457,8 @@ if __name__=="__main__":
                                                    models_gradient_dict=this_task_gradients_list,
                                                    local_data_num=dis[task_idx],
                                                    p_list=p_dict[task_idx], args=args, decay_beta=decay_beta_record[round, task_idx], chosen_clients=this_task_chosen_clients,
-                                                   old_global_weights=adjusted_old_local_updates[task_idx], allocation_result=allocation_dict_list, task_index=task_idx))
+                                                   old_global_weights=adjusted_old_local_updates[task_idx], allocation_result=allocation_dict_list, task_index=task_idx,
+                                                    save_path='./result/'+folder_name+'/'))
                             else:
                                 global_models[task_idx].load_state_dict(
                                 federated_prob(global_weights=global_models[task_idx], models_gradient_dict=this_task_gradients_list, local_data_num=dis[task_idx],
@@ -544,7 +537,7 @@ if __name__=="__main__":
                                 global_models[task_idx].to(device)
                             temp_global_results.append(evaluation(model = global_models[task_idx], data = tasks_data_info[task_idx][1], batch_size = batch_size, device = device, args=args))
                             print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",file=file)
-                            print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             #print(f"Task[{task_idx}]: Global not changed")

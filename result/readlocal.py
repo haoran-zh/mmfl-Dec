@@ -530,46 +530,172 @@ extra_folder = {
 # "5task_nnnnn_lessVennc0.1uv0.90.05_full_": "full participation",
 
  # active rate-0.05, uv 0.9 0.1, data ratio 1.0
-# # "3task_nnnnn_lessVennc0.1uv0.90.1_OS_": "MMFL-GVR",
-# # "3task_nnnnn_lessVennc0.1uv0.90.1_AS_": "MMFL-LVR",
-# # "3task_nnnnn_lessVennc0.1uv0.90.1_OSstale_f2_": "MMFL-GVR*",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_OS_": "MMFL-GVR",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_AS_": "MMFL-LVR",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_OSstale_f2_": "MMFL-GVR*",
 # "3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_Ob_f2ff2_": "VR+optimal_b",
-# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decayop_f2ff2_": "VRApprox+decayApprox",
+# #"3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decayop_f2ff2_": "VRApprox+decayApprox",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decay_f2ff2_": "VRApprox+decayLinear",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_decay_f2ff2_": "VR+decayLinear",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.7_f_": "VRApprox+decay0.7",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.8_f_": "VRApprox+decay0.8",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.9_f_": "VRApprox+decay0.9",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b1.0_f_": "VRApprox+decay1.0",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b0.7_f_": "VR+decay0.7",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b0.8_f_": "VR+decay0.8",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b0.9_f_": "VR+decay0.9",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b1.0_f_": "VR+decay1.0",
 # # "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleAll_decayop_": "VR+decayApprox",
 # # # "3task_nnnnn_lessVennc0.1uv0.90.1_FedVARP_a1_": "FedVARP",
 # # # "3task_nnnnn_lessVennc0.1uv0.90.1_MILA_a1_": "MIFA",
 # # # "3task_nnnnn_lessVennc0.1uv0.90.1_SCAFFOLD_a1_": "SCAFFOLD",
 # "3task_nnnnn_lessVennc0.1uv0.90.1_full_f2ff2_": "Full participation",
 # "3task_nnnnn_lessVennc0.1uv0.90.1_random_f2ff2_": "Random",
+
 # today I needs to run these three algorithms
 # optimal sampling with stale updates fixed beta: 0.5 0.6 0.7 0.8 0.9
 # optimal sampling (Approx) with stale updates fixed beta: 0.5 0.6 0.7 0.8 0.9
 # no optimal sampling with stale updates fixed beta: 0.5 0.6 0.7 0.8 0.9
 
-"1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_Ob_f_": "VR+optimal_b",
-"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decayop_f_": "VRApprox+decayApprox",
-"1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b0.7_f_": "VR+decay0.7",
-"1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b0.8_f_": "VR+decay0.8",
-"1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b0.9_f_": "VR+decay0.9",
-"1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b1.0_f_": "VR+decay1.0",
-"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.7_f_": "VRApprox+decay0.7",
-"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.8_f_": "VRApprox+decay0.8",
-"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.9_f_": "VRApprox+decay0.9",
-"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b1.0_f_": "VRApprox+decay1.0",
-"1task_nnnnn_lessVennc0.1uv0.90.1_full_f_": "full participation",
-"1task_nnnnn_lessVennc0.1uv0.90.1_random_f_": "random",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_Ob_f_": "VR+optimal_b",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decay_f_": "VRApprox+decayApprox",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_decay_f_": "VR+decayApprox",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b0.7_f_": "VR+decay0.7",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b0.8_f_": "VR+decay0.8",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b0.9_f_": "VR+decay0.9",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_b1.0_f_": "VR+decay1.0",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.7_f_": "VRApprox+decay0.7",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.8_f_": "VRApprox+decay0.8",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.9_f_": "VRApprox+decay0.9",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b1.0_f_": "VRApprox+decay1.0",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_full_f_": "full participation",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_random_f_": "random",
+
+# "1task_nnnnn_lessVennc0.03uv0.50.1_Diffstale_Ob_m_": "VR+optimal_b",
+# #"1task_nnnnn_lessVennc0.03uv0.50.1_DiffstaleNoextra_decay_m_": "VRApprox+decayApprox",
+# "1task_nnnnn_lessVennc0.03uv0.50.1_DiffstaleNoextraAO_decay_m_": "VRApprox+decayApprox",
+# #"1task_nnnnn_lessVennc0.03uv0.50.1_Diffstale_m_": "VR",
+# #"1task_nnnnn_lessVennc0.03uv0.50.1_DiffstaleNoextra_m_": "VRApprox",
+# #"1task_nnnnn_lessVennc0.03uv0.50.1_Diffstale_decay_m_": "VR+decayApprox",
+# "1task_nnnnn_lessVennc0.03uv0.50.1_DiffstaleNoextraw10_decay_m_": "VRApprox+decayApprox-w10",
+# # should use AO
+# "1task_nnnnn_lessVennc0.03uv0.50.1_DiffstaleNoextraw20_decay_m_": "VRApprox+decayApprox-w20",
+# "1task_nnnnn_lessVennc0.03uv0.50.1_DiffstaleNoextraw30_decay_m_": "VRApprox+decayApprox-w30",
+# #"1task_nnnnn_lessVennc0.03uv0.50.1_Diffstale_b0.7_m_": "VR+decay0.7",
+# #"1task_nnnnn_lessVennc0.03uv0.50.1_Diffstale_b0.8_m_": "VR+decay0.8",
+# #"1task_nnnnn_lessVennc0.03uv0.50.1_Diffstale_b0.9_m_": "VR+decay0.9",
+# #"1task_nnnnn_lessVennc0.03uv0.50.1_Diffstale_b1.0_m_": "VR+decay1.0",
+# "1task_nnnnn_lessVennc0.03uv0.50.1_DiffstaleNoextra_b0.7_m_": "VRApprox+b0.7",
+# "1task_nnnnn_lessVennc0.03uv0.50.1_DiffstaleNoextra_b0.8_m_": "VRApprox+b0.8",
+# "1task_nnnnn_lessVennc0.03uv0.50.1_DiffstaleNoextra_b0.9_m_": "VRApprox+b0.9",
+# "1task_nnnnn_lessVennc0.03uv0.50.1_DiffstaleNoextra_b1.0_m_": "VRApprox+b1.0",
+# "1task_nnnnn_lessVennc0.03uv0.50.1_full_m_": "full participation",
+# "1task_nnnnn_lessVennc0.03uv0.50.1_random_m_": "random",
+
+# test all fashion-mnist, to show GVR code is ok
+# "1task_nnnnn_lessVennc0.1uv0.90.1_GVR_f_": "GVR",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_GVRApprox_f_": "GVR_approx",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_full_f_": "full participation",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_random_f_": "random",
+
+
+# "1task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_Ob_m_": "VR+optimal_b",
+# #"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decay_m_": "VRApprox+decayApprox",
+# #"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decay_m2_": "VRApprox+decayApprox2",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_decay_m2_": "VRApprox+decayApprox",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_GVR_": "GVR", # need to check GVR code
+# "1task_nnnnn_lessVennc0.1uv0.90.1_GVRApprox_": "GVRApprox",
+# #"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_decay_m_": "VRApproxAO+decayApprox",
+# #"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw10_decay_m_": "VRApprox+decayApproxw10",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw5AO_decay_m2_": "VRApprox+decayApprox-w5",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw10AO_decay_m2_": "VRApprox+decayApprox-w10",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw15AO_decay_m2_": "VRApprox+decayApprox-w15", # use main2, not mnist2
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw20AO_decay_m2_": "VRApprox+decayApprox-w20",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw30AO_decay_m2_": "VRApprox+decayApprox-w30",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw40AO_decay_m2_": "VRApprox+decayApprox-w40",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraUW5AO_decay_m2_": "VRApprox+decayApprox-UW5",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraUW10AO_decay_m2_": "VRApprox+decayApprox-UW10",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraUW15AO_decay_m2_": "VRApprox+decayApprox-UW15", # use main2, not mnist2
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraUW20AO_decay_m2_": "VRApprox+decayApprox-UW20",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraUW30AO_decay_m2_": "VRApprox+decayApprox-UW30",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraUW40AO_decay_m2_": "VRApprox+decayApprox-UW40",
+# #"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw30_decay_m_": "VRApprox+decayApproxw30",
+# #"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.9_m_": "VRApprox+b0.9",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.1_m2_": "VRApprox+b0.1",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.2_m2_": "VRApprox+b0.2",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.3_m2_": "VRApprox+b0.3",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.4_m2_": "VRApprox+b0.4",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.5_m2_": "VRApprox+b0.5",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.6_m2_": "VRApprox+b0.6",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.7_m2_": "VRApprox+b0.7",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.8_m2_": "VRApprox+b0.8",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.9_m2_": "VRApprox+b0.9",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_full_m_": "full participation",
+# "1task_nnnnn_lessVennc0.1uv0.90.1_random_m_": "random",
+
+
+# "3task_nnnnn_lessVennc0.1uv0.90.1_Diffstale_Ob_mfe_": "VR+optimal_b",
+# #"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decay_m_": "VRApprox+decayApprox",
+# #"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decay_m2_": "VRApprox+decayApprox2",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_decay_mfe_": "VRApprox+decayApprox",
+# #"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_decay_m_": "VRApproxAO+decayApprox",
+# #"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw10_decay_m_": "VRApprox+decayApproxw10",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw5AO_decay_mfe_": "VRApprox+decayApprox-w5",
+# #"3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw10AO_decay_mfe_": "VRApprox+decayApprox-w10",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw15AO_decay_mfe_": "VRApprox+decayApprox-w15",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw20AO_decay_mfe_": "VRApprox+decayApprox-w20",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw30AO_decay_mfe_": "VRApprox+decayApprox-w30",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw40AO_decay_mfe_": "VRApprox+decayApprox-w40",
+# #"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw30_decay_m_": "VRApprox+decayApproxw30",
+# #"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.9_m_": "VRApprox+b0.9",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.5_mfe_": "VRApprox+b0.5",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.6_mfe_": "VRApprox+b0.6",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.7_mfe_": "VRApprox+b0.7",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.8_mfe_": "VRApprox+b0.8",
+# #"3task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_b0.9_mfe_": "VRApprox+b0.9",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_full_mfe_": "full participation",
+# "3task_nnnnn_lessVennc0.1uv0.90.1_random_mfe_": "random",
+
+
+"3task_nnnnn_lessVennc0.3uv0.90.1_Diffstale_Ob_mfe_": "VR+optimal_b",
+#"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decay_m_": "VRApprox+decayApprox",
+#"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_decay_m2_": "VRApprox+decayApprox2",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraAO_decay_mfe_": "VRApprox+decayApprox",
+"3task_nnnnn_lessVennc0.3uv0.90.1_GVR_mfe_": "GVR",  # need to check GVR code
+"3task_nnnnn_lessVennc0.3uv0.90.1_GVRApprox_mfe_": "GVRApprox",
+#"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraAO_decay_m_": "VRApproxAO+decayApprox",
+#"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw10_decay_m_": "VRApprox+decayApproxw10",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraw5AO_decay_mfe_": "VRApprox+decayApprox-w5",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraw10AO_decay_mfe_": "VRApprox+decayApprox-w10",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraw15AO_decay_mfe_": "VRApprox+decayApprox-w15",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraw20AO_decay_mfe_": "VRApprox+decayApprox-w20",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraw30AO_decay_mfe_": "VRApprox+decayApprox-w30",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraw40AO_decay_mfe_": "VRApprox+decayApprox-w40",
+#"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextraw30_decay_m_": "VRApprox+decayApproxw30",
+#"1task_nnnnn_lessVennc0.1uv0.90.1_DiffstaleNoextra_b0.9_m_": "VRApprox+b0.9",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraAO_b0.1_mfe_": "VRApprox+b0.1",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraAO_b0.2_mfe_": "VRApprox+b0.2",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraAO_b0.3_mfe_": "VRApprox+b0.3",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraAO_b0.4_mfe_": "VRApprox+b0.4",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraAO_b0.5_mfe_": "VRApprox+b0.5",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraAO_b0.6_mfe_": "VRApprox+b0.6",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraAO_b0.7_mfe_": "VRApprox+b0.7",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraAO_b0.8_mfe_": "VRApprox+b0.8",
+"3task_nnnnn_lessVennc0.3uv0.90.1_DiffstaleNoextraAO_b0.9_mfe_": "VRApprox+b0.9",
+"3task_nnnnn_lessVennc0.3uv0.90.1_full_mfe_": "full participation",
+"3task_nnnnn_lessVennc0.3uv0.90.1_random_mfe_": "random",
+
 }
 all_rounds=150
-# 15 is fine
-seed_list = [11,12,13,14,15,16]
-# no 12
+# m: (not 11), 12,13,14 (not 15),16,17 (not 18 19)
+seed_list = [11,12,13,14,15,16,17,18,19]
 tasknum= 3
 # 17 16 15
-line_list = ['-', '-', '-', '-', '-','-','--','-','-','-','-', '--','-','-','-','-','--','-','-','-','-']
-marker_list =['o', 's', 'v','^', 'p','D','X', 'P','^', 'p','D','X', 'P','p','D','X', 'P']
+line_list = ['-', '-', '-', '-', '-','-','--','-','-','-','-', '--','-','-','-','-','--','-','-','-','-','-','-','-','--','-','-','-','-','-','-','-','-','--','-','-','-','-']
+marker_list =['o', 's', 'v','^', 'p','D','X', 'P','^', 'p','D','X', 'P','p','D','X', 'P','p','D','X', 'P','p','D','X', 'P','D','X', 'P','p','D','X', 'P']
 # sd 21 is good,
 # sd 19, 20 is bad
-finalPath = f'./result/3task_nnnnn_lessVennc0.1uv0.90.1_OSstale_a1_19'
+finalPath = f'./result/1task_nnn_test_13'
 
 # make figure wide=8, height=5
 
@@ -704,7 +830,7 @@ for key in extra_folder:
 #     plot_each_task(all_algorithm_curve, keys_list)
 #     plot_allocation_count(all_count_list, keys_list)
 
-ax_avg.legend(fontsize=20, frameon=False)
+ax_avg.legend(fontsize=12, frameon=False)
 # make label size larger
 ax_avg.set_xlabel('Num. Global Iterations', fontsize=20)
 ax_avg.set_ylabel('Accuracy', fontsize=20)
@@ -712,7 +838,7 @@ ax_avg.set_title(f'Avg Accuracy over {tasknum} Models', fontsize=20)
 ax_avg.tick_params(axis='both', which='major', labelsize=20)
 # make the figure is tight
 
-ax_min.legend(fontsize=20, frameon=False)
+ax_min.legend(fontsize=12, frameon=False)
 ax_min.set_xlabel('Num. Global Iterations', fontsize=20)
 ax_min.set_ylabel('Accuracy', fontsize=20)
 ax_min.set_title(f'Min Accuracy over {tasknum} Models', fontsize=20)

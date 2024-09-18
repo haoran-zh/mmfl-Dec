@@ -233,11 +233,11 @@ class EMnistCNN(nn.Module):
     def __init__(self, num_classes=47):
         super(EMnistCNN, self).__init__()
         # Define layers
-        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=5, padding=2)  # 'same' padding
-        self.conv2 = nn.Conv2d(in_channels=32, out_channels=48, kernel_size=5, padding=2)
-        self.conv3 = nn.Conv2d(in_channels=48, out_channels=64, kernel_size=5, padding=2)
-        self.fc1 = nn.Linear(in_features=64 * 7 * 7, out_features=512)
-        self.fc2 = nn.Linear(in_features=512, out_features=84)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=5, padding=2)  # 'same' padding
+        self.conv2 = nn.Conv2d(in_channels=16, out_channels=24, kernel_size=5, padding=2)
+        self.conv3 = nn.Conv2d(in_channels=24, out_channels=32, kernel_size=5, padding=2)
+        self.fc1 = nn.Linear(in_features=32 * 7 * 7, out_features=256)
+        self.fc2 = nn.Linear(in_features=256, out_features=84)
         self.fc3 = nn.Linear(in_features=84, out_features=num_classes)
 
     def forward(self, x):
