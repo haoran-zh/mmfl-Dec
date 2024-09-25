@@ -73,15 +73,16 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
 def compute_p_active_once(psi, window_size):
     # psi is a list
     p_active_once = np.ones_like(psi[-1]) # tasknum, clientnum
-
-    for t_ in range(window_size):
-        if t_ == len(psi):
-            break
-        p_active_once *= (1 - psi[-1-t_])
-    p_active_once = 1 - p_active_once
-    # set 0 to 1 for elements in p_active_once
-    p_active_once[p_active_once == 0.0] = 1.0
-    return p_active_once
+    current_round = len(psi)
+    if current_round < (window_size+1):
+        return p_active_once
+    else:
+        for t_ in range(window_size):
+            p_active_once *= (1 - psi[-2-t_])
+        p_active_once = 1 - p_active_once
+        # set 0 to 1 for elements in p_active_once
+        p_active_once[p_active_once == 0.0] = 1.0
+        return p_active_once
 
 
 
@@ -129,17 +130,21 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
         if args.window is True:
             # only include clients within the window
             clients_num = len(dis_s)
+
+            if args.ubwindow is True:
+                # read past probabilities, divide probability to ensure unbiasedness
+                psi_list_file = save_path + 'psi_OS.pkl'
+                with open(psi_list_file, "rb") as f:
+                    psi = pickle.load(f)
+                # compute probability of being active at least once in the window
+                p_active_once = compute_p_active_once(psi, args.window_size)
+
+
             for i in range(clients_num):
                 delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
                 if delta_t <= args.window_size:
                     d_i = dis_s[i]
                     if args.ubwindow is True:
-                        # read past probabilities, divide probability to ensure unbiasedness
-                        psi_list_file = save_path + 'psi_OS.pkl'
-                        with open(psi_list_file, "rb") as f:
-                            psi = pickle.load(f)
-                        # compute probability of being active at least once in the window
-                        p_active_once = compute_p_active_once(psi, args.window_size)
                         d_i = d_i / p_active_once[task_index, i]
                     h_i = old_global_weights[i]
                     for key in global_keys:

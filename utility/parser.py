@@ -79,7 +79,6 @@ class ParserArgs(object):
         self.parser.add_argument("--ubwindow", action="store_true", help="unbiased window aggregation")
 
 
-
     def get_args(self):
         args = self.parser.parse_args()
         return args
