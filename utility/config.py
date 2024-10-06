@@ -4,6 +4,7 @@ def optimizer_config(name_data):
         
     if name_data =='mnist':
         learning_rate = 0.01#0.001
+        # OCt 4,previous 0.01
         
     if name_data=='fashion_mnist':
         learning_rate= 0.01 #0.002 # 2e-6

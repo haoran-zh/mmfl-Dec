@@ -77,6 +77,9 @@ class ParserArgs(object):
         self.parser.add_argument("--window_size", type=int, default=10, help="window size")
         self.parser.add_argument("--approximation", action="store_true", help="reduce computation")
         self.parser.add_argument("--ubwindow", action="store_true", help="unbiased window aggregation")
+        self.parser.add_argument("--ff", action="store_true", help="fullfill window terms")
+        self.parser.add_argument("--alt_min", action="store_true", help="alternating minimization")
+
 
 
     def get_args(self):

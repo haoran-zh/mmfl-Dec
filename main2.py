@@ -302,73 +302,105 @@ if __name__=="__main__":
                                                                                             local_epochs=local_epochs, batch_size=batch_size, classes_size=tasks_data_info,
                                                                                             type_iid=type_iid, device=device, args=args)
 
-                    if args.optimal_b is True:
-                        optimal_b_array = optimal_sampling.get_optimal_b(all_tasks_gradients_list, old_local_updates,
-                                                                         task_number, num_clients)
+                    if args.alt_min is False:  # normal methods, with closed-form solution, decay-approximation or optimal values.
+                        if args.optimal_b is True:
+                            optimal_b_array = optimal_sampling.get_optimal_b(all_tasks_gradients_list, old_local_updates,
+                                                                             task_number, num_clients)
+                            optimal_b_list.append(optimal_b_array)
+                        else:
+                            optimal_b_array = decay_beta_record[round]
+                        if args.stale is True:
+                            for task_idx in range(len(task_type)):
+                                for client_idx in range(num_clients):
+                                    adjusted_old_local_updates[task_idx][client_idx] = copy.deepcopy(
+                                        optimal_sampling.newupdate(old_local_updates[task_idx][client_idx],
+                                                                   optimal_b_array[task_idx][client_idx]))
+
+                        if args.stale is True:
+                            if round == 0:
+                                pseudo_all_weights_diff = copy.deepcopy(all_weights_diff)  # fast initialization
+                                # old_local_updates = copy.deepcopy(all_tasks_gradients_list)  # fast initialization
+                            else:
+                                for task in range(task_number):
+                                    # the function is this-next.
+                                    # for us, new-old
+                                    # get learning rate for this task
+                                    # clients send norm(new-old) for sampling distribution
+                                    all_weights_diff = pseudo_all_weights_diff  # will update to other values, just an initialization to avoid all_weights_diff not yet defined
+                                    LR = optimizer_config(task_type[task])
+                                    for cl in range(num_clients):
+                                        all_weights_diff[task][cl], _ = optimal_sampling.get_gradient_norm(
+                                            weights_this_round=all_tasks_gradients_list[task][cl],
+                                            weights_next_round=adjusted_old_local_updates[task][cl],
+                                            lr=LR)
+
+                        if args.freshness is True:
+                            if round == 0:
+                                stored_wdiff_list = all_weights_diff  # fast initialization
+                            else:
+                                if args.noextra_com is True:
+                                    # adjust old based on new beta
+                                    if args.adjustoldVR is True:  # GVR no need to adjust old
+                                        # update recent_G
+                                        if round == 0:
+                                            recent_G = copy.deepcopy(all_tasks_gradients_list)
+                                        else:
+                                            for i in range(len(chosen_clients)):
+                                                task = clients_task[i]
+                                                client = chosen_clients[i]
+                                                recent_G[task][client] = copy.deepcopy(all_tasks_gradients_list[task][client])
+                                        # update based on recent_G
+                                        for task in range(task_number):
+                                            LR = optimizer_config(task_type[task])
+                                            for client in range(num_clients):
+                                                stored_wdiff_list[task][client], _ = optimal_sampling.get_gradient_norm(
+                                                    weights_this_round=recent_G[task][client],
+                                                    weights_next_round=adjusted_old_local_updates[task][client],
+                                                    lr=LR)
+                                    else:
+                                        # adjust new updates as the latest
+                                        for i in range(len(chosen_clients)):
+                                            stored_wdiff_list[clients_task[i]][chosen_clients[i]] = all_weights_diff[clients_task[i]][chosen_clients[i]] \
+                                                                                                    * venn_matrix[clients_task[i], chosen_clients[i]]
+                            all_weights_diff = stored_wdiff_list
+                        # optimal sampling
+                        all_weights_diff_power = all_weights_diff
+                            #optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args, dis)
+                        clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
+                                                                                             dis,
+                                                                                             all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix, save_path='./result/'+folder_name+'/')
+                        # optimal sampling needs to be moved after we get local_data_nums
+                    elif args.alt_min is True:
+                        if round == 0:
+                            recent_G = copy.deepcopy(all_tasks_gradients_list)
+                            pseudo_all_weights_diff = copy.deepcopy(all_weights_diff)
+                        else:
+                            for i in range(len(chosen_clients)):
+                                task = clients_task[i]
+                                client = chosen_clients[i]
+                                recent_G[task][client] = copy.deepcopy(all_tasks_gradients_list[task][client])
+
+                        # alternating minimization to get the optimal beta and sampling distribution
+                        optimal_b_array, p_all_list = optimal_sampling.alt_min(round, task_type, chosen_clients,
+                                                                               client_task_ability, clients_process,
+                                                                               venn_matrix, dis,
+                                                                               gradient_new=recent_G, gradient_old=old_local_updates,
+                                                                               all_weights_diff=pseudo_all_weights_diff, args=args, save_path='./result/'+folder_name+'/')
+                        # record optimal_b_array
                         optimal_b_list.append(optimal_b_array)
-                    else:
-                        optimal_b_array = decay_beta_record[round]
-                    if args.stale is True:
+                        # get sampling result
+                        clients_task, p_dict, chosen_clients = optimal_sampling.sampling_distribution(p_s_i=p_all_list,
+                                                                                                      tasks_num=len(task_type), clients_process=clients_process,
+                                                                                                      client_task_ability=client_task_ability, save_path='./result/'+folder_name+'/',
+                                                                                                      args=args)
+                        # rescale stale updates for aggregation
                         for task_idx in range(len(task_type)):
                             for client_idx in range(num_clients):
                                 adjusted_old_local_updates[task_idx][client_idx] = copy.deepcopy(
                                     optimal_sampling.newupdate(old_local_updates[task_idx][client_idx],
                                                                optimal_b_array[task_idx][client_idx]))
 
-                    if args.stale is True:
-                        if round == 0:
-                            pseudo_all_weights_diff = copy.deepcopy(all_weights_diff)  # fast initialization
-                            # old_local_updates = copy.deepcopy(all_tasks_gradients_list)  # fast initialization
-                        else:
-                            for task in range(task_number):
-                                # the function is this-next.
-                                # for us, new-old
-                                # get learning rate for this task
-                                # clients send norm(new-old) for sampling distribution
-                                all_weights_diff = pseudo_all_weights_diff  # will update to other values, just an initialization to avoid all_weights_diff not yet defined
-                                LR = optimizer_config(task_type[task])
-                                for cl in range(num_clients):
-                                    all_weights_diff[task][cl], _ = optimal_sampling.get_gradient_norm(
-                                        weights_this_round=all_tasks_gradients_list[task][cl],
-                                        weights_next_round=adjusted_old_local_updates[task][cl],
-                                        lr=LR)
 
-                    if args.freshness is True:
-                        if round == 0:
-                            stored_wdiff_list = all_weights_diff  # fast initialization
-                        else:
-                            if args.noextra_com is True:
-                                # adjust old based on new beta
-                                if args.adjustoldVR is True:  # GVR no need to adjust old
-                                    # update recent_G
-                                    if round == 0:
-                                        recent_G = copy.deepcopy(all_tasks_gradients_list)
-                                    else:
-                                        for i in range(len(chosen_clients)):
-                                            task = clients_task[i]
-                                            client = chosen_clients[i]
-                                            recent_G[task][client] = copy.deepcopy(all_tasks_gradients_list[task][client])
-                                    # update based on recent_G
-                                    for task in range(task_number):
-                                        LR = optimizer_config(task_type[task])
-                                        for client in range(num_clients):
-                                            stored_wdiff_list[task][client], _ = optimal_sampling.get_gradient_norm(
-                                                weights_this_round=recent_G[task][client],
-                                                weights_next_round=adjusted_old_local_updates[task][client],
-                                                lr=LR)
-                                else:
-                                    # adjust new updates as the latest
-                                    for i in range(len(chosen_clients)):
-                                        stored_wdiff_list[clients_task[i]][chosen_clients[i]] = all_weights_diff[clients_task[i]][chosen_clients[i]] \
-                                                                                                * venn_matrix[clients_task[i], chosen_clients[i]]
-                        all_weights_diff = stored_wdiff_list
-                    # optimal sampling
-                    all_weights_diff_power = all_weights_diff
-                        #optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args, dis)
-                    clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
-                                                                                         dis,
-                                                                                         all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix, save_path='./result/'+folder_name+'/')
-                    # optimal sampling needs to be moved after we get local_data_nums
                     # if approximation, train again
                     if (args.approximation is True) and (round > 0):
                         tasks_gradients_list, tasks_local_training_acc, tasks_local_training_loss, all_weights_diff = training(
@@ -474,7 +506,7 @@ if __name__=="__main__":
                             print(
                                 f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}",
                                 file=file)
-                            # print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
+                            #print(f"Task[{task_idx}]: Global Acc-{temp_global_results[task_idx][0]} Global Loss-{temp_global_results[task_idx][1]}")
                         else:
                             temp_global_results.append(global_results[task_idx])
                             # print(f"Task[{task_idx}]: Global not changed")
@@ -570,7 +602,7 @@ if __name__=="__main__":
                             # recover to the original scale
                             # if decay_beta_record[round + 1, task, client] == 0, first time active, scale to b0 directly
                             decay_beta_record[round + 1, task, client] = b0
-                    else:
+                    else:  # fixed value of beta, no decay (FedStale)
                         b0 = args.stale_b0
                         b_tasks = [args.stale_b for _ in range(task_number)]
                         decay_tasks_list.append(b_tasks)

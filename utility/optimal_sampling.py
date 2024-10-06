@@ -2,14 +2,19 @@ import torch
 import numpy as np
 import random
 import pickle
+from utility.config import optimizer_config
+import copy
 
 
 def get_gradient_norm(weights_this_round, weights_next_round, lr):
     # get gradient by subtracting weights_next_round from weights_this_round
     weight_diff = {name: (weights_this_round[name] - weights_next_round[name]).cpu() for name in weights_this_round}
     # Calculate the L2 norm of the weight differences
+    # bound in case appear nan
     norm = sum(torch.norm(diff, p=2) ** 2 for diff in weight_diff.values()) ** 0.5 / lr
     norm.item()
+    if torch.isnan(norm):
+        norm = torch.tensor(0.0)
     return norm.item(), weight_diff
 
 
@@ -19,10 +24,15 @@ def weight_minus(weights_A, weights_B):
     # Calculate the L2 norm of the weight differences
     return weight_diff
 
-def weight_product(weights_A, weights_B):
-    # get gradient by subtracting weights_next_round from weights_this_round
+
+def weight_product(weights_A, weights_B, epsilon=1e-7):
     # Calculate weight_A * weight_B (inner product, return a scalar)
     weight_prod = sum(torch.sum(weights_A[name] * weights_B[name]) for name in weights_A)
+
+    # Replace NaN with a small value and bound very small values
+    if torch.isnan(weight_prod) or torch.abs(weight_prod) < epsilon:
+        weight_prod = epsilon  # Set to a small non-zero value
+
     return weight_prod
 
 def weight_norm(weights_A):
@@ -385,25 +395,6 @@ def get_optimal_sampling(chosen_processes, dis, gradient_record, args, client_ta
     file_path = save_path + 'gradient_record_' + type + '.pkl'
     append_to_pickle(file_path, gradient_record)
 
-    # compute the punishment
-    punishment_list = []
-    for task_index in range(tasks_num):
-        punishment_each_task = 0
-        for process_index in range(processes_num):
-            client_index = clients_process[process_index]
-            if p_s_i[task_index][process_index] == 0:
-                continue
-            else:
-                # if client_idx is active, then add it
-                if client_index in chosen_clients:
-                    punishment_each_task += dis[task_index][client_index] / client_task_ability[client_index] / p_s_i[task_index][process_index]
-        punishment_each_task = (punishment_each_task - 1)**2
-        punishment_list.append(punishment_each_task)
-
-    # save the punishment
-    file_path = save_path + 'punishment_' + type + '.pkl'
-    append_to_pickle(file_path, punishment_list)
-
     return clients_task, p_dict, chosen_clients
 
 def get_clients_num_per_task(clients_task, tasks_num):
@@ -666,96 +657,6 @@ def get_optimal_sampling_cvx(clients_process, tasks_count, dis, gradient_record,
 
 
 
-def get_delta_sampling(clients_process, dis, gradient_record, client_task_ability, args, venn_matrix, save_path):
-    # gradient_record: the shape is [task_index][client_index]
-    # chosen_clients provide the index of the chosen clients in a random order
-    # clients_task has the same order as chosen_clients
-    # multiple tasks sampling will degenerate to single task sampling when task=1
-    # therefore we can use the same function.
-    delta = args.delta
-    tasks_num = len(gradient_record)
-    processes_num = len(gradient_record[0])
-    active_rate = args.C
-    sample_num = int(processes_num * active_rate)
-
-    all_gradients = gradient_record.copy()
-
-    for task_index in range(tasks_num):
-        for process_index in range(processes_num):
-        # from U to U~ in the paper
-            client_index = clients_process[process_index]
-            all_gradients[task_index][process_index] = gradient_record[task_index][client_index] * dis[task_index][client_index] / client_task_ability[client_index] * venn_matrix[task_index][client_index]
-
-
-    p_optimal = optimal_solver_delta(client_num=processes_num, task_num=tasks_num, all_gradients=all_gradients, m=sample_num, delta=delta)
-    # p_optimal = tradeoff_solver(client_num=all_clients_num, task_num=tasks_num, all_gradients=all_gradients, active_num=sample_num, dis=d_is)
-
-    p_s_i = p_optimal
-    allocation_result = np.zeros(processes_num, dtype=int)
-    for process_idx in range(processes_num):
-        if abs(1 - np.sum(p_s_i[:, process_idx])) < 1e-6:
-            p_not_choose = 0
-        else:
-            p_not_choose = 1 - np.sum(p_s_i[:, process_idx])
-        # append p_not_choose to the head of p_s_i
-        p_client = np.zeros(tasks_num + 1)
-        p_client[0] = p_not_choose
-        p_client[1:] = p_s_i[:, process_idx]
-        # ensure p_client sum to 1
-        p_client = p_client / np.sum(p_client)
-        allocation_result[process_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client)
-    allocation_result = allocation_result.tolist()
-    clients_task = [s for s in allocation_result if s != -1]
-    chosen_process_order = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
-    chosen_clients = [clients_process[i] for i in chosen_process_order]
-    # get p_dict
-    p_dict = []
-    active_rate = len(chosen_clients) / processes_num
-
-    for task_index in range(tasks_num):
-        p_dict.append(
-            [p_s_i[task_index][i] * client_task_ability[clients_process[i]] for i in range(processes_num) if
-             allocation_result[i] == task_index])
-
-    # print(p_dict)
-
-    # store p_s_i, process_gradients_sumTasks
-    if args.optimal_sampling is True:
-        type = 'OS'
-    elif args.approx_optimal is True:
-        type = 'AS'
-    else:
-        type = 'none'
-    file_path = save_path + 'psi_' + type + '.pkl'
-    append_to_pickle(file_path, p_s_i)
-
-    # record gradient_record
-    file_path = save_path + 'gradient_record_' + type + '.pkl'
-    append_to_pickle(file_path, gradient_record)
-
-    # compute the punishment
-    punishment_list = []
-    for task_index in range(tasks_num):
-        punishment_each_task = 0
-        for process_index in range(processes_num):
-            client_index = clients_process[process_index]
-            if p_s_i[task_index][process_index] == 0:
-                continue
-            else:
-                # if client_idx is active, then add it
-                if client_index in chosen_clients:
-                    punishment_each_task += dis[task_index][client_index] / client_task_ability[client_index] / \
-                                            p_s_i[task_index][process_index]
-        punishment_each_task = (punishment_each_task - 1) ** 2
-        punishment_list.append(punishment_each_task)
-
-    # save the punishment
-    file_path = save_path + 'punishment_' + type + '.pkl'
-    append_to_pickle(file_path, punishment_list)
-
-    return clients_task, p_dict, chosen_clients
-
-
 def aggregation_fair(loss_af_aggregation, loss_bf_aggregation):
     loss_diff = loss_af_aggregation - loss_bf_aggregation
     # we want loss_diff to be small
@@ -800,24 +701,6 @@ def fixed_distribution(round, round_scale):
 
 
 import math
-def gompertz_function(t, a, b, c):
-    """
-    Computes the Gompertz function value at time t.
-
-    Parameters:
-    t : int or float : Time period at which to calculate the function value
-    a : float : The upper asymptote (maximum value the function approaches as t increases)
-    b : float : The displacement factor (related to the initial value of the function)
-    c : float : The growth rate (controls the steepness of the curve)
-
-    Returns:
-    f(t) : float : Gompertz function value at time t
-    """
-
-    # Calculate the Gompertz function value using the formula
-    f_t = a * math.exp(-b * math.exp(-c * t))
-
-    return f_t
 
 
 def find_recent_allocation(allocation_record, task_index, client_index):
@@ -889,3 +772,192 @@ def get_one_optimal_b(new_updates, old_updates):
     else:
         optimal_b = weight_product(new_updates, old_updates) / weight_product(old_updates, old_updates)
     return optimal_b
+
+
+def get_optimal_distribution(m, dis, gradient_record, client_task_ability, clients_process, venn_matrix): # gradient record is norm
+    # gradient_record: the shape is [task_index][client_index]
+    # chosen_clients provide the index of the chosen clients in a random order
+    # clients_task has the same order as chosen_clients
+    # multiple tasks sampling will degenerate to single task sampling when task=1
+    # therefore we can use the same function.
+    sample_num = m  # m in the paper
+    tasks_num = len(gradient_record)
+    # random.shuffle(task_indices) # make task order random
+    all_clients_num = len(gradient_record[0])
+    processes_num = sum(client_task_ability) # client_task_ability [4,2,1,..] client 1 has 4 processes, client 2 has 2 processes
+
+    all_gradients = np.zeros((tasks_num, processes_num))
+
+
+    for task_index in range(tasks_num):
+        for process_index in range(processes_num):
+        # from U to U~ in the paper
+            client_index = clients_process[process_index]
+            all_gradients[task_index][process_index] = gradient_record[task_index][client_index] * dis[task_index][client_index] / client_task_ability[client_index] * venn_matrix[task_index][client_index]
+    process_gradients_sumTasks = np.zeros(processes_num) # this is M_i in the proof
+    for process_index in range(processes_num):
+        for task_index in range(tasks_num):
+            process_gradients_sumTasks[process_index] += all_gradients[task_index][process_index]
+
+    # sort the gradients of the clients for this task, get a list of indices
+    sorted_indices = np.argsort(process_gradients_sumTasks)
+
+    n = processes_num
+    m = sample_num
+
+    l = n - m + 1
+    best_l = l
+    if m == 0: # if m=0, we get best_l = n+1 above, which is wrong. how to solve?
+        best_l = n
+
+    while True:
+        l += 1
+        if l > n:
+            break
+        # sum the first l smallest gradients
+        sum_upto_l = sum(process_gradients_sumTasks[sorted_indices[i]] for i in range(l))
+        upper = sum_upto_l / process_gradients_sumTasks[sorted_indices[l-1]]
+        # if 0<m+l-n<=upper, then this l is good. find the largest l satisfying this condition
+        if 0 < m + l - n <= upper:
+            best_l = l
+    # compute p
+    p_s_i = np.zeros((tasks_num, processes_num))
+    sum_upto_l = sum(process_gradients_sumTasks[sorted_indices[i]] for i in range(best_l))
+    # print('sum_upto_l', sum_upto_l)
+    for i in range(len(sorted_indices)):
+        if i >= best_l:
+            for task_index in range(tasks_num):
+                p_s_i[task_index][sorted_indices[i]] = all_gradients[task_index][sorted_indices[i]] / process_gradients_sumTasks[sorted_indices[i]]
+        else:
+            for task_index in range(tasks_num):
+                p_s_i[task_index][sorted_indices[i]] = (m + best_l - n) * all_gradients[task_index][sorted_indices[i]] / sum_upto_l
+    # if nan appears, then set it to 0
+    p_s_i[np.isnan(p_s_i)] = m/n
+    return p_s_i
+
+
+
+def get_one_optimal_b_ALT(new_updates, old_updates, p, q):
+    if weight_norm(old_updates) == 0:
+        optimal_b = 0
+    else:
+        if (p < 1e-6) or (q < 1e-6):  # if p is 0
+            x = 1
+            k = 0
+        else:
+            x = (1 - p) / p
+            k = (1 - q) / q
+        nom = weight_product(new_updates, old_updates)
+        denom = weight_product(old_updates, old_updates)
+        optimal_b = nom * x / (denom * (x + k))
+    return optimal_b
+
+
+def compute_p_active_once(psi, window_size):
+    # psi is a list
+    p_active_once = np.ones_like(psi[-1]) # tasknum, clientnum
+    current_round = len(psi)
+    if current_round < (window_size+1):
+        return p_active_once
+    else:
+        for t_ in range(window_size):
+            p_active_once *= (1 - psi[-2-t_])
+        p_active_once = 1 - p_active_once
+        # set 0 to 1 for elements in p_active_once
+        p_active_once[p_active_once == 0.0] = 1.0
+        p_active_once[p_active_once < 0.5] = 0.5
+        return p_active_once
+
+
+def alt_min(round, task_type, chosen_clients, client_task_ability,
+            clients_process, venn_matrix, dis, gradient_new, gradient_old, all_weights_diff, args, save_path):
+    # optimal beta closed-form:
+    # beta = (h*G)^2 * (1/p-1) /(\|h\|^2 * (1/p + 1/q -2))
+    # p=optimal_sampling(\|G-beta*h\|^2)
+    client_num = len(gradient_new[0])
+    task_num = len(gradient_new)
+    m = len(chosen_clients)
+    processes_num = sum(client_task_ability)
+    iteration = 20
+
+    betaH = copy.deepcopy(gradient_old)
+
+    # initialize beta as all ones
+    beta = np.ones((task_num, client_num)) * 0.5
+    norms_array = all_weights_diff
+    # initialize qsi
+
+    if round == 0:
+        psi = get_optimal_distribution(m=m, dis=dis, gradient_record=norms_array,
+                                       client_task_ability=client_task_ability,
+                                       clients_process=clients_process, venn_matrix=venn_matrix)
+    else:
+        psi_list_file = save_path + 'psi_OS.pkl'
+        with open(psi_list_file, "rb") as f:
+            psi_history = pickle.load(f)
+        qsi = compute_p_active_once(psi_history, args.window_size)
+        # initialize psi
+        psi = np.ones((task_num, processes_num))
+        for _ in range(iteration):
+            pre_beta = beta
+            pre_psi = psi
+            # ------------------P step------------------
+            # ------update \|G-beta*h\|------
+            for task in range(task_num):
+                LR = optimizer_config(task_type[task])
+                for cl in range(client_num):
+                    betaH[task][cl] = newupdate(weights=gradient_old[task][cl], b0=beta[task][cl])
+                    norms_array[task][cl], _ = get_gradient_norm(
+                        weights_this_round=gradient_new[task][cl],
+                        weights_next_round=betaH[task][cl],
+                        lr=LR)
+
+            # ------compute norm (without learning rate)------
+            psi = get_optimal_distribution(m=m, dis=dis, gradient_record=norms_array, client_task_ability=client_task_ability,
+                                           clients_process=clients_process, venn_matrix=venn_matrix)
+            # ------------------beta step------------------
+            for task in range(task_num):
+                for cl in range(client_num):
+                    beta[task][cl] = get_one_optimal_b_ALT(new_updates=gradient_new[task][cl], old_updates=betaH[task][cl], p=psi[task][cl], q=qsi[task][cl])
+
+            # ------------------check if converge------------------
+            # print(f"beta error with iteration {beta}")
+            # print(f"p error with iteration {psi[1][1]}")
+    return beta, psi
+
+def sampling_distribution(p_s_i, tasks_num, clients_process, client_task_ability, save_path, args):
+    all_clients_num = args.num_clients
+    processes_num = sum(client_task_ability)
+
+    allocation_result = np.zeros(processes_num, dtype=int)
+    for process_idx in range(processes_num):
+        if abs(1-np.sum(p_s_i[:, process_idx])) < 1e-6:
+            p_not_choose = 0
+        else:
+            p_not_choose = 1 - np.sum(p_s_i[:, process_idx])
+        # append p_not_choose to the head of p_s_i
+        p_client = np.zeros(tasks_num+1)
+        p_client[0] = p_not_choose
+        p_client[1:] = p_s_i[:, process_idx]
+        allocation_result[process_idx] = np.random.choice(np.arange(-1, tasks_num), p=p_client) # appear NaN
+    allocation_result = allocation_result.tolist()
+    clients_task = [s for s in allocation_result if s != -1]
+    chosen_process_order = [i for i in range(len(allocation_result)) if allocation_result[i] != -1]
+    chosen_clients = [clients_process[i] for i in chosen_process_order]
+    # get p_dict
+    p_dict = []
+    active_rate = len(chosen_clients)/all_clients_num
+    for task_index in range(tasks_num):
+        p_dict.append([p_s_i[task_index][i] * client_task_ability[clients_process[i]] for i in range(processes_num) if allocation_result[i] == task_index])
+
+    # store p_s_i, process_gradients_sumTasks
+    if args.optimal_sampling is True:
+        type = 'OS'
+    elif args.approx_optimal is True:
+        type = 'AS'
+    else:
+        type = 'none'
+    file_path = save_path + 'psi_'+type+'.pkl'
+    append_to_pickle(file_path, p_s_i)
+
+    return clients_task, p_dict, chosen_clients

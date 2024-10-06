@@ -82,6 +82,32 @@ def compute_p_active_once(psi, window_size):
         p_active_once = 1 - p_active_once
         # set 0 to 1 for elements in p_active_once
         p_active_once[p_active_once == 0.0] = 1.0
+        # set any value in p_active_once to no less than 0.5
+        p_active_once[p_active_once < 0.5] = 0.5
+        return p_active_once
+
+
+def compute_p_active_once_fullfill(psi, window_size):
+    # psi is a list
+    p_active_once = np.ones_like(psi[-1]) # tasknum, clientnum
+    current_round = len(psi)
+    if current_round < (window_size+1):
+        # fill the first few rounds with p[0]
+        for t_ in range(window_size):
+            if t_ < (current_round-1):
+                p_active_once *= (1 - psi[-2-t_])
+            else:
+                p_active_once *= (1 - psi[0])
+        p_active_once = 1 - p_active_once
+        # set 0 to 1 for elements in p_active_once
+        p_active_once[p_active_once == 0.0] = 1.0
+        return p_active_once
+    else:
+        for t_ in range(window_size):
+            p_active_once *= (1 - psi[-2-t_])
+        p_active_once = 1 - p_active_once
+        # set 0 to 1 for elements in p_active_once
+        p_active_once[p_active_once == 0.0] = 1.0
         return p_active_once
 
 
@@ -137,7 +163,10 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
                 with open(psi_list_file, "rb") as f:
                     psi = pickle.load(f)
                 # compute probability of being active at least once in the window
-                p_active_once = compute_p_active_once(psi, args.window_size)
+                if args.ff is True:
+                    p_active_once = compute_p_active_once_fullfill(psi, args.window_size)
+                else:
+                    p_active_once = compute_p_active_once(psi, args.window_size)
 
 
             for i in range(clients_num):
