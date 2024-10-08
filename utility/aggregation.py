@@ -70,12 +70,12 @@ def federated_prob(global_weights, models_gradient_dict, local_data_num, p_list,
 
     return global_weights_dict
 
-def compute_p_active_once(psi, window_size):
+def compute_p_active_once(psi, window_size, args):
     # psi is a list
     p_active_once = np.ones_like(psi[-1]) # tasknum, clientnum
     current_round = len(psi)
     if current_round < (window_size+1):
-        return p_active_once
+        return p_active_once, -1
     else:
         for t_ in range(window_size):
             p_active_once *= (1 - psi[-2-t_])
@@ -83,8 +83,10 @@ def compute_p_active_once(psi, window_size):
         # set 0 to 1 for elements in p_active_once
         p_active_once[p_active_once == 0.0] = 1.0
         # set any value in p_active_once to no less than 0.5
-        p_active_once[p_active_once < 0.5] = 0.5
-        return p_active_once
+        # record how many clients are below the LB
+        num_clients_below_LB = np.sum(p_active_once < args.LB)
+        p_active_once[p_active_once < args.LB] = args.LB
+        return p_active_once, num_clients_below_LB
 
 
 def compute_p_active_once_fullfill(psi, window_size):
@@ -166,7 +168,11 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
                 if args.ff is True:
                     p_active_once = compute_p_active_once_fullfill(psi, args.window_size)
                 else:
-                    p_active_once = compute_p_active_once(psi, args.window_size)
+                    p_active_once, num_clients_below_LB = compute_p_active_once(psi, args.window_size, args)
+                    # store num_clients_below_LB
+                    num_clients_below_LB_file = save_path + 'num_clients_below_LB.pkl'
+                    with open(num_clients_below_LB_file, "wb") as f:
+                        optimal_sampling.append_to_pickle(num_clients_below_LB, f)
 
 
             for i in range(clients_num):

@@ -79,6 +79,7 @@ class ParserArgs(object):
         self.parser.add_argument("--ubwindow", action="store_true", help="unbiased window aggregation")
         self.parser.add_argument("--ff", action="store_true", help="fullfill window terms")
         self.parser.add_argument("--alt_min", action="store_true", help="alternating minimization")
+        self.parser.add_argument("--LB", type=float, default=0.5, help="lower bound for q")
 
 
 
