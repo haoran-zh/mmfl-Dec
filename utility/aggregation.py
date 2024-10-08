@@ -171,8 +171,7 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
                     p_active_once, num_clients_below_LB = compute_p_active_once(psi, args.window_size, args)
                     # store num_clients_below_LB
                     num_clients_below_LB_file = save_path + 'num_clients_below_LB.pkl'
-                    with open(num_clients_below_LB_file, "wb") as f:
-                        optimal_sampling.append_to_pickle(num_clients_below_LB, f)
+                    optimal_sampling.append_to_pickle(num_clients_below_LB_file, num_clients_below_LB)
 
 
             for i in range(clients_num):
