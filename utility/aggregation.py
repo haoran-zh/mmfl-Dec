@@ -125,6 +125,7 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
     N = args.num_clients
     L = 1
     dis_s = local_data_num
+    total_rounds = len(allocation_result)
 
     if args.MILA is True:
         clients_num = len(dis_s)
@@ -152,6 +153,7 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
                 # adjust h_i to new scale
                 h_i = copy.deepcopy(optimal_sampling.stale_decay(h_i_original, beta))
             for key in global_keys:
+                # if we use summation window, then should minus h_i * window_size
                 global_weights_dict[key] -= (d_i / p_list[i]) * (gradient_dict[key] - h_i[key])
             # sum all old
             # for all clients
@@ -175,6 +177,7 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
 
 
             for i in range(clients_num):
+                # to decide if client i is within the window
                 delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
                 if delta_t <= args.window_size:
                     d_i = dis_s[i]
@@ -183,6 +186,35 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
                     h_i = old_global_weights[i]
                     for key in global_keys:
                         global_weights_dict[key] -= d_i * h_i[key]
+
+        elif args.windowSum is True:
+            # only include clients within the window
+            clients_num = len(dis_s)
+
+            if args.ubwindow is True:
+                # read past probabilities, divide probability to ensure unbiasedness
+                psi_list_file = save_path + 'psi_OS.pkl'
+                with open(psi_list_file, "rb") as f:
+                    psi = pickle.load(f)
+
+            if (total_rounds > args.window_size) is False:
+                for i in range(clients_num):
+                    delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
+                    if delta_t <= args.window_size:
+                        d_i = dis_s[i]
+                        h_i = old_global_weights[i]
+                        for key in global_keys:
+                            global_weights_dict[key] -= d_i * h_i[key]
+            else:  # start to have real window structure
+                for i in range(clients_num):
+                    delta_t, p_stale = optimal_sampling.find_recent_allocation_withP(allocation_result, task_index, i, psi)
+                    if delta_t <= args.window_size:
+                        d_i = dis_s[i]
+                        if args.ubwindow is True:
+                            d_i = d_i / (p_stale * args.window_size)
+                        h_i = old_global_weights[i]
+                        for key in global_keys:
+                            global_weights_dict[key] -= d_i * h_i[key]
         else:
             clients_num = len(dis_s)
             for i in range(clients_num):

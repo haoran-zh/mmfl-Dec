@@ -712,6 +712,15 @@ def find_recent_allocation(allocation_record, task_index, client_index):
     return -1 # the first time allocation
 
 
+def find_recent_allocation_withP(allocation_record, task_index, client_index, psi):
+    current_total_round = len(allocation_record)
+    for i in range(current_total_round-2, -1, -1): # reverse order
+        if client_index in allocation_record[i].keys():
+            if task_index in allocation_record[i][client_index]:
+                return current_total_round - i - 1, psi[i][task_index][client_index]
+    return -1, 1 # the first time allocation
+
+
 def approximate_decayb(new_updates, old_updates, tasknum, clientnum, allocation_record, chosen_clients, client_task, b0, decay_rates):
     # allocation_record include the current round allocation
     if len(allocation_record) == 1:

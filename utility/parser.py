@@ -80,6 +80,7 @@ class ParserArgs(object):
         self.parser.add_argument("--ff", action="store_true", help="fullfill window terms")
         self.parser.add_argument("--LB", type=float, default=0.5, help="lower bound for q")
         self.parser.add_argument("--skipOS", action="store_true", help="skip optimal sampling")
+        self.parser.add_argument("--windowSum", action="store_true", help="window slot with summation")
 
 
 
