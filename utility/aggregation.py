@@ -206,12 +206,22 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
                         for key in global_keys:
                             global_weights_dict[key] -= d_i * h_i[key]
             else:  # start to have real window structure
+                # c_list, how to decide c_list weights, for now, we use linear
+                c_list = np.ones(args.window_size)
+                # recent is more important
+                for t_ in range(args.window_size):
+                    # compute it as e^{-t}
+                    c_list[t_] = args.window_size - t_
+                    # c_list[t_] = np.exp(-t_)
+                # normalize c_list
+                c_list = c_list / np.sum(c_list)
+
                 for i in range(clients_num):
                     delta_t, p_stale = optimal_sampling.find_recent_allocation_withP(allocation_result, task_index, i, psi)
                     if delta_t <= args.window_size:
                         d_i = dis_s[i]
                         if args.ubwindow is True:
-                            d_i = d_i / (p_stale * args.window_size)
+                            d_i = d_i / p_stale * c_list[delta_t-1]
                         h_i = old_global_weights[i]
                         for key in global_keys:
                             global_weights_dict[key] -= d_i * h_i[key]

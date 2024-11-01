@@ -49,7 +49,9 @@ if __name__=="__main__":
     venn_list = args.venn_list # [0.3,0.4,0.3]
     venn_matrix = np.zeros((task_number, num_clients))
     # 30% can handle , 40% can handle handle task_num-1, 30% can handle task_num-2
-    venn_task_num_list = [task_number, max(1,task_number-1), max(1,task_number-2)]
+    #venn_task_num_list = [task_number, max(1,task_number-1), max(1,task_number-2)]
+    venn_task_num_list = [1, 1, 1] # remove venn structure for the ease of implementation
+    # each client can only train one model per round
     task_num_venn_list = []
     for i in range(num_clients):
         task_num_venn = random.choices(venn_task_num_list, venn_list, k=1)[0]
