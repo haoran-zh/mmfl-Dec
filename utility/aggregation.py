@@ -127,7 +127,7 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
     dis_s = local_data_num
     total_rounds = len(allocation_result)
 
-    if args.MILA is True:
+    if args.MILA is True:  # no problem, because MIFA doesn't have optimal sampling, so we get original h_i without beta here
         clients_num = len(dis_s)
         for i in range(clients_num):
             if i not in chosen_clients:
@@ -136,96 +136,75 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
             else:
                 for key in global_keys:
                     global_weights_dict[key] -= dis_s[i] * models_gradient_dict[chosen_clients.index(i)][key]
+    else:
+        # other method, FedVARP, FedStale, our methods
+        # For FedVARP(args.optimal_sampling is False),
+        # decay_beta_record is always totally 0, old_global_weights is the original
+        # FedStale has args.skipOS as True.
+        if args.ubwindow is True:
+            # read past probabilities, divide probability to ensure unbiasedness
+            psi_list_file = save_path + 'psi_OS.pkl'
+            with open(psi_list_file, "rb") as f:
+                psi = pickle.load(f)
+            # compute probability of being active at least once in the window
+            p_active_once, num_clients_below_LB = compute_p_active_once(psi, args.window_size, args)
+            # store num_clients_below_LB
+            num_clients_below_LB_file = save_path + 'num_clients_below_LB.pkl'
+            optimal_sampling.append_to_pickle(num_clients_below_LB_file, num_clients_below_LB)
 
-    else:  # other method
-        for i, gradient_dict in enumerate(models_gradient_dict):  # active clients
-            d_i = dis_s[chosen_clients[i]]
-            h_i = old_global_weights[chosen_clients[i]]
-            if args.optimal_b is False:
-                # adjust h_i to optimal scale
-                if decay_beta[chosen_clients[i]] == 0:
-                    h_i_original = copy.deepcopy(h_i)  # only for the first active I think
-                    # print('first time active')
-                else:
-                    h_i_original = copy.deepcopy(optimal_sampling.stale_decay(h_i, 1/decay_beta[chosen_clients[i]])) # recover back to original scale
-                # compute optimal beta
-                beta = optimal_sampling.get_one_optimal_b(gradient_dict, h_i_original)
-                # adjust h_i to new scale
-                h_i = copy.deepcopy(optimal_sampling.stale_decay(h_i_original, beta))
-            for key in global_keys:
-                # if we use summation window, then should minus h_i * window_size
-                global_weights_dict[key] -= (d_i / p_list[i]) * (gradient_dict[key] - h_i[key])
-            # sum all old
-            # for all clients
-        if args.window is True:
+            for i, gradient_dict in enumerate(models_gradient_dict):  # active clients
+                d_i = dis_s[chosen_clients[i]]
+                h_i = old_global_weights[chosen_clients[i]]
+                for key in global_keys:
+                    global_weights_dict[key] -= (d_i / p_list[i]) * (gradient_dict[key] - h_i[key])
+
+
             # only include clients within the window
             clients_num = len(dis_s)
-
-            if args.ubwindow is True:
-                # read past probabilities, divide probability to ensure unbiasedness
-                psi_list_file = save_path + 'psi_OS.pkl'
-                with open(psi_list_file, "rb") as f:
-                    psi = pickle.load(f)
-                # compute probability of being active at least once in the window
-                if args.ff is True:
-                    p_active_once = compute_p_active_once_fullfill(psi, args.window_size)
-                else:
-                    p_active_once, num_clients_below_LB = compute_p_active_once(psi, args.window_size, args)
-                    # store num_clients_below_LB
-                    num_clients_below_LB_file = save_path + 'num_clients_below_LB.pkl'
-                    optimal_sampling.append_to_pickle(num_clients_below_LB_file, num_clients_below_LB)
-
 
             for i in range(clients_num):
                 # to decide if client i is within the window
                 delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
                 if delta_t <= args.window_size:
                     d_i = dis_s[i]
-                    if args.ubwindow is True:
-                        d_i = d_i / p_active_once[task_index, i]
+                    d_i = d_i / p_active_once[task_index, i]
                     h_i = old_global_weights[i]
                     for key in global_keys:
                         global_weights_dict[key] -= d_i * h_i[key]
 
-        elif args.windowSum is True:
+        elif args.ubwindow2 is True:
+            # read past probabilities, divide probability to ensure unbiasedness
+            for i, gradient_dict in enumerate(models_gradient_dict):  # active clients
+                delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, chosen_clients[i])
+                if delta_t <= args.window_size:
+                    d_i = dis_s[chosen_clients[i]]
+                    h_i = old_global_weights[chosen_clients[i]]
+                    for key in global_keys:
+                        global_weights_dict[key] -= (d_i / p_list[i]) * (gradient_dict[key] - h_i[key])
+                else:
+                    d_i = dis_s[chosen_clients[i]]
+                    for key in global_keys:
+                        global_weights_dict[key] -= (d_i / p_list[i]) * (gradient_dict[key])
+
             # only include clients within the window
             clients_num = len(dis_s)
 
-            if args.ubwindow is True:
-                # read past probabilities, divide probability to ensure unbiasedness
-                psi_list_file = save_path + 'psi_OS.pkl'
-                with open(psi_list_file, "rb") as f:
-                    psi = pickle.load(f)
+            for i in range(clients_num):
+                # to decide if client i is within the window
+                delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
+                if delta_t <= args.window_size:
+                    d_i = dis_s[i]
+                    h_i = old_global_weights[i]
+                    for key in global_keys:
+                        global_weights_dict[key] -= d_i * h_i[key]
 
-            if (total_rounds > args.window_size) is False:
-                for i in range(clients_num):
-                    delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
-                    if delta_t <= args.window_size:
-                        d_i = dis_s[i]
-                        h_i = old_global_weights[i]
-                        for key in global_keys:
-                            global_weights_dict[key] -= d_i * h_i[key]
-            else:  # start to have real window structure
-                # c_list, how to decide c_list weights, for now, we use linear
-                c_list = np.ones(args.window_size)
-                # recent is more important
-                for t_ in range(args.window_size):
-                    # compute it as e^{-t}
-                    c_list[t_] = args.window_size - t_
-                    # c_list[t_] = np.exp(-t_)
-                # normalize c_list
-                c_list = c_list / np.sum(c_list)
-
-                for i in range(clients_num):
-                    delta_t, p_stale = optimal_sampling.find_recent_allocation_withP(allocation_result, task_index, i, psi)
-                    if delta_t <= args.window_size:
-                        d_i = dis_s[i]
-                        if args.ubwindow is True:
-                            d_i = d_i / p_stale * c_list[delta_t-1]
-                        h_i = old_global_weights[i]
-                        for key in global_keys:
-                            global_weights_dict[key] -= d_i * h_i[key]
-        else:
+        else: # sum for all clients
+            for i, gradient_dict in enumerate(models_gradient_dict):  # active clients
+                d_i = dis_s[chosen_clients[i]]
+                h_i = old_global_weights[chosen_clients[i]]
+                for key in global_keys:
+                    # if we use summation window, then should minus h_i * window_size
+                    global_weights_dict[key] -= (d_i / p_list[i]) * (gradient_dict[key] - h_i[key])
             clients_num = len(dis_s)
             for i in range(clients_num):
                 d_i = dis_s[i]

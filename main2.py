@@ -433,13 +433,14 @@ if __name__=="__main__":
                                                                                                    task_type=task_type, clients_task=clients_task,
                                                                                                    local_epochs=local_epochs, batch_size = batch_size, classes_size = tasks_data_info,
                                                                                                     type_iid=type_iid, device=device, args=args)
-                        pseudo_all_tasks_gradients_list = copy.deepcopy(old_local_updates)
-                        # update new ones
-                        for i in range(len(chosen_clients)):
-                            task = clients_task[i]
-                            cl = chosen_clients[i]
-                            pseudo_all_tasks_gradients_list[task][cl] = copy.deepcopy(tasks_gradients_list[i])
-                            all_tasks_gradients_list = pseudo_all_tasks_gradients_list
+                        if (args.stale is True) or (args.approximation is True):
+                            pseudo_all_tasks_gradients_list = copy.deepcopy(old_local_updates)
+                            # update new ones
+                            for i in range(len(chosen_clients)):
+                                task = clients_task[i]
+                                cl = chosen_clients[i]
+                                pseudo_all_tasks_gradients_list[task][cl] = copy.deepcopy(tasks_gradients_list[i])
+                                all_tasks_gradients_list = pseudo_all_tasks_gradients_list
 
 
                 allocation_dict = {}
