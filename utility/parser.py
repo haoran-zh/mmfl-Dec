@@ -78,6 +78,7 @@ class ParserArgs(object):
         self.parser.add_argument("--approximation", action="store_true", help="reduce computation")
         self.parser.add_argument("--ubwindow", action="store_true", help="unbiased window aggregation")
         self.parser.add_argument("--ubwindow2", action="store_true", help="unbiased window aggregation")
+        self.parser.add_argument("--ubwindow3", action="store_true", help="unbiased window aggregation")
         self.parser.add_argument("--ff", action="store_true", help="fullfill window terms")
         self.parser.add_argument("--LB", type=float, default=0.0, help="lower bound for q")
         self.parser.add_argument("--skipOS", action="store_true", help="skip optimal sampling")
