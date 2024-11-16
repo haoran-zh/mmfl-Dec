@@ -83,6 +83,8 @@ class ParserArgs(object):
         self.parser.add_argument("--LB", type=float, default=0.0, help="lower bound for q")
         self.parser.add_argument("--skipOS", action="store_true", help="skip optimal sampling")
         self.parser.add_argument("--windowSum", action="store_true", help="window slot with summation")
+        # window_max
+        self.parser.add_argument("--window_max", type=int, default=120, help="number of clients in the window at most")
 
 
 

@@ -114,6 +114,20 @@ def compute_p_active_once_fullfill(psi, window_size):
 
 
 
+def window_states(allocation_history, task_index, args):
+    # use this function at the start, create a list to include all clients within the bound
+    clients_within_window = {}
+    clients_num = args.num_clients
+    for i in range(clients_num):
+        delta_t = optimal_sampling.find_recent_allocation(allocation_history, task_index, i)
+        if delta_t <= args.window_size:
+            clients_within_window[i] = delta_t
+    window_max = args.window_max
+    # if clients_within_window includes clients more than window_max, remove clients with largest delta_t
+    if len(clients_within_window) > window_max:
+        clients_within_window = dict(sorted(clients_within_window.items(), key=lambda item: item[1])[:window_max])
+    return clients_within_window
+
 
 
 def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list, args, chosen_clients, old_global_weights, decay_beta, allocation_result, task_index, save_path):
@@ -141,6 +155,10 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
         # For FedVARP(args.optimal_sampling is False),
         # decay_beta_record is always totally 0, old_global_weights is the original
         # FedStale has args.skipOS as True.
+        clients_within_window = window_states(allocation_result, task_index, args)
+        # dict, key is client index, value is delta_t
+
+
         if args.ubwindow is True:
             # read past probabilities, divide probability to ensure unbiasedness
             psi_list_file = save_path + 'psi_OS.pkl'
@@ -164,8 +182,9 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
 
             for i in range(clients_num):
                 # to decide if client i is within the window
-                delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
-                if delta_t <= args.window_size:
+                # delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
+                # use clients_within_window, keys: client index, values: delta_t
+                if i in clients_within_window:
                     d_i = dis_s[i]
                     d_i = d_i / p_active_once[task_index, i]  # where we make it unbiased
                     h_i = old_global_weights[i]
@@ -175,8 +194,8 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
         elif args.ubwindow2 is True:
             # read past probabilities, divide probability to ensure unbiasedness
             for i, gradient_dict in enumerate(models_gradient_dict):  # active clients
-                delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, chosen_clients[i])
-                if delta_t <= args.window_size:
+                # delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, chosen_clients[i])
+                if chosen_clients[i] in clients_within_window:
                     d_i = dis_s[chosen_clients[i]]
                     h_i = old_global_weights[chosen_clients[i]]
                     for key in global_keys:
@@ -191,8 +210,8 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
 
             for i in range(clients_num):
                 # to decide if client i is within the window
-                delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
-                if delta_t <= args.window_size:
+                #delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
+                if i in clients_within_window:
                     d_i = dis_s[i]
                     h_i = old_global_weights[i]
                     for key in global_keys:
@@ -210,8 +229,8 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
             optimal_sampling.append_to_pickle(num_clients_below_LB_file, num_clients_below_LB)
 
             for i, gradient_dict in enumerate(models_gradient_dict):  # active clients
-                delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, chosen_clients[i])
-                if delta_t <= args.window_size:
+                #delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, chosen_clients[i])
+                if chosen_clients[i] in clients_within_window:
                     d_i = dis_s[chosen_clients[i]]
                     h_i = old_global_weights[chosen_clients[i]]
                     for key in global_keys:
@@ -227,8 +246,8 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
 
             for i in range(clients_num):
                 # to decide if client i is within the window
-                delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
-                if delta_t <= args.window_size:
+                #delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
+                if i in clients_within_window:
                     d_i = dis_s[i]
                     d_i = d_i / p_active_once[task_index, i]
                     h_i = old_global_weights[i]
@@ -247,8 +266,8 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
 
             for i in range(clients_num):
                 # to decide if client i is within the window
-                delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
-                if delta_t <= args.window_size:
+                # delta_t = optimal_sampling.find_recent_allocation(allocation_result, task_index, i)
+                if i in clients_within_window:
                     d_i = dis_s[i]
                     h_i = old_global_weights[i]
                     for key in global_keys:
