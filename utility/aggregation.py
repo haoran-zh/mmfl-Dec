@@ -128,6 +128,21 @@ def window_states(allocation_history, task_index, args):
         clients_within_window = dict(sorted(clients_within_window.items(), key=lambda item: item[1])[:window_max])
     return clients_within_window
 
+def window_states_Krank(allocation_history, task_index, args):
+    # use this function at the start, create a list to include all clients within the bound
+    # if Krank is True, then window_max (K) means the most recent K stale updates
+    # and window_size will not be used
+    clients_recent_activeTime = {}
+    K = args.window_max
+    clients_num = args.num_clients
+    for i in range(clients_num):
+        delta_t = optimal_sampling.find_recent_allocation(allocation_history, task_index, i)
+        clients_recent_activeTime[i] = delta_t
+    # rank clients by their active time
+    clients_within_window = dict(sorted(clients_recent_activeTime.items(), key=lambda item: item[1])[:K])
+    # return the most recent K clients
+    return clients_within_window
+
 
 
 def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list, args, chosen_clients, old_global_weights, decay_beta, allocation_result, task_index, save_path):
@@ -155,8 +170,11 @@ def federated_stale(global_weights, models_gradient_dict, local_data_num, p_list
         # For FedVARP(args.optimal_sampling is False),
         # decay_beta_record is always totally 0, old_global_weights is the original
         # FedStale has args.skipOS as True.
-        clients_within_window = window_states(allocation_result, task_index, args)
         # dict, key is client index, value is delta_t
+        if args.Krank is True:
+            clients_within_window = window_states_Krank(allocation_result, task_index, args)
+        else:
+            clients_within_window = window_states(allocation_result, task_index, args)
 
 
         if args.ubwindow is True:

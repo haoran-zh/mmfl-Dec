@@ -85,6 +85,8 @@ class ParserArgs(object):
         self.parser.add_argument("--windowSum", action="store_true", help="window slot with summation")
         # window_max
         self.parser.add_argument("--window_max", type=int, default=120, help="number of clients in the window at most")
+        # Krank
+        self.parser.add_argument("--Krank", action="store_true", help="use Krank")
 
 
 
