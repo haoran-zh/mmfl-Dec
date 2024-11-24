@@ -87,6 +87,7 @@ class ParserArgs(object):
         self.parser.add_argument("--window_max", type=int, default=120, help="number of clients in the window at most")
         # Krank
         self.parser.add_argument("--Krank", action="store_true", help="use Krank")
+        self.parser.add_argument("--givenProb", type=float, default=0.0, help="half client p=1+a, other are 1, then normalize")
 
 
 

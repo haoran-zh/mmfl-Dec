@@ -21,6 +21,7 @@ import argparse
 from utility.parser import ParserArgs
 import utility.optimal_sampling as optimal_sampling
 
+
 if __name__=="__main__":
     parser = ParserArgs()
     args = parser.get_args()
@@ -265,11 +266,14 @@ if __name__=="__main__":
                                                args.freshness, localLoss, args.fresh_ratio)
                     localLossResults[:, :, round] = localLoss
                 else:
-                    chosen_clients = random.sample(clients_process, int(allowed_communication))
-                    # allocate task based on venn matrix
-                    clients_task = []
-                    for process in chosen_clients:
-                        clients_task.append(np.random.choice(np.where(venn_matrix[:, process] == 1)[0]))
+                    if args.givenProb != 0.0:
+                        chosen_clients, clients_task, p_dict = optimal_sampling.sample_unbalanced_distribution(clients_process, int(allowed_communication), args.givenProb, task_number)
+                    else:
+                        chosen_clients = random.sample(clients_process, int(allowed_communication))
+                        # allocate task based on venn matrix
+                        clients_task = []
+                        for process in chosen_clients:
+                            clients_task.append(np.random.choice(np.where(venn_matrix[:, process] == 1)[0]))
                     # this will be used for random sampling
                 # training
                 if (args.optimal_sampling is True):
@@ -395,11 +399,14 @@ if __name__=="__main__":
                             # change to pseudo_all_tasks_gradients_list
                     else:
                         # if skipOS is True, then need to build p_dict given the chosen_clients and clients_task
-                        p_dict = []
-                        for task_index in range(task_number):
-                            # track how many clients are chosen for this task: count how many task_index in clients_task
-                            task_count = clients_task.count(task_index)
-                            p_dict.append([args.C / task_number] * task_count)
+                        if args.givenProb != 0.0:
+                            pass
+                        else:
+                            p_dict = []
+                            for task_index in range(task_number):
+                                # track how many clients are chosen for this task: count how many task_index in clients_task
+                                task_count = clients_task.count(task_index)
+                                p_dict.append([args.C / task_number] * task_count)
 
                 else:
                     # if args.approx_optimal, then get all local loss and acc, update chosen_clients and clients_task

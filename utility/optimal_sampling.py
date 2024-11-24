@@ -970,3 +970,41 @@ def sampling_distribution(p_s_i, tasks_num, clients_process, client_task_ability
     append_to_pickle(file_path, p_s_i)
 
     return clients_task, p_dict, chosen_clients
+
+
+def sample_unbalanced_distribution(clients_process, m, givenProb, task_num):
+    # clients_process: order of clients, e.g., [0,1,2,3,4,5,6,7,8,9] (total 9 clients)
+    # m: allowed communication (int)
+    # givenProb: unbalanced coefficient alpha. half client get 1+alpha, half get 1, then normalize to probabilities
+    # return chosen_clients: list of chosen clients, p_all: list of p for each client
+    p_high = 1 + givenProb
+    p_low = 1
+    clients_num = len(clients_process)
+    active_num = m
+    # create distribution, half are p_high, half are p_low
+    p_all = [p_high for i in range(clients_num)]
+    p_all[clients_num//2:] = [p_low for i in range(clients_num - clients_num//2)]
+    # normalize to probabilities
+    p_all = np.array(p_all)
+    p_all = p_all / np.sum(p_all) * active_num
+    # sample clients
+    chosen_clients = []
+    allocation_result = np.zeros(clients_num, dtype=int)
+    for idx in range(clients_num):
+        p = p_all[idx]
+        # binomial sampling, decide 0 or 1
+        allocation_result[idx] = np.random.choice([0, 1], p=[1.0 - p, p])
+        # convert allocation_result to list of indices (selected_clients)
+    for idx in range(clients_num):
+        if allocation_result[idx] == 1:
+            chosen_clients.append(idx)
+    # create p_list
+    p_list = [[] for i in range(task_num)]
+    clients_task = []
+    for client in chosen_clients:
+        # decide which task to do (random sampling)
+        clients_task.append(np.random.choice(task_num))
+        # record the probability in p_list
+        p_list[clients_task[-1]].append(p_all[clients_process.index(client)])
+    return chosen_clients, clients_task, p_list  # here we don't consider tasks
+
