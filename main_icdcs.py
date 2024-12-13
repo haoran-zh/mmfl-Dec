@@ -382,9 +382,13 @@ if __name__=="__main__":
                     all_weights_diff_power = all_weights_diff
                         #optimal_sampling.power_gradient_norm(all_weights_diff, localLoss, args, dis)
                     if args.skipOS is False:
+                        # sequential training, decide current s
+                        s = round % task_number
+                        # use sequential venn matrix
+                        venn_matrix_temp = venn_sequential[s]
                         clients_task, p_dict, chosen_clients = optimal_sampling.get_optimal_sampling(chosen_clients,
                                                                                          dis,
-                                                                                         all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix, save_path='./result/'+folder_name+'/')
+                                                                                         all_weights_diff_power, args, client_task_ability, clients_process, venn_matrix_temp, save_path='./result/'+folder_name+'/')
                         # optimal sampling needs to be moved after we get local_data_nums
 
 
